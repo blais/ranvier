@@ -22,3 +22,129 @@
 
 * Add tests.
 
+
+* For folder with default: we should declare the directory as being served as
+  well, but how do we deal with the conflict in names?  It consists in two
+  differents paths leading to the same resource.  Should we perhaps check that
+  resources given during a single visit be unique?  What does it all mean?
+
+
+
+
+* The resources package should be split away from the rest  DO IT!!!
+* Write tests
+
+  * Instances that can be referenced should take a '//key' code string so that
+    we are able to map resources back into URLs.  Do this by using the **kwds
+    varargs and having every node cherrypick what it needs when moving back
+    towards the root of the tree.
+
+  * We need to automatically compute these names from the names of the
+    classes, and a class attribute can be used on the classes to override that
+    as well as it should be able to be specified as a keyword argument on the
+    base class.
+
+  * Move::
+
+        hume/doc/urlmaps*
+        hume/app/lib/hume/resource.py
+        hume/app/lib/hume/context.py
+        hume/app/lib/hume/resources/pseudores.py
+
+* Update all the resources everywhere for their enum method.
+
+
+
+* Add a call so that the mapper implements the root handle method:
+
+  - Create a context object
+  - Catch the internal redirects and apply them automatically
+
+
+* Add the following methods:
+
+  - declare_var() becomes declare_compvar()
+  - declare_param( ..., optional=True ) -> adds a query arg
+
+* Provide a simple template replacement routine that replaces::
+
+      <a href="@@Profile(username=username, ...)">Search</a>
+
+  This should be configured to use an appropriate mapper.
+
+* In the docs, mention that the list of URLs can be used by a new developer to
+  quickly get acquainted with the layout of a new project.  This could also be
+  used to generate a site map.
+
+* Hide rest better in resources, rename it::
+
+   Resource.resid -> Resource._Ranvier_resid
+
+* Write a test program using an Apache rewrite rule on a CGI script, to give the
+  impression that we're running a web application.  Rewrite to::
+
+     /ranvier/demo/handle.cgi?url=/users/blais/home&arg1=val1&arg2=val2
+
+
+* Plop in a global ``url()`` function for doing the inverse mappings::
+
+    from app import url
+    def url( *args, **kwds ):
+        # Use the global URL mapper instance.
+        return mapper.url(*args, **kwds)
+
+
+* We need to figure out some kind of solution for the forms which are defined at
+  module initialization time, to be able to generate the actual URLs later when
+  the mapper has been created.
+
+  (Atocha)
+  - Implement support for a callable to be used for the action= arguments in
+    Atocha.
+
+
+  - Add a global function that returns a closure to do this::
+
+     def delayed_url( *args, **kwds ):
+         # Capture the parameters and return a callable.
+         def durl():
+             url(*args, **kwds)
+         return durl
+
+         
+
+* Add a function to initialize ::
+
+    __builtin__.__dict__['url'] = mapper.url()
+
+  Call this function from the carpool app framework.
+
+
+* Remove htmlout from all Ranvier code (FolderWithMenu)
+
+
+* Send Ranvier information to twill list when the URL mapper for testing is
+  complete.
+
+
+
+Query Parameters
+================
+
+* Think about integrating the parameters with the query arguments at some point,
+  so that we can generate URLs like this (maybe this could be done automatically
+  by passing in extra arguments instead of raising an error):
+
+     /a/bli/blou?myextra=42
+
+
+* The enumerator visitor could be augmented with a method to accept declaration
+  of possible query arguments, some being mandatory (this sounds like a cool
+  idea).
+
+  Also, a special function could be provided to do these declarations given an
+  Atocha form, thus providing us with the complete interface to a speciific
+  resource.  The pretty renderer could take advantage of that by rendering a
+  nice table with those, and the fields' titles could even be declared as well,
+  so that we can render a good interface of a resource.
+
