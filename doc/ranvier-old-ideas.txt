@@ -80,16 +80,16 @@ Requests are Function Calls
 
 Essentially, each request maps onto a function call within our system.  Let's
 examine the anatomy of a function call, as it is often represented in most
-computer languages, in this case we will choose Python:
+computer languages, in this case we will choose Python::
 
    def foo( bar1, bar2, bar3=def1, bar4=def2, *kwds )
 
 A function has:
 
-* a name, "foo"
-* some fixed number of formal parameters, "bar1" and "bar2"
-* some optional parameters, "bar3" and "bar4"
-* some extra unnamed parameters, "*kwds"
+* a name, ``foo``
+* some fixed number of formal parameters, ``bar1`` and ``bar2``
+* some optional parameters, ``bar3`` and ``bar4``
+* some extra unnamed parameters, ``*kwds``
 * a return value (which can be packed as a tuple)
 
 The difference between systems which implement the various RPC protocols and a

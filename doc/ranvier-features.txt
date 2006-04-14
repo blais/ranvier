@@ -3,7 +3,12 @@
 ===============================================
 :Author: Martin Blais <blais@furius.ca>
 :Date: 2006-04-11
+:Abstract:
 
+   (Unfinished) Documentation on the Ranvier URL mapping system.
+
+
+.. section-numbering::
 .. contents::
 ..
     1  Introduction
@@ -32,11 +37,12 @@ Mapping URLs is an important component of building web applications.
 Mapping Forward
 ===============
 
-We can view URLs are function calls into a running computer program, i.e:
+We can view URLs are function calls into a running computer program, i.e::
 
-  ``http://mysite.com/accounts/get_balance?``**user=blais**``&``**accno=643843**
+   http://mysite.com/accounts/get_balance?user=blais&accno=643843
 
-maps in the application into a call to a function with two parameters::
+maps in a web application into a call to some function ``get_balance`` with two
+parameters, *user* and *accno*::
 
   def get_balance( user, accno ):
       ...
@@ -48,9 +54,9 @@ per-user global state, this is what we call *session data*, and it is
 implemented using cookies, that a user's browser serves back to the server).
 
 In the preceding example, the parameters were obvious, they were embedded in the
-query arguments.  However, any part of the URL can be an argument:
+query arguments.  However, any part of the URL can be an argument::
 
-  ``http://mysite.com/users/``**blais**``/acc/``**643843**``/get_balance/``
+  http://mysite.com/users/blais/acc/643843/get_balance/
 
 This tends to produce nicer URLs and bends the user into conceptually organizing
 the resources he makes available on his server in a hierarchy.  Query arguments

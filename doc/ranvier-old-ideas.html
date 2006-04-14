@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
+<title>The Problem is Binding URL Paths to Code and Data</title>
+<meta name="author" content="Martin Blais &lt;blais&#64;furius.ca&gt;" />
+<meta name="date" content="2005-04-24" />
+<link rel="stylesheet" href="../style.css" type="text/css" />
+</head>
+<body>
+
+<div id="project-header">
+  <a href="/"><img src="/home/furius-logo-w.png" id="logo"></a>
+  <div id="project-home"><a href="..">Project Home</a></div>
+</div>
+
+<div class="document" id="the-problem-is-binding-url-paths-to-code-and-data">
+<h1 class="title">The Problem is Binding URL Paths to Code and Data</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Martin Blais &lt;<a class="reference" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>2005-04-24</td></tr>
+</tbody>
+</table>
+<div class="abstract topic">
+<p class="topic-title first">Abstract</p>
+<p>Note about my understanding of RESTfulness and motivation.</p>
+</div>
+<div class="section">
+<h1><a id="introduction" name="introduction">Introduction</a></h1>
+<p>Today I have realized something important about web applications while designing
+a security mechanism for my framework.  I think I have understood the real value
+of making a system RESTful.  Even after reading the design of Zope3, which is
+making more and more sense now, I had not quite grasped the importance of this.
+This document describes my understanding of the issue, with a specific example
+that should motivate the desire for RESTfulness.</p>
+</div>
+<div class="section">
+<h1><a id="stateful-design" name="stateful-design">Stateful Design</a></h1>
+<p>The way my system is currently designed ties the notion of &quot;current user&quot; with
+the meaning of a URL path on my server.  For example, when I access the
+&quot;/profile&quot; URL, the results are different depending on which is the currently
+logged in user.</p>
+<p>An important problem with this approach lies in the definition of a flexible
+system for permissions.  If, for example, I want to define a permission group
+for an administrator to be able to access any user's /profile page, I would have
+to create some special codes for the administrator page to access that
+functionality.</p>
+<p>It is obvious that a better system would be for each URL to represent a unique
+resource, and for a permission system to simply restrict which resources are
+available depending on the credentials of the currently logged in user.  That
+is, to make the system RESTful.</p>
+</div>
+<div class="section">
+<h1><a id="restfulness-is-important" name="restfulness-is-important">RESTfulness is important</a></h1>
+<p>REST stands for REpresentational State Tranfer.  The basic idea is that each URL
+uniquely represents a resource in the system.  Basically, given a specific URL
+(including its GET or POST arguments), you should obtain the same resource,
+and/or trigger a specific state transfer that does not depend on
+context/session.</p>
+<p>You want to be able to separate authentication from session data.  Basically,
+the less you can do with session-specific data, the better.</p>
+</div>
+<div class="section">
+<h1><a id="a-specific-example" name="a-specific-example">A Specific Example</a></h1>
+<p>In my case, the way I should serve user-specific pages should be:</p>
+<pre class="literal-block">
+/users/&lt;username&gt;/profile
+</pre>
+<p>This way, even if a user other than &lt;username&gt; is logged in, and has permissions
+to access this page, he can.  This is how administrator users should be able to
+access user profiles.  They use the very same URLs/codes, and their credentials
+allow them access to those resources.  Users != &lt;username&gt; simply don't have the
+credentials to access those pages, but technically, if they could, the resource
+URL would be the same.</p>
+<p>This allows the creation of very flexible access policies.  These policies could
+be created either by writing special code to accept or reject access to specific
+resources, or by using a special regexp syntax (a special case of the former).</p>
+<p>Another interesting consequence of defining access policies this way is that we
+can decouple the implementation of the resources with the implementation of the
+access mechanisms.  This makes the system much more flexible.</p>
+</div>
+<div class="section">
+<h1><a id="requests-are-function-calls" name="requests-are-function-calls">Requests are Function Calls</a></h1>
+<p>Essentially, each request maps onto a function call within our system.  Let's
+examine the anatomy of a function call, as it is often represented in most
+computer languages, in this case we will choose Python:</p>
+<pre class="literal-block">
+def foo( bar1, bar2, bar3=def1, bar4=def2, *kwds )
+</pre>
+<p>A function has:</p>
+<ul class="simple">
+<li>a name, <tt class="docutils literal"><span class="pre">foo</span></tt></li>
+<li>some fixed number of formal parameters, <tt class="docutils literal"><span class="pre">bar1</span></tt> and <tt class="docutils literal"><span class="pre">bar2</span></tt></li>
+<li>some optional parameters, <tt class="docutils literal"><span class="pre">bar3</span></tt> and <tt class="docutils literal"><span class="pre">bar4</span></tt></li>
+<li>some extra unnamed parameters, <tt class="docutils literal"><span class="pre">*kwds</span></tt></li>
+<li>a return value (which can be packed as a tuple)</li>
+</ul>
+<p>The difference between systems which implement the various RPC protocols and a
+URL is simple: a URL is simply an encoding of the function call parameters.</p>
+<p>How we map URLs to these functions/arguments is a centrally important feature of
+a web framework.</p>
+<p>Any combination of the informations above, availalble in the URL itself, or the
+POST values, are candidates for mapping into a function and into arguments.
+Also, parts of the URL path can be used as arguments, and arguments could map
+into a function name or influence it.</p>
+</div>
+<div class="section">
+<h1><a id="objects" name="objects">Objects</a></h1>
+<p>If we think of &quot;users&quot; as objects in our system, we can think of including their
+reference in the path itself, e.g.:</p>
+<pre class="literal-block">
+/users/&lt;username&gt;/edit
+</pre>
+<p>This maps naturally on an hierarchical data structure.  This is the approach
+that Zope takes: &quot;folders&quot; are containers for objects, which map directly onto
+the ZoDB, which have methods associated to them (via the ugly ZCML), to perform
+a specific method call on these objects.</p>
+</div>
+<div class="section">
+<h1><a id="databases-and-flexibility" name="databases-and-flexibility">Databases and Flexibility</a></h1>
+<p>Unfortunately, most efficient and well-tested database systems today exist in
+the form of flat SQL databases, with indexes between their tables.  This is a
+reality that must be dealt with, and requiring the user to use a specific kind
+of storage is not a very flexible approach.  Often an interface needs to be
+build around existing data storage systems.</p>
+<p>We would like to design a more flexible system of mapping URLs to resources.</p>
+</div>
+<div class="section">
+<h1><a id="notes" name="notes">Notes</a></h1>
+<p>In draco, currently:</p>
+<pre class="literal-block">
+def foo( self, path, args ):
+</pre>
+<p>'path' is NEVER used in my web application. I don't see it becoming used in the
+future.</p>
+</div>
+<div class="section">
+<h1><a id="mapping-urls-to-resources" name="mapping-urls-to-resources">Mapping URLs to Resources</a></h1>
+<p>One problem that occurs is when you want to include part of the parameters in
+the request path itself.  For example, considering that we would want to make
+our system RESTful, a natural approach would be to prefer:</p>
+<pre class="literal-block">
+/users/&lt;username&gt;/profile
+</pre>
+<p>to</p>
+<pre class="literal-block">
+/profile?user=username
+</pre>
+<p>So the question is, how do we map URLs to function calls?  We need to create a
+scheme to be able to do that efficiently and flexibly.</p>
+<p>Also note the possibility of mixed schemes:</p>
+<pre class="literal-block">
+/users/&lt;username&gt;/profile?lang=&lt;lang&gt;
+</pre>
+<div class="section">
+<h2><a id="global-arguments" name="global-arguments">Global Arguments</a></h2>
+<p>During the lookup, we should be able to recursively (?) process and remove some
+input arguments.  For example, if we are to make the system purely RESTful, even
+with regards to the current language being used, <em>all</em> the pages on a website
+should be able to accept the 'lang' argument.  The effect of this argument is to
+set a global variable for all string lookups, by changing the very definition of
+the _() gettext function itself.  None of the functions called will want to
+process the 'lang' input variable.</p>
+</div>
+<div class="section">
+<h2><a id="kinds-of-input" name="kinds-of-input">Kinds of Input</a></h2>
+<p>Let's examine what we get as inputs to our system:</p>
+<ul class="simple">
+<li>a URL path, with /-separated components;</li>
+<li>query arguments (GET form)</li>
+<li>POST variables (POST form)</li>
+</ul>
+<p>Our scheme must consider all of these when mapping to a specific function call.</p>
+</div>
+<div class="section">
+<h2><a id="abstracting-the-internal-organization" name="abstracting-the-internal-organization">Abstracting the Internal Organization</a></h2>
+<p>Another aspect of the mapping is that we may want to hide the internal
+organization of our program codes.  Also, by providing a more flexible approach
+we may open the door to future reorganization of the code, providing space for
+growth as well as backwards compatibility.</p>
+</div>
+<div class="section">
+<h2><a id="serving-files" name="serving-files">Serving Files</a></h2>
+<p>How do we serve files?  We should be able to serve files normally.</p>
+</div>
+<div class="section">
+<h2><a id="automated-argument-parsing" name="automated-argument-parsing">Automated Argument Parsing</a></h2>
+<p>Wouldn't it be great if the argument parsing was performed automatically?</p>
+<p>For example, each resource could be represented as a class, with the following
+interface:</p>
+<pre class="literal-block">
+class Profile:
+
+    form = ... &lt;form definition&gt;
+
+    def validate( self, args ):
+        ... returns an error, redirect, or success
+
+    def handle( self, arg1, arg2, arg3 ):
+        ... at this point we can expect the arguments to be legal
+</pre>
+</div>
+</div>
+<div class="section">
+<h1><a id="possible-solutions" name="possible-solutions">Possible Solutions</a></h1>
+<div class="section">
+<h2><a id="recursive-tree-lookup" name="recursive-tree-lookup">Recursive tree lookup</a></h2>
+<p>We could create a tree of resources, like is done in Twisted, where the process
+of parsing the URL becomes a chain-of-responsibility by searching down the tree.</p>
+<div class="line-block">
+<div class="line">+ we can alter per-component behaviour of the lookup</div>
+<div class="line">- the hierarchy of URL components must match the hierarchy of objects/code</div>
+<div class="line"><br /></div>
+<div class="line">? we cannot combine query arguments in the code lookup, well, we could, if</div>
+<div class="line-block">
+<div class="line">we provide them in the lookup function, e.g.</div>
+<div class="line"><br /></div>
+<div class="line-block">
+<div class="line">def getChild( prepath, postpath, query_args )</div>
+</div>
+</div>
+</div>
+</div>
+<div class="section">
+<h2><a id="regular-expressions" name="regular-expressions">Regular expressions</a></h2>
+<p>We could create a special-purpose set of rules to lookup code by using regular
+expressions on the request URL combined with conditions on the query arguments.</p>
+<div class="line-block">
+<div class="line">+ very flexible, we can combine query arguments in the code lookup</div>
+<div class="line">+ the hierarchy of components is entirely disconnected from the code</div>
+<div class="line">- it might be a little slow due to the linear list of regular expressions to</div>
+<div class="line-block">
+<div class="line">search</div>
+</div>
+</div>
+</div>
+</div>
+<div class="section">
+<h1><a id="privileges-mechanism" name="privileges-mechanism">Privileges Mechanism</a></h1>
+<p>Can we do like in Zope3? e.g.</p>
+<blockquote>
+role.grant(resource)</blockquote>
+</div>
+<div class="section">
+<h1><a id="questions" name="questions">Questions</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Question:</th><td class="field-body">How do we identity a permission?  In other words, how do we bind a
+permission to a resource?</td>
+</tr>
+<tr class="field"><th class="field-name">Question:</th><td class="field-body">How do we specify permissions for a particular user?</td>
+</tr>
+<tr class="field"><th class="field-name">Question:</th><td class="field-body">With the resource tree mapping URL/query to a function, how do we
+simply serve files?</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</body>
+</html>

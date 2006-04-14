@@ -10,15 +10,17 @@ Pseudo resources, which use a path component as an argument for some action.
 import sys, string, StringIO, types, re
 from os.path import join, normpath
 
+# ranvier imports
+from ranvier.resource import Resource
+
 # hume imports
-from hume import resource, response, authentication
-from hume import umusers, umprivileges
+from hume import authentication, umusers, umprivileges
 from hume.resources.umres import login_redirect
 
 
 #-------------------------------------------------------------------------------
 #
-class Redirect(resource.Resource):
+class Redirect(Resource):
     """
     Simply redirect to a fixed location.
     """
@@ -27,8 +29,7 @@ class Redirect(resource.Resource):
         self._target = target
 
     def handle( self, ctxt ):
-        response.redirect(self._target)
-
+        ctxt.response.redirect(self._target)
 
 
 #-------------------------------------------------------------------------------
@@ -42,44 +43,14 @@ class TestMapper(Resource):
         self.mapper = mapper
 
     def handle( self, ctxt ):
-        response.setContentType('text/html')
+        ctxt.response.setContentType('text/html')
 
-
-
-
-#-------------------------------------------------------------------------------
-#
-class DelegResource(Resource):
-    """
-    Resource base class for resources which do something and then forward to
-    another resource.
-    """
-    def __init__( self, next_resource, **kwds ):
-        Resource.__init__(self, **kwds)
-        self._next = next_resource
-
-    def getnext( self ):
-        return self._next
-
-    def enum( self, enumv ):
-        enumv.declare_anon(self._next)
-
-    def handle( self, ctxt ):
-        self.handle_this(ctxt)
-        self.forward(ctxt)
-
-    def forward( self, ctxt ):
-        self._next.handle(ctxt)
-
-    def handle_this( self, ctxt ):
-        raise NotImplementedError
-
-
+        # FIXME todo
 
 
 #-------------------------------------------------------------------------------
 #
-class LogRequests(DelegResource):
+class LogRequests(DelegaterResource):
 
     fmt = '----------------------------- %s'
 
@@ -89,12 +60,12 @@ class LogRequests(DelegResource):
 
 #-------------------------------------------------------------------------------
 #
-class RemoveBase(DelegResource):
+class RemoveBase(DelegaterResource):
     """
     Resource that removes a fixed number of base components.
     """
     def __init__( self, count, next, **kwds ):
-        DelegResource.__init__(self, next, **kwds)
+        DelegaterResource.__init__(self, next, **kwds)
         self.count = count
 
     def handle_this( self, ctxt ):
@@ -119,13 +90,13 @@ class UserObj(Resource):
             ctxt.log("resolver: %s" % ctxt.locator.path[ctxt.locator.index:])
         if ctxt.locator.isleaf():
             # no username specified
-            response.error(response.code.NotFound)
+            return ctxt.response.errorNotFound()
 
         username = ctxt.locator.current()
         try:
             ctxt.user = self.users[username]
         except KeyError:
-            response.error(response.code.NotFound)
+            return ctxt.response.errorNotFound()
 
         ctxt.locator.next()
         return self.resource.handle(ctxt)
@@ -136,17 +107,17 @@ class UserObj(Resource):
 class LeafPage(Resource):
     def handle( self, ctxt ):
         if not ctxt.locator.isleaf():
-            response.error(response.code.NotFound)
+            return ctxt.response.errorNotFound()
 
 
 #-------------------------------------------------------------------------------
 #
-class RequireAuth(resource.Resource):
+class RequireAuth(Resource):
     """
     A handler which requires authentication to follow the request.
     """
     def __init__( self, nextres, **kwds ):
-        resource.Resource.__init__(self, **kwds)
+        Resource.__init__(self, **kwds)
         self._nextres = nextres
 
     def enum( self, enumv ):
@@ -161,7 +132,7 @@ class RequireAuth(resource.Resource):
         """
         Called on authentication failure.
         """
-        response.error(response.code.Forbidden)
+        return ctxt.response.errorForbidden()
 
 
 class RequireAuthViaLogin(RequireAuth):
@@ -176,17 +147,17 @@ class RequireAuthViaLogin(RequireAuth):
         login_redirect(self.redirect, ctxt.locator.uri(), ctxt.args)
 
 
-class PrivilegesBase(resource.Resource):
+class PrivilegesBase(Resource):
     """
     Class that initializes a set of privileges and a delegate resource.
     """
     def __init__( self, required_privileges, nextres, **kwds ):
-        resource.Resource.__init__(self, **kwds)
+        Resource.__init__(self, **kwds)
         if isinstance(required_privileges, types.StringType):
             required_privileges = [required_privileges]
         self._required_privileges = required_privileges
         self._nextres = nextres
-        assert isinstance(nextres, resource.Resource)
+        assert isinstance(nextres, Resource)
 
     def enum( self, enumv ):
         enumv.declare_anon(self._nextres)
@@ -202,7 +173,7 @@ class RequirePrivilege(PrivilegesBase):
 
             # You must be logged in to have any kind of privilege.
             if not uid:
-                response.error(response.code.Forbidden)
+                return ctxt.response.errorForbidden()
 
             # Check each privilege in turn and break on the first one that
             # authorises (this is an OR logical).
@@ -210,12 +181,12 @@ class RequirePrivilege(PrivilegesBase):
                 if umprivileges.authorise(uid, p):
                     break
             else:
-                response.error(response.code.Forbidden)
+                return ctxt.response.errorForbidden()
 
         return self._nextres.handle(ctxt)
 
 
-class UserRoot(resource.DelegResource):
+class UserRoot(resource.DelegaterResource):
     """
     A handler that interprets the path component as a username and sets that
     user in the args for consumption by later handlers.
@@ -223,7 +194,7 @@ class UserRoot(resource.DelegResource):
     digitsre = re.compile('^\d+$')
 
     def __init__( self, next_resource, no_error=False, **kwds ):
-        resource.DelegResource.__init__(self, next_resource, **kwds)
+        resource.DelegaterResource.__init__(self, next_resource, **kwds)
         self._no_error = no_error
 
     def enum( self, enumv ):
@@ -232,7 +203,7 @@ class UserRoot(resource.DelegResource):
     def handle_this( self, ctxt ):
         if ctxt.locator.isleaf():
             # no username specified
-            response.error(response.code.NotFound)
+            return ctxt.response.errorNotFound()
 
         # allow those who can to access resources from obsolete users
         allowobs = umprivileges.authorise(authentication.userid(), 'obsolete')
@@ -245,14 +216,14 @@ class UserRoot(resource.DelegResource):
                 u = umusers.getById(name, allowobs)
             except RuntimeError:
                 if not self._no_error:
-                    response.error(response.code.NotFound)
+                    return ctxt.response.errorNotFound()
         else:
             # get user by username
             try:
                 u = umusers.getByUser(name)
             except RuntimeError:
                 if not self._no_error:
-                    response.error(response.code.NotFound)
+                    return ctxt.response.errorNotFound()
 
         # Add current user in arguments.
         ctxt.user = u
@@ -279,14 +250,14 @@ class UserChildren(PrivilegesBase):
             else:
                 # if no special privileges, require same user
                 if ctxt.user.id != uid:
-                    response.error(response.code.Forbidden)
+                    return ctxt.response.errorForbidden()
 
         return self._nextres.handle(ctxt)
 
 
 #-------------------------------------------------------------------------------
 #
-class LogRequestsWithUser(resource.DelegResource):
+class LogRequestsWithUser(resource.DelegaterResource):
 
     fmt = '-----------[%05d] %s'
         

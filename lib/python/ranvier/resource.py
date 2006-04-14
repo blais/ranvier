@@ -50,3 +50,31 @@ class Resource(object):
         raise NotImplementedError
 
 
+#-------------------------------------------------------------------------------
+#
+class DelegaterResource(Resource):
+    """
+    Resource base class for resources which do something and then
+    inconditionally forward to another resource.  It used a template method to
+    implement this simple behaviour.
+    """
+    def __init__( self, next_resource, **kwds ):
+        Resource.__init__(self, **kwds)
+        self._next = next_resource
+
+    def getnext( self ):
+        return self._next
+
+    def enum( self, enumv ):
+        enumv.declare_anon(self._next)
+
+    def handle( self, ctxt ):
+        self.handle_this(ctxt)
+        self.forward(ctxt)
+
+    def forward( self, ctxt ):
+        self._next.handle(ctxt)
+
+    def handle_this( self, ctxt ):
+        raise NotImplementedError
+
