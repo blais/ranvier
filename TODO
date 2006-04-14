@@ -2,10 +2,43 @@
    TODO: ranvier
 ===================
 
+* Remove dependencies on hume::
+
+    13 matches for "response\." in buffer: resource.py
+        432:        response.setContentType('text/plain')
+        434:            response.write(line)
+        435:            response.write('\n')
+        448:        response.setContentType('text/html')
+        449:        response.write(self.mapper.pretty_render())
+        463:        response.setContentType('text/html')
+        558:                response.redirect(ctxt.locator.uri() + '/')
+        580:                response.error(response.code.NotFound)
+        639:            response.error(response.code.NotFound)
+        678:        response.write(tostring(doc))
+        698:            response.error(response.code.NotFound)
+        704:            response.error(response.code.NotFound)
+        715:            response.error(response.code.NotFound)
+
+    8 matches for "response\." in buffer: pseudores.py
+         27:        response.redirect(self._target)
+         50:        response.error(response.code.Forbidden)
+         91:                response.error(response.code.Forbidden)
+         99:                response.error(response.code.Forbidden)
+        121:            response.error(response.code.NotFound)
+        134:                    response.error(response.code.NotFound)
+        141:                    response.error(response.code.NotFound)
+        168:                    response.error(response.code.Forbidden)
+
+
+  * Move some of the resources back to hume, to avoid dependencies
+
+* Move the mapper and enumerator stuff to ranvier.mapper
+
 * Rename WrapResource to DelegResource
 
 * Create an exception class for Ranvier, and convert the codebase to use it.
 
+* Replace all RuntimeError by RanvierError
 
 * Add to my template headers the rendering of the resource-id.
 
@@ -46,7 +79,6 @@
 
   * Move::
 
-        hume/doc/urlmaps*
         hume/app/lib/hume/resource.py
         hume/app/lib/hume/context.py
         hume/app/lib/hume/resources/pseudores.py

@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
-#
-# $Source: /home/blais/repos/cvsroot/hume/app/lib/hume/locator.py,v $
-# $Id: locator.py,v 1.2 2005/07/04 12:56:31 blais Exp $
-#
+# This file is part of the Ranvier package.
+# See http://furius.ca/ranvier/ for license and details.
 
 """
 Path locator class.
@@ -12,14 +9,6 @@ Path locator class.
 # stdlib imports
 import sys
 from os.path import join, normpath
-
-# zope imports.
-## from zope import interface
-## implements = interface.implements
-def implements( foo ): pass
-
-# indra imports.
-from indra.iresource import IHandlerContext, IPathLocator
 
 
 #-------------------------------------------------------------------------------
@@ -30,8 +19,6 @@ class HandlerContext(object):
     clients to put other stuff that should be passed around in the chain of
     handlers.
     """
-    implements(IHandlerContext)
-
     def __init__( self, uri, args ):
         
         self.locator = PathLocator.from_uri(uri)
@@ -40,6 +27,15 @@ class HandlerContext(object):
         self.args = args
         """Arguments, as they come from the framework."""
 
+    def log( self, msg ):
+        """
+        Print a message to the server's error log.  The default implementation
+        just prints on stderr.  Override this method in a derived class if you
+        need real logging.
+        """
+        sys.stderr.write(msg)
+        sys.stderr.write('\n')
+
         
 #-------------------------------------------------------------------------------
 #
@@ -47,8 +43,6 @@ class PathLocator(object):
     """
     Locator object used to resolve the paths.
     """
-    implements(IPathLocator)
-
     @staticmethod
     def from_uri( uri ):
         trailing = False
@@ -97,7 +91,7 @@ class PathLocator(object):
 
 import unittest
 
-class LocationTests(unittest.TestCase):
+class Tests(unittest.TestCase):
 
     def test_simple( self ):
         loc = PathLocator.from_uri('')

@@ -1,23 +1,23 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
-#
-# $Source: /home/blais/repos/cvsroot/hume/app/lib/hume/resources/pseudores.py,v $
-# $Id: pseudores.py,v 1.2 2005/06/29 14:51:54 blais Exp $
-#
+# This file is part of the Ranvier package.
+# See http://furius.ca/ranvier/ for license and details.
 
 """
 Pseudo resources, which use a path component as an argument for some action.
 """
 
 # stdlib imports
-import types, re
+import sys, string, StringIO, types, re
+from os.path import join, normpath
 
 # hume imports
-from hume import resource, response, authentication, logger
+from hume import resource, response, authentication
 from hume import umusers, umprivileges
 from hume.resources.umres import login_redirect
 
 
+#-------------------------------------------------------------------------------
+#
 class Redirect(resource.Resource):
     """
     Simply redirect to a fixed location.
@@ -30,6 +30,117 @@ class Redirect(resource.Resource):
         response.redirect(self._target)
 
 
+
+#-------------------------------------------------------------------------------
+#
+class TestMapper(Resource):
+    """
+    Test the mapper.
+    """
+    def __init__( self, mapper, **kwds ):
+        Resource.__init__(self, **kwds)
+        self.mapper = mapper
+
+    def handle( self, ctxt ):
+        response.setContentType('text/html')
+
+
+
+
+#-------------------------------------------------------------------------------
+#
+class WrapResource(Resource):
+    """
+    Resource base class for resources which do something and then forward to
+    another resource.
+    """
+    def __init__( self, next_resource, **kwds ):
+        Resource.__init__(self, **kwds)
+        self._next = next_resource
+
+    def getnext( self ):
+        return self._next
+
+    def enum( self, enumv ):
+        enumv.declare_anon(self._next)
+
+    def handle( self, ctxt ):
+        self.handle_this(ctxt)
+        self.forward(ctxt)
+
+    def forward( self, ctxt ):
+        self._next.handle(ctxt)
+
+    def handle_this( self, ctxt ):
+        raise NotImplementedError
+
+
+
+
+#-------------------------------------------------------------------------------
+#
+class LogRequests(WrapResource):
+
+    fmt = '----------------------------- %s'
+
+    def handle_this( self, ctxt ):
+        ctxt.log(self.fmt % ctxt.locator.uri())
+
+
+#-------------------------------------------------------------------------------
+#
+class RemoveBase(WrapResource):
+    """
+    Resource that removes a fixed number of base components.
+    """
+    def __init__( self, count, next, **kwds ):
+        WrapResource.__init__(self, next, **kwds)
+        self.count = count
+
+    def handle_this( self, ctxt ):
+        for c in xrange(self.count):
+            ctxt.locator.next()
+
+
+#-------------------------------------------------------------------------------
+#
+class UserObj(Resource):
+    """
+    A resource handler that allows specifying a username in the path.
+    This is more or less an example.
+    """
+    def __init__( self, users, resource, **kwds ):
+        Resource.__init__(self, **kwds)
+        self.resource = resource
+        self.users = users
+
+    def handle( self, ctxt ):
+        if verbosity >= 1:
+            ctxt.log("resolver: %s" % ctxt.locator.path[ctxt.locator.index:])
+        if ctxt.locator.isleaf():
+            # no username specified
+            response.error(response.code.NotFound)
+
+        username = ctxt.locator.current()
+        try:
+            ctxt.user = self.users[username]
+        except KeyError:
+            response.error(response.code.NotFound)
+
+        ctxt.locator.next()
+        return self.resource.handle(ctxt)
+
+
+#-------------------------------------------------------------------------------
+#
+class LeafPage(Resource):
+    def handle( self, ctxt ):
+        if not ctxt.locator.isleaf():
+            response.error(response.code.NotFound)
+
+
+#-------------------------------------------------------------------------------
+#
 class RequireAuth(resource.Resource):
     """
     A handler which requires authentication to follow the request.
@@ -180,6 +291,5 @@ class LogRequestsWithUser(resource.WrapResource):
     fmt = '-----------[%05d] %s'
         
     def handle_this( self, ctxt ):
-        logger.info(
-            self.fmt % (authentication.userid() or 0, ctxt.locator.uri()))
+        ctxt.log(self.fmt % (authentication.userid() or 0, ctxt.locator.uri()))
 
