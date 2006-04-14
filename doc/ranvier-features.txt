@@ -1,0 +1,214 @@
+===============================================
+   urlmaps: Mapping URLs in Web Applications
+===============================================
+:Author: Martin Blais <blais@furius.ca>
+:Date: 2006-04-11
+
+.. contents::
+..
+    1  Introduction
+    2  Mapping Forward
+      2.1  Chain of Responsibility
+      2.2  Naming of Resources
+    3  Mapping Backward
+      3.1  Optimization of BackMapping
+      3.2  Static Maps
+    4  Listing URLs
+    5  Embedding Security
+    6  Internal Redirects
+    7  Support for Debugging
+    8  A Routes-Like Interface
+    9  (Other)
+
+
+Introduction
+============
+
+Mapping URLs is an important component of building web applications.
+…
+
+
+Mapping Forward
+===============
+
+We can view URLs are function calls into a running computer program, i.e:
+
+  ``http://mysite.com/accounts/get_balance?``**user=blais**``&``**accno=643843**
+
+maps in the application into a call to a function with two parameters::
+
+  def get_balance( user, accno ):
+      ...
+
+This view is similar to the event loop model of desktop applications, where the
+idle event loop consists of a server waiting for requests.  (The difference is
+that the web's event loop serves multiple users and therefore must maintain
+per-user global state, this is what we call *session data*, and it is
+implemented using cookies, that a user's browser serves back to the server).
+
+In the preceding example, the parameters were obvious, they were embedded in the
+query arguments.  However, any part of the URL can be an argument:
+
+  ``http://mysite.com/users/``**blais**``/acc/``**643843**``/get_balance/``
+
+This tends to produce nicer URLs and bends the user into conceptually organizing
+the resources he makes available on his server in a hierarchy.  Query arguments
+are best reserved for optional arguments.
+
+Within this view, we can easily explain the concept of RESTfulness__: an
+resource is said to comply to the principles of REST if it does not have
+significant side-effects, i.e. if it does not rely on global state/variables as
+input.
+
+__ http://en.wikipedia.org/wiki/Representational_State_Transfer
+
+
+Chain of Responsibility
+-----------------------
+
+(explain resource system)
+
+One of the advantages in using a Chain of Responsibility pattern to implement
+the controller search is that complete flexibility is available to the
+programmer.  We have no need to define a complicated and necessarily limited
+wildcard matching system.  The matching of URL components is entirely up to you,
+i.e. you can look up information in a database, augment the context object that
+is passed along the search, etc.  This is much more powerful (and simpler) than
+a wildcard system.
+
+
+
+Naming of Resources
+-------------------
+
+The overwhelmingly general case for leaf resources/controllers is that they are
+instantiated only once.  We thus take the opportunity to forego having the user
+enter resource names for each of these.  Instead, we reuse the names of the
+classes of the leaf controllers to enter them in the URL map.
+
+For those few cases where controllers are reused and instantiated in many
+places, we provide an optional keyword argument to let the user uniquely name
+the instances for later referral.
+
+
+
+Mapping Backward
+================
+
+One problem with web applications is that due to the nature of the web
+application frameworks, they tend to be rather static and difficult to change.
+URLs are cross-referenced from page templates and sometimes build
+programmatically, and it can be tricky to move resources around.
+
+A solution for this is to let the URL construction be taken care of by the
+resource system itself, mapping from the leaf of the URL back to the root, thus
+re-constructing the original resource.
+
+We can identify individual resources by using unique strings (e.g. ``//balance``
+the user account balance page) and then asking a central URL mapping service to
+create the URLs for us to insert in web pages.  This process must require all
+the parameters of the function to call, in order to insert them in their
+appropriate place.
+
+A web application build this way can be completely rearranged without breaking.
+
+
+However, this flexibility makes using templates impossible.
+
+
+Optimization of BackMapping
+---------------------------
+
+- Ask each resource whether it is
+
+  * Static
+  * A fixed name (e.g. user)
+  * Programmatic (cannot optimize)
+
+FIXME todo
+
+
+
+Static Maps
+-----------
+
+Since we already have a global registry of URL maps that we use to generate our
+URLs, we also provide the ability to map names to static and possibly external
+URLs.  This is similar to Routes’ “static named routes” feature.
+
+
+
+
+
+
+
+
+
+Listing URLs
+============
+
+One nice feature of our system is that we like to be able to get an entire list
+of the URLs served by the system.  This is extremely useful, because:
+
+#. We visually appreciate the entire list of documents which are offered to the
+   public.  We need this, because during development it is possible that
+   temporary resources are installed for debugging and later on forgotten.
+
+#. Our test programs can automatically fetch this list (from a special resource
+   only served in testing mode) and can rebuild a mapper from it, so that they
+   are entirely independent of the application URL layout.
+
+(#. Can inspect the various security credentials that each URL requires.)
+
+
+Embedding Security
+==================
+
+The URLs can be grouped so that they share security access privileges.  For
+example, any URL beginning with ``/backstore`` could require administrative
+privileges.
+
+One way to do this
+
+
+
+
+
+Internal Redirects
+==================
+
+
+
+
+Support for Debugging
+=====================
+
+
+
+A Routes-Like Interface
+=======================
+
+FIXME answer what is “Routes”
+
+
+* provide an interface that is similar to routes, but that automatically creates
+  all the required resources underneath
+
+
+
+
+
+
+
+
+
+
+
+(Other)
+=======
+
+Idea: in our resources traversal, we could put the query args together with the
+parameters in the URL itself… they are really conceptually the same…
+
+
+
