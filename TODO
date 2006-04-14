@@ -1,0 +1,24 @@
+===================
+   TODO: ranvier
+===================
+
+* Rename WrapResource to DelegResource
+
+* Create an exception class for Ranvier, and convert the codebase to use it.
+
+
+* Add to my template headers the rendering of the resource-id.
+
+* Implement enum() on all the resource classes everywhere.
+
+
+* Implement all the remaining features described in the docs
+
+* We need to implement a method on the UrlMapper that can load it from it clean
+  rendered description.
+
+* Make sure for all resource classes that we initialize the parent resource
+  class for its resid.
+
+* Add tests.
+

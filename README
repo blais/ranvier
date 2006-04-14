@@ -1,0 +1,60 @@
+====================================
+   ranvier: A Powerful URL Mapper
+====================================
+
+.. contents:: Table of Contents
+
+
+Description
+===========
+
+Ranvier is a Python library that can be integrated in any web application
+framework to map an incoming URL to a resource (controller).
+
+It can also serve as a central registry of all the URLs that are served from a
+web application and can generate the URLs necessary for cross-linking pages.  If
+you use this library to map and generate all your URLs you should be able to
+completely rearrange the layout of your site without breaking the pages nor the
+tests.
+
+
+Dependencies
+============
+
+- Python 2.4
+
+
+Documentation
+=============
+
+Use the source.  If you can't use the source, well, you should not be using this
+library.  This is simple!
+
+
+Download
+========
+
+- `Download </downloads/ranvier/>`_
+
+
+Links
+=====
+
+- This is similar in spirit to the Routes__ system implemented in Ruby-on-Rails
+  and by its namesake Python library.
+
+__ ???
+
+
+Copyright and License
+=====================
+
+Copyright (C) 2005-2006  Martin Blais.
+This code is distributed under the `GNU General Public License <COPYING>`_.
+
+
+Author
+======
+
+Martin Blais <blais@furius.ca>
+
