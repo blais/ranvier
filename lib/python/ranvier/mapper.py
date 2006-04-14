@@ -13,9 +13,7 @@ import types
 
 # ranvier imports
 import rodict
-
-# hume imports
-from hume import response
+import resource
 
 
 #-------------------------------------------------------------------------------
@@ -37,8 +35,8 @@ class EnumVisitor(object):
         type of the delegate."""
 
     def _add_delegate( self, kind, delegate, arg ):
-        if not isinstance(delegate, Resource):
-            raise RuntimeError("Class %s must be derived from Resource." %
+        if not isinstance(delegate, resource.Resource):
+            raise RanvierError("Class %s must be derived from Resource." %
                                delegate.__class__.__name__)
         self.delegates.append( (kind, delegate, arg) )
 
@@ -171,7 +169,7 @@ class UrlMapper(rodict.ReadOnlyDict):
 
             # Check that the resource-id has not already been seen.
             if resid in self.mappings:
-                raise RuntimeError("Error: Duplicate resource id '%s'." % resid)
+                raise RanvierError("Error: Duplicate resource id '%s'." % resid)
 
             # Add the mapping.
             self.mappings[resid] = ('/'.join(components),
@@ -207,9 +205,9 @@ class UrlMapper(rodict.ReadOnlyDict):
         * the instance of the resource
         """
         # Support passing in resource instances and resource classes as well.
-        if isinstance(resid, Resource):
+        if isinstance(resid, resource.Resource):
             resid = self.namexform(resid.__class__.__name__)
-        elif isinstance(resid, type) and issubclass(resid, Resource):
+        elif isinstance(resid, type) and issubclass(resid, resource.Resource):
             resid = self.namexform(resid.__class__.__name__)
         else:
             assert isinstanc(resid, (str, unicode))
@@ -218,14 +216,14 @@ class UrlMapper(rodict.ReadOnlyDict):
         try:
             urlstr, defdict = self.mappings[resid]
         except KeyError:
-            raise RuntimeError("Error: invalid resource-id '%s'." % resid)
+            raise RanvierError("Error: invalid resource-id '%s'." % resid)
 
         # Prepare the defaults dict with the provided values.
         params = defdict.copy()
         for cname, cvalue in kwds.iteritems():
             # Check all provided values are legal.
             if cname not in params:
-                raise RuntimeError(
+                raise RanvierError(
                     "Error: '%s' is not a valid component key for mapping the "
                     "'%s' resource.'" % (cname, resid))
             params[cname] = cvalue
@@ -234,7 +232,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         missing = filter(cname for cname, cvalue in params.iteritems()
                          if cvalue is None)
         if missing:
-            raise RuntimeError(
+            raise RanvierError(
                 "Error: Missing values attempting to map to a resource: %s" %
                 ', '.join(missing))
                 
@@ -340,31 +338,30 @@ def slashslash_namexformer( clsname ):
 
 #-------------------------------------------------------------------------------
 #
-class EnumResource( Resource ):
+class EnumResource(resource.Resource):
     """
     Enumerate all the resources available from a resource tree.
     """
     def __init__( self, mapper, **kwds ):
-        Resource.__init__(self, **kwds)
+        resource.Resource.__init__(self, **kwds)
         self.mapper = mapper
 
     def handle( self, ctxt ):
-        response.setContentType('text/plain')
+        print 'Content-Type: text/plain\n\n'
         for line in self.mapper.render():
-            response.write(line)
-            response.write('\n')
+            print line
 
 
-class PrettyEnumResource(Resource):
+class PrettyEnumResource(resource.Resource):
     """
     Output a rather nice page that describes all the pages that are being served
     from the given mapper.
     """
     def __init__( self, mapper, **kwds ):
-        Resource.__init__(self, **kwds)
+        resource.Resource.__init__(self, **kwds)
         self.mapper = mapper
 
     def handle( self, ctxt ):
-        response.setContentType('text/html')
-        response.write(self.mapper.pretty_render())
+        print 'Content-Type: text/plain\n\n'
+        print self.mapper.pretty_render()
 

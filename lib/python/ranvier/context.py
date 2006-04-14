@@ -19,9 +19,9 @@ class HandlerContext(object):
     clients to put other stuff that should be passed around in the chain of
     handlers.
     """
-    def __init__( self, uri, args ):
-        
-        self.locator = PathLocator.from_uri(uri)
+    def __init__( self, uri, args, root=None ):
+
+        self.locator = PathLocator.from_uri(uri, root=root)
         """Locator object that is updated between handler to handler."""
 
         self.args = args
@@ -36,7 +36,7 @@ class HandlerContext(object):
         sys.stderr.write(msg)
         sys.stderr.write('\n')
 
-        
+
 #-------------------------------------------------------------------------------
 #
 class PathLocator(object):
@@ -44,15 +44,16 @@ class PathLocator(object):
     Locator object used to resolve the paths.
     """
     @staticmethod
-    def from_uri( uri ):
+    def from_uri( uri, root=None ):
         trailing = False
         if uri.endswith('/'): # remove trailing / if present
             trailing = True
         path = [x for x in uri.split('/') if x]
-        p = PathLocator(path, trailing)
+        p = PathLocator(path, trailing, root)
         return p
 
-    def __init__( self, path, trailing=False ):
+    def __init__( self, path, trailing=False, root=None ):
+        self.root = root
         self.path = path
         self.index = 0
         self.trailing = trailing
@@ -62,7 +63,7 @@ class PathLocator(object):
 
     def current( self ):
         return self.path[self.index]
-        
+
     def getnext( self ):
         return self.path[self.index+1]
 
@@ -75,9 +76,10 @@ class PathLocator(object):
 
     def uri( self, idx=1000 ):
         if self.path:
-            r = '/' + '/'.join(self.path[:idx])
+            root = self.root or '/'
+            r = root + '/'.join(self.path[:idx])
         else:
-            r = ''
+            r = self.root or ''
         r += (self.trailing and '/' or '')
         return r
 
@@ -126,4 +128,4 @@ class Tests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    
+

@@ -13,6 +13,7 @@
     3  Mapping Backward
       3.1  Optimization of BackMapping
       3.2  Static Maps
+      3.3  Unique Identifiers
     4  Listing URLs
     5  Embedding Security
     6  Internal Redirects
@@ -139,6 +140,17 @@ URLs.  This is similar to Routes’ “static named routes” feature.
 
 
 
+
+Unique Identifiers
+------------------
+
+FIXME do this, talk about the automatic conversion from the class names and the
+possibility to identify instances.
+
+  * We need to automatically compute these names from the names of the
+    classes, and a class attribute can be used on the classes to override that
+    as well as it should be able to be specified as a keyword argument on the
+    base class.
 
 
 

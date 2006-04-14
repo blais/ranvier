@@ -13,11 +13,7 @@ import types
 
 # ranvier imports
 from ranvier import verbosity
-
-# hume imports
-from hume import response
-
-
+from ranvier.resource import Resource
 
 
 #-------------------------------------------------------------------------------
@@ -55,7 +51,7 @@ class FolderBase(Resource, dict):
             if not ctxt.locator.trailing and self.redirect_leaf_as_dir:
                 # If a folder resource is requested by default, redirect so that
                 # relative paths will work in that directory.
-                response.redirect(ctxt.locator.uri() + '/')
+                return ctxt.response.redirect(ctxt.locator.uri() + '/')
 
             return self.default(ctxt)
         # else ...
@@ -68,7 +64,7 @@ class FolderBase(Resource, dict):
             if not isinstance(child, Resource):
                 msg = "resolver: child is not a resource: %s" % child
                 ctxt.log(msg)
-                assert RuntimeError(msg)
+                assert RanvierError(msg)
 
         except KeyError:
             # Try fallback method.
@@ -77,7 +73,7 @@ class FolderBase(Resource, dict):
             if child is None:
                 if verbosity >= 1:
                     ctxt.log("resolver: child %s not found" % name)
-                response.error(response.code.NotFound)
+                return ctxt.response.errorNotFound()
 
         if verbosity >= 1:
             ctxt.log("resolver: child %s found, calling it" % name)
@@ -136,7 +132,7 @@ class Folder(FolderBase):
             if verbosity >= 1:
                 ctxt.log("resolver: no default page set")
             # no default page submitted, indicate error
-            response.error(response.code.NotFound)
+            return ctxt.response.errorNotFound()
         else:
             # we have a default name, call ourselves again to fetch it
             if type(self._default) in types.StringTypes:
@@ -149,18 +145,21 @@ class Folder(FolderBase):
                 assert isinstance(self._default, Resource)
                 self._default.handle(ctxt)
 
+
 class FolderWithMenu(Folder):
     """
     A folder resource handler who can render a default page that lists and
     allows access to all the subresources it contains.
     """
     def genmenu( self, ctxt ):
-        from htmlout import UL, LI, P, A
-        ul = UL()
+        oss = StringIO.StringIO()
+        print >> oss, '<h1>Resources menu</h1>'
+        print >> oss, '<ul>'
         for c in sorted(self.iterkeys()):
             path = join(ctxt.locator.uri(), c)
-            ul.append( LI(A(c, href=path)) )
-        return ul
+            print >> oss, '  <li><a href="%s">%s</a></li>' % (path, c)
+        print >> oss, '</ul>'
+        return oss.getvalue()
 
     def default( self, ctxt ):
         """
@@ -169,10 +168,21 @@ class FolderWithMenu(Folder):
         # If we have set a default, use it.
         if self._default is not None:
             return Folder.default(self, ctxt)
-
-        from htmlout import HTML, HEAD, BODY, H1, tostring
+        
+        self.default_menu(ctxt)
+        
+    def default_menu( self, ctxt ):
         menu = self.genmenu(ctxt)
-        doc = HTML( HEAD(), BODY(
-            H1('Subresources:'), menu
-            ))
-        response.write(tostring(doc))
+        template = '''
+<html>
+  <head>
+    <title>Folder menu</title>
+  </head>
+  <body>
+    %s
+  </body>
+</html>
+'''
+        ctxt.response.setContentType('text/html')
+        ctxt.response.write(template % menu)
+

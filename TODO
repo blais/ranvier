@@ -6,44 +6,19 @@
 
     13 matches for "response\." in buffer: resource.py
         432:        response.setContentType('text/plain')
-        434:            response.write(line)
         435:            response.write('\n')
-        448:        response.setContentType('text/html')
-        449:        response.write(self.mapper.pretty_render())
-        463:        response.setContentType('text/html')
-        558:                response.redirect(ctxt.locator.uri() + '/')
         580:                response.error(response.code.NotFound)
-        639:            response.error(response.code.NotFound)
-        678:        response.write(tostring(doc))
-        698:            response.error(response.code.NotFound)
-        704:            response.error(response.code.NotFound)
-        715:            response.error(response.code.NotFound)
-
-    8 matches for "response\." in buffer: pseudores.py
          27:        response.redirect(self._target)
          50:        response.error(response.code.Forbidden)
-         91:                response.error(response.code.Forbidden)
-         99:                response.error(response.code.Forbidden)
-        121:            response.error(response.code.NotFound)
-        134:                    response.error(response.code.NotFound)
-        141:                    response.error(response.code.NotFound)
         168:                    response.error(response.code.Forbidden)
 
 
   * Move some of the resources back to hume, to avoid dependencies
 
-* Move the mapper and enumerator stuff to ranvier.mapper
-
-* Rename WrapResource to DelegResource
-
-* Create an exception class for Ranvier, and convert the codebase to use it.
-
-* Replace all RuntimeError by RanvierError
 
 * Add to my template headers the rendering of the resource-id.
 
 * Implement enum() on all the resource classes everywhere.
-
 
 * Implement all the remaining features described in the docs
 
@@ -53,16 +28,12 @@
 * Make sure for all resource classes that we initialize the parent resource
   class for its resid.
 
-* Add tests.
-
+* Add tests for everything.
 
 * For folder with default: we should declare the directory as being served as
   well, but how do we deal with the conflict in names?  It consists in two
   differents paths leading to the same resource.  Should we perhaps check that
   resources given during a single visit be unique?  What does it all mean?
-
-
-
 
 * The resources package should be split away from the rest  DO IT!!!
 * Write tests
@@ -72,20 +43,7 @@
     varargs and having every node cherrypick what it needs when moving back
     towards the root of the tree.
 
-  * We need to automatically compute these names from the names of the
-    classes, and a class attribute can be used on the classes to override that
-    as well as it should be able to be specified as a keyword argument on the
-    base class.
-
-  * Move::
-
-        hume/app/lib/hume/resource.py
-        hume/app/lib/hume/context.py
-        hume/app/lib/hume/resources/pseudores.py
-
 * Update all the resources everywhere for their enum method.
-
-
 
 * Add a call so that the mapper implements the root handle method:
 
@@ -158,6 +116,10 @@
 * Send Ranvier information to twill list when the URL mapper for testing is
   complete.
 
+* Check out if we could not use WSGI to implement our response proxy.
+
+
+* Run an import-check before submitting anywhere.
 
 
 Query Parameters
@@ -180,3 +142,39 @@ Query Parameters
   nice table with those, and the fields' titles could even be declared as well,
   so that we can render a good interface of a resource.
 
+
+
+Back into Hume
+==============
+
+* Add these back into hume, to be able to serve the URL mapper contents::
+
+    #-------------------------------------------------------------------------------
+    #
+    class EnumResource( Resource ):
+        """
+        Enumerate all the resources available from a resource tree.
+        """
+        def __init__( self, mapper, **kwds ):
+            Resource.__init__(self, **kwds)
+            self.mapper = mapper
+
+        def handle( self, ctxt ):
+            response.setContentType('text/plain')
+            for line in self.mapper.render():
+                response.write(line)
+                response.write('\n')
+
+
+    class PrettyEnumResource(Resource):
+        """
+        Output a rather nice page that describes all the pages that are being served
+        from the given mapper.
+        """
+        def __init__( self, mapper, **kwds ):
+            Resource.__init__(self, **kwds)
+            self.mapper = mapper
+
+        def handle( self, ctxt ):
+            response.setContentType('text/html')
+            response.write(self.mapper.pretty_render())

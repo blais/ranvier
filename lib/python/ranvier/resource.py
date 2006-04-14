@@ -14,9 +14,6 @@ import types
 # ranvier imports
 from ranvier import verbosity
 
-# hume imports
-from hume import response
-
 
 #-------------------------------------------------------------------------------
 #

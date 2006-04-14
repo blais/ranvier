@@ -49,7 +49,7 @@ class TestMapper(Resource):
 
 #-------------------------------------------------------------------------------
 #
-class WrapResource(Resource):
+class DelegResource(Resource):
     """
     Resource base class for resources which do something and then forward to
     another resource.
@@ -79,7 +79,7 @@ class WrapResource(Resource):
 
 #-------------------------------------------------------------------------------
 #
-class LogRequests(WrapResource):
+class LogRequests(DelegResource):
 
     fmt = '----------------------------- %s'
 
@@ -89,12 +89,12 @@ class LogRequests(WrapResource):
 
 #-------------------------------------------------------------------------------
 #
-class RemoveBase(WrapResource):
+class RemoveBase(DelegResource):
     """
     Resource that removes a fixed number of base components.
     """
     def __init__( self, count, next, **kwds ):
-        WrapResource.__init__(self, next, **kwds)
+        DelegResource.__init__(self, next, **kwds)
         self.count = count
 
     def handle_this( self, ctxt ):
@@ -215,7 +215,7 @@ class RequirePrivilege(PrivilegesBase):
         return self._nextres.handle(ctxt)
 
 
-class UserRoot(resource.WrapResource):
+class UserRoot(resource.DelegResource):
     """
     A handler that interprets the path component as a username and sets that
     user in the args for consumption by later handlers.
@@ -223,7 +223,7 @@ class UserRoot(resource.WrapResource):
     digitsre = re.compile('^\d+$')
 
     def __init__( self, next_resource, no_error=False, **kwds ):
-        resource.WrapResource.__init__(self, next_resource, **kwds)
+        resource.DelegResource.__init__(self, next_resource, **kwds)
         self._no_error = no_error
 
     def enum( self, enumv ):
@@ -286,7 +286,7 @@ class UserChildren(PrivilegesBase):
 
 #-------------------------------------------------------------------------------
 #
-class LogRequestsWithUser(resource.WrapResource):
+class LogRequestsWithUser(resource.DelegResource):
 
     fmt = '-----------[%05d] %s'
         

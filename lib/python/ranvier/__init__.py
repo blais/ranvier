@@ -17,15 +17,16 @@ class RanvierError(Exception):
 
 #-------------------------------------------------------------------------------
 #
+# For debugging.
+verbosity = 0
+
+#-------------------------------------------------------------------------------
+#
 from resource import *
 from context import *
 from mapper import *
 from folders import *
-from pseudores import *
+## from miscres import *
+from respproxy import CGIResponse
 
-
-#-------------------------------------------------------------------------------
-#
-# For debugging.
-verbosity = 0
 

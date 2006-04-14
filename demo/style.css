@@ -1,0 +1,28 @@
+/* 
+ * CSS style file for Ranvier demo.
+ */
+
+@import url("/docutils-style.css");
+@import url("/project.css");
+
+div#project-header {
+  background-image: url("/ranvier/etc/header-fxt-loft-door.jpg");
+  background-color: black;
+}
+
+div#project-header a:visited {
+  text-decoration: none;
+}
+
+div#blurb-container { 
+  text-align: center;
+}
+
+#blurb { 
+  width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+  border: thin solid gray;
+  font-size: smaller;
+  font-style: italic;
+}
