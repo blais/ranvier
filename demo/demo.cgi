@@ -35,7 +35,7 @@ import demoapp
 
 #-------------------------------------------------------------------------------
 #
-remroot = '/ranvier/demo'
+rootloc = '/ranvier/demo'
 
 def main():
     """
@@ -44,70 +44,34 @@ def main():
     uri = os.environ['SCRIPT_URI']
     scheme, netloc, path, parameters, query, fragid = urlparse.urlparse(uri)
     
-    assert path.startswith(remroot)
-    path = path[len(remroot):]
+    assert path.startswith(rootloc)
+    path = path[len(rootloc):]
 
     # Create a context for resource handling.
     form = cgi.FieldStorage()
-
-    ctxt = HandlerContext(path, form, rootloc=remroot)
-    ctxt.response = CGIResponse(sys.stdout)
-    ctxt.page = PageLayout()
 
     # Create the application.
     #
     # Note: this is a bit silly, we recreate the entire resource tree on every
     # request.  In a "real" web application, your process is a running for a
     # long time and this happens only once for every child.
-    mapper, root = demoapp.create_application(remroot)
+    mapper, root = demoapp.create_application(rootloc)
+
+    # Create a proxy response object for the default resources provided with
+    # Ranvier to use.
+    response = CGIResponse(sys.stdout)
+
+
+## FIXME: this should be moved into mapper.handle()
+    # Create a handler context for a CGI script.
+    ctxt = HandlerContext(path, form, rootloc=rootloc)
+    ctxt.response = response
+    ctxt.page = demoapp.PageLayout(rootloc)
+    ctxt.mapper = mapper
 
     # Handle the resource.
     return root.handle(ctxt)
 
-
-
-#-------------------------------------------------------------------------------
-#
-class PageLayout:
-    """
-    A class that provides common rendering routines for a page's layout.
-    """
-
-    def render_header( self, ctxt ):
-        header = """
-    <html>
-    <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" href="/ranvier/demo/style.css" type="text/css" />
-    </head>
-    <body>
-
-    <div id="project-header">
-      <a href="/ranvier/demo/">
-      <img src="/home/furius-logo-w.png" id="logo"></a>
-    </div>
-
-    <div id="blurb-container">
-    <div id="blurb">
-    <p>
-    You are currently viewing a demo application for the URL mapping capabilities of
-    <a href="/ranvier">Ranvier</a>.
-    </p>
-    </div>
-    </div>
-
-    <div id="main" class="document">
-
-    """
-        ctxt.response.setContentType('text/html')
-        ctxt.response.write(header)
-
-    def render_footer( self, ctxt ):
-        ctxt.response.write("""
-
-    </div>
-    </body></html>
-    """)
 
 #-------------------------------------------------------------------------------
 #

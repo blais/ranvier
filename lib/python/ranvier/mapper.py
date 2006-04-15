@@ -252,8 +252,8 @@ class UrlMapper(rodict.ReadOnlyDict):
             params[cname] = cvalue
 
         # Check that all the required values have been provided.
-        missing = filter(cname for cname, cvalue in params.iteritems()
-                         if cvalue is None)
+        missing = [cname for cname, cvalue in params.iteritems()
+                   if cvalue is None]
         if missing:
             raise RanvierError(
                 "Error: Missing values attempting to map to a resource: %s" %
@@ -317,51 +317,6 @@ class UrlMapper(rodict.ReadOnlyDict):
         # would be done for generating test cases.  For now we ignore the
         # defdict.
 
-    def pretty_render( self ):
-        """
-        Output an HTML representation of the contents of the mapper (a str).
-
-        This representation is meant to serve to the user for debugging, and
-        includes the docstrings of the resource classes, if present.
-        """
-        oss = StringIO.StringIO()
-        oss.write('''
-<html>
-  <head>
-    <title>URL Mapper Resources</title>
-    <meta name="generator" content="Ranvier Pretty Resource Renderer" />
-    <style type="text/css"><!--
-body { font-family: Luxi Sans, Lucida, Arial, sans-serif; }
-.resource-title { white-space: nowrap; }
-p.docstring { margin-left: 2em; }
---></style>
- <body>
-  <h1>URL Mapper Resources</h1>
-''')
-
-        for o in self.getmappings():
-            # Prettify the URL somewhat for user readability.
-            url = self.url_tmpl(o.resid, '[<i>%s</i>]')
-
-            # Make the URL clickable if it contains no parameters.
-            if not o.defdict:
-                url = '<a href="%s">%s</a>' % (url, url)
-
-            m = {'resid': o.resid,
-                 'url': url}
-            oss.write('''
-  <h2 class="resource-title">%(resid)s: <tt>%(url)s</tt></h2>
-''' % m)
-            if o.resobj.__doc__:
-                oss.write('  <p class="docstring">%s</p>' % o.resobj.__doc__)
-
-        oss.write('''
- </body>
-</html>
-''')
-        return oss.getvalue()
-
-
 #-------------------------------------------------------------------------------
 #
 def slashslash_namexformer( clsname ):
@@ -388,6 +343,52 @@ class EnumResource(resource.Resource):
             ctxt.response.write(line)
             ctxt.response.write('\n')
 
+#-------------------------------------------------------------------------------
+#
+def pretty_render_mapper( mapper ):
+    """
+    Output an HTML representation of the contents of the mapper (a str).
+
+    This representation is meant to serve to the user for debugging, and
+    includes the docstrings of the resource classes, if present.
+    """
+    oss = StringIO.StringIO()
+    oss.write('''
+<html>
+  <head>
+    <title>URL Mapper Resources</title>
+    <meta name="generator" content="Ranvier Pretty Resource Renderer" />
+    <style type="text/css"><!--
+body { font-family: Luxi Sans, Lucida, Arial, sans-serif; }
+.resource-title { white-space: nowrap; }
+p.docstring { margin-left: 2em; }
+--></style>
+ <body>
+  <h1>URL Mapper Resources</h1>
+''')
+
+    for o in mapper.getmappings():
+        # Prettify the URL somewhat for user readability.
+        url = mapper.url_tmpl(o.resid, '[<i>%s</i>]')
+
+        # Make the URL clickable if it contains no parameters.
+        if not o.defdict:
+            url = '<a href="%s">%s</a>' % (url, url)
+
+        m = {'resid': o.resid,
+             'url': url}
+        oss.write('''
+  <h2 class="resource-title"><tt>%(resid)s: %(url)s</tt></h2>
+''' % m)
+        if o.resobj.__doc__:
+            oss.write('  <p class="docstring">%s</p>' % o.resobj.__doc__)
+
+    oss.write('''
+ </body>
+</html>
+''')
+    return oss.getvalue()
+
 class PrettyEnumResource(resource.Resource):
     """
     Output a rather nice page that describes all the pages that are being served
@@ -399,6 +400,6 @@ class PrettyEnumResource(resource.Resource):
 
     def handle( self, ctxt ):
         ctxt.response.setContentType('text/html')
-        ctxt.response.write(self.mapper.pretty_render())
+        ctxt.response.write(pretty_render_mapper(self.mapper))
 
 
