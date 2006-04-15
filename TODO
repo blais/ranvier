@@ -15,6 +15,7 @@
 
   * Move some of the resources back to hume, to avoid dependencies
 
+
 * Add to my template headers the rendering of the resource-id.
 
 * Implement enum() on all the resource classes everywhere.
@@ -59,9 +60,11 @@
 
     Find a way to map the position parameters to the URL, in order.
 
-  - Add a optional parameter 'privileges' which can be used to indicated, for
-    informational purposes only, what privileges are involved/considered during
-    the traversal for a particular leaf resource.
+  - Add a optional parameter 'extra' which can be used to indicate, for
+    informational purposes only, what extra data is involved/considered during
+    the traversal for a particular leaf resource.  This can be used to display
+    the privileges that are involved in accessing a single resource.
+
 
 * Add a UrlMapper.handle() method that takes care of the forward mapping.
   This way, the mapper becomes the central point-of-control after the tree is
@@ -152,6 +155,10 @@
 
 
 * Run an import-check before submitting anywhere.
+
+* See if I cannot remove the redundant rootloc stored in the context and
+  locator.  This is already stored in the URL mapper.
+
 
 
 Query Parameters

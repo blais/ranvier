@@ -29,6 +29,9 @@ sys.path.append(join(root, 'lib', 'python'))
 # ranvier imports
 from ranvier import *
 
+# local imports
+import demoapp
+
 
 #-------------------------------------------------------------------------------
 #
@@ -46,101 +49,65 @@ def main():
 
     # Create a context for resource handling.
     form = cgi.FieldStorage()
-    ctxt = HandlerContext(path, form, root=remroot)
+
+    ctxt = HandlerContext(path, form, rootloc=remroot)
     ctxt.response = CGIResponse(sys.stdout)
+    ctxt.page = PageLayout()
 
     # Create the application.
     #
     # Note: this is a bit silly, we recreate the entire resource tree on every
     # request.  In a "real" web application, your process is a running for a
     # long time and this happens only once for every child.
-    root = create_application()
+    mapper, root = demoapp.create_application(remroot)
 
     # Handle the resource.
     return root.handle(ctxt)
 
-#-------------------------------------------------------------------------------
-#
-def render_header( ctxt ):
-    header = """
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" href="/ranvier/demo/style.css" type="text/css" />
-</head>
-<body>
-
-<div id="project-header">
-  <a href="/ranvier/demo/">
-  <img src="/home/furius-logo-w.png" id="logo"></a>
-</div>
-
-<div id="blurb-container">
-<div id="blurb">
-<p>
-You are currently viewing a demo application for the URL mapping capabilities of
-<a href="/ranvier">Ranvier</a>.
-</p>
-</div>
-</div>
-
-<div id="main" class="document">
-
-"""
-    ctxt.response.setContentType('text/html')
-    ctxt.response.write(header)
-
-    
-def render_footer( ctxt ):
-    ctxt.response.write("""
-
-</div>
-</body></html>
-""")
-    
-
-#-------------------------------------------------------------------------------
-#
-class DemoFolderWithMenu(FolderWithMenu):
-    """
-    Our prettified folder class.
-    """
-    def default_menu( self, ctxt ):
-        render_header(ctxt)
-        menu = self.genmenu(ctxt)
-        ctxt.response.write(menu)
-        render_footer(ctxt)
-        
-
-#-------------------------------------------------------------------------------
-#
-def create_application():
-    """
-    Create a tree of application resources and return the corresponding root
-    resource.
-    """
-
-    root = DemoFolderWithMenu('home', home=Home())
-
-    return root
-
 
 
 #-------------------------------------------------------------------------------
 #
-class Home(Resource):
-    def handle( self, ctxt ):
-        render_header(ctxt)
+class PageLayout:
+    """
+    A class that provides common rendering routines for a page's layout.
+    """
 
+    def render_header( self, ctxt ):
+        header = """
+    <html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="/ranvier/demo/style.css" type="text/css" />
+    </head>
+    <body>
+
+    <div id="project-header">
+      <a href="/ranvier/demo/">
+      <img src="/home/furius-logo-w.png" id="logo"></a>
+    </div>
+
+    <div id="blurb-container">
+    <div id="blurb">
+    <p>
+    You are currently viewing a demo application for the URL mapping capabilities of
+    <a href="/ranvier">Ranvier</a>.
+    </p>
+    </div>
+    </div>
+
+    <div id="main" class="document">
+
+    """
+        ctxt.response.setContentType('text/html')
+        ctxt.response.write(header)
+
+    def render_footer( self, ctxt ):
         ctxt.response.write("""
-<h1>Demo Home</h1>
 
-
-
-
-
-""")
-        render_footer(ctxt)
+    </div>
+    </body></html>
+    """)
 
 #-------------------------------------------------------------------------------
 #

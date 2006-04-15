@@ -19,9 +19,13 @@ class HandlerContext(object):
     clients to put other stuff that should be passed around in the chain of
     handlers.
     """
-    def __init__( self, uri, args, root=None ):
+    def __init__( self, uri, args, rootloc=None ):
 
-        self.locator = PathLocator.from_uri(uri, root=root)
+        self.rootloc = rootloc
+        """A root directory to which the resource tree being handled is
+        appended."""
+
+        self.locator = PathLocator.from_uri(uri, rootloc=rootloc)
         """Locator object that is updated between handler to handler."""
 
         self.args = args
@@ -44,16 +48,16 @@ class PathLocator(object):
     Locator object used to resolve the paths.
     """
     @staticmethod
-    def from_uri( uri, root=None ):
+    def from_uri( uri, rootloc=None ):
         trailing = False
         if uri.endswith('/'): # remove trailing / if present
             trailing = True
         path = [x for x in uri.split('/') if x]
-        p = PathLocator(path, trailing, root)
+        p = PathLocator(path, trailing, rootloc)
         return p
 
-    def __init__( self, path, trailing=False, root=None ):
-        self.root = root
+    def __init__( self, path, trailing=False, rootloc=None ):
+        self.rootloc = rootloc
         self.path = path
         self.index = 0
         self.trailing = trailing
@@ -76,10 +80,10 @@ class PathLocator(object):
 
     def uri( self, idx=1000 ):
         if self.path:
-            root = self.root or '/'
-            r = root + '/'.join(self.path[:idx])
+            rootloc = self.rootloc or '/'
+            r = rootloc + '/'.join(self.path[:idx])
         else:
-            r = self.root or ''
+            r = self.rootloc or ''
         r += (self.trailing and '/' or '')
         return r
 

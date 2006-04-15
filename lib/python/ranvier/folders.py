@@ -64,7 +64,7 @@ class FolderBase(Resource, dict):
             if not isinstance(child, Resource):
                 msg = "resolver: child is not a resource: %s" % child
                 ctxt.log(msg)
-                assert RanvierError(msg)
+                raise RanvierError(msg)
 
         except KeyError:
             # Try fallback method.

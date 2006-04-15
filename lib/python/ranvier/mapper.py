@@ -125,8 +125,12 @@ class UrlMapper(rodict.ReadOnlyDict):
     and parameters.  It is also a very safe way to force the creation of URLs
     that are always valid.
     """
-    def __init__( self, resource_root=None, namexform=None ):
+    def __init__( self, resource_root=None, namexform=None, rootloc=None ):
         rodict.ReadOnlyDict.__init__(self)
+
+        self.rootloc = rootloc
+        """A root directory to which the resource tree being handled is
+        appended."""
 
         self.mappings = self.rwdict
         """Mappings from resource-id to (url, defaults-dict, resource)
@@ -193,30 +197,49 @@ class UrlMapper(rodict.ReadOnlyDict):
         assert resid
         return resid
 
-    def url( self, resid, **kwds ):
+
+    def _get_url( self, res ):
+        """
+        Get the URL string and defaults dict for a resource-id, supporting all
+        the types described in url().
+        """
+        # Support passing in resource instances and resource classes as well.
+        if isinstance(res, resource.Resource):
+            resid = self.namexform(res.__class__.__name__)
+        elif isinstance(res, type) and issubclass(res, resource.Resource):
+            resid = self.namexform(res.__class__.__name__)
+        else:
+            resid = res
+            assert isinstance(res, (str, unicode))
+
+        # Get the desired mapping.
+        try:
+            urlstr, defdict, resobj = self.mappings[resid]
+        except KeyError:
+            raise RanvierError("Error: invalid resource-id '%s'." % resid)
+        
+        return resid, urlstr, defdict, resobj
+
+    def _subst_url( self, urlstr, params ):
+        """
+        Substitute the parameters in the URL string and build and return the
+        final URL.
+        """
+        mapped_url = urlstr % params
+        return '/'.join((self.rootloc or '', mapped_url))
+
+    def url( self, res, **kwds ):
         """
         Map a resource-id to its URL, filling in the parameters and making sure
         that they are valid.  The keyword arguments are expected to match the
         required arguments for the URL exactly.  The resource id can be either
 
-        * a string of the class
-        * the class object of the resource (if there is only one
-          of them instanced in the tree)
-        * the instance of the resource
+        1. a string of the class
+        2. the class object of the resource (if there is only one of them
+           instanced in the tree)
+        3. the instance of the resource
         """
-        # Support passing in resource instances and resource classes as well.
-        if isinstance(resid, resource.Resource):
-            resid = self.namexform(resid.__class__.__name__)
-        elif isinstance(resid, type) and issubclass(resid, resource.Resource):
-            resid = self.namexform(resid.__class__.__name__)
-        else:
-            assert isinstanc(resid, (str, unicode))
-
-        # Get the desired mapping.
-        try:
-            urlstr, defdict = self.mappings[resid]
-        except KeyError:
-            raise RanvierError("Error: invalid resource-id '%s'." % resid)
+        resid, urlstr, defdict, resobj = self._get_url(res)
 
         # Prepare the defaults dict with the provided values.
         params = defdict.copy()
@@ -235,23 +258,38 @@ class UrlMapper(rodict.ReadOnlyDict):
             raise RanvierError(
                 "Error: Missing values attempting to map to a resource: %s" %
                 ', '.join(missing))
-                
-        # Plop in the values.  This should always succeed here due to the checks
-        # above.
-        mapped_url = urlstr % params
 
-        return '/' + mapped_url
+        return self._subst_url(urlstr, params)
+        
+    def url_tmpl( self, res, format='%s' ):
+        """
+        Same as url() above, except that instead of replacing the required
+        parameters with supplied values, we replace them with their own name.
+        This is used for rendering a readable version of the resources.
+        """
+        resid, urlstr, defdict, resobj = self._get_url(res)
 
-    def inversemap( self ):
+        # Prepare the defaults dict with the provided values.
+        params = dict((x, x) for x in defdict.iterkeys())
+
+        return self._subst_url(urlstr, params)
+
+    def getmappings( self ):
         """
         Return an inverse mapping of (url, resid, defdict) triples sorted by
         URL.
         """
-        # Print each mapping, on a single line.
-        invmap = [(url, resid, defdict, resource)
-                      for resid, (url, defdict, resource) in self.iteritems()]
-        invmap.sort()
-        return invmap
+        class ResContainer: pass
+        mappings = []
+        for resid, (url, defdict, resobj) in self.iteritems():
+            o = ResContainer()
+            o.resid = resid
+            o.url = url
+            o.defdict = defdict
+            o.resobj = resobj
+            mappings.append(o)
+        mappings.sort(key=lambda x: x.url)
+        return mappings
 
     def render( self ):
         """
@@ -265,14 +303,14 @@ class UrlMapper(rodict.ReadOnlyDict):
         entirely shuffle the URLs in your web application and your entire test
         suite would still keep working.
         """
-        invmap = self.inversemap()
+        invmap = self.getmappings()
 
         # Format for alignment for nice printing (and this does make the parsing
         # any more complicated.
-        maxidlen = max(len(x[1]) for x in invmap)
+        maxidlen = max(len(x.resid) for x in invmap)
         fmt = '%%-%ds : /%%s' % maxidlen
 
-        return [fmt % (resid, url) for url, resid, defdict, res in invmap]
+        return [fmt % (o.resid, o.url) for o in invmap]
 
         # Note: we are considering whether rendering the defaults-dict would be
         # interesting for reconstructing the UrlMapper from a list of lines, as
@@ -301,23 +339,21 @@ p.docstring { margin-left: 2em; }
   <h1>URL Mapper Resources</h1>
 ''')
 
-        invmap = self.inversemap()
-
-        for url, resid, defdict, resource in invmap:
+        for o in self.getmappings():
             # Prettify the URL somewhat for user readability.
-            url = '/' + url.replace('%(', '[<i>').replace(')s', '</i>]')
+            url = self.url_tmpl(o.resid, '[<i>%s</i>]')
 
-            # Make the URL clickable it contains no parameters.
-            if not defdict:
+            # Make the URL clickable if it contains no parameters.
+            if not o.defdict:
                 url = '<a href="%s">%s</a>' % (url, url)
 
-            m = {'resid': resid,
+            m = {'resid': o.resid,
                  'url': url}
             oss.write('''
   <h2 class="resource-title">%(resid)s: <tt>%(url)s</tt></h2>
 ''' % m)
-            if resource.__doc__:
-                oss.write('  <p class="docstring">%s</p>' % resource.__doc__)
+            if o.resobj.__doc__:
+                oss.write('  <p class="docstring">%s</p>' % o.resobj.__doc__)
 
         oss.write('''
  </body>
@@ -347,10 +383,10 @@ class EnumResource(resource.Resource):
         self.mapper = mapper
 
     def handle( self, ctxt ):
-        print 'Content-Type: text/plain\n\n'
+        ctxt.response.setContentType('text/plain')
         for line in self.mapper.render():
-            print line
-
+            ctxt.response.write(line)
+            ctxt.response.write('\n')
 
 class PrettyEnumResource(resource.Resource):
     """
@@ -362,6 +398,7 @@ class PrettyEnumResource(resource.Resource):
         self.mapper = mapper
 
     def handle( self, ctxt ):
-        print 'Content-Type: text/plain\n\n'
-        print self.mapper.pretty_render()
+        ctxt.response.setContentType('text/html')
+        ctxt.response.write(self.mapper.pretty_render())
+
 

@@ -5,8 +5,9 @@
 """
 Response proxy: an base class for adapting to other web frameworks.
 
-The response proxy provides an interface which you can derive from to integrate
-the default resources provided by this framework into any framework.
+The response proxy is only used for us to be able to provide some resources that
+are framework agnostic.  It provides an interface which you can derive from to
+integrate those default resources into any framework.
 """
 
 # stdlib imports
@@ -66,7 +67,10 @@ class CGIResponse(ResponseProxy):
         self.contype = 'text/plain'
         """Content type, to be output upon first write."""
 
-        self.wrotect = False
+        self.headers = {}
+        """Additional response headers."""
+
+        self.wrote = False
         """Flag to indicate if we have written yet."""
 
         if outfile is None:
@@ -76,35 +80,41 @@ class CGIResponse(ResponseProxy):
     def setContentType( self, contype ):
         self.contype = contype
 
+    def addHeader( self, header, content ):
+        assert header not in self.headers
+        self.headers[header] = content
+
     def write( self, text ):
-        # Output content type header if we haven't yet done that.
-        if not self.wrotect:
-            self.outfile.write('Content-type: %s\n\n' % self.contype)
-            self.wrotect = True
+        # Output the headers if we haven't yet done that.
+        if self.wrote is False:
+            # Output content-type
+            self.outfile.write('Content-type: %s\n' % self.contype)
+
+            # Output the headers
+            for header, content in self.headers.iteritems():
+                self.outfile.write('%s: %s\n' % (header, content))
+            self.outfile.write('\n\n')
+            self.wrote = True
+
         self.outfile.write(text)
+
+    # These are very basic, you would most probably override them.
 
     def errorNotFound( self, msg=None ):
         if msg is None:
             msg = 'Document Not Found'
-        for line in ('Content-type:', 'text/plain'
-                     'Status: 404 %s' % msg,
-                     ''):
-            self.outfile.write(line)
-            self.outfile.write('\n')
+        self.addHeader('Status', '404 %s' % msg)
+        self.setContentType('text/html')
+        self.write('<html><body><p>%s</p></body></html>\n' % msg)
 
     def errorForbidden( self, msg=None ):
         if msg is None:
             msg = 'Access Denied'
-        for line in ('Content-type:', 'text/plain'
-                     'Status: 404 %s' % msg,
-                     ''):
-            self.outfile.write(line)
-            self.outfile.write('\n')
+        self.addHeader('Status', '403 %s' % msg)
+        self.setContentType('text/html')
+        self.write('<html><body><p>%s</p></body></html>\n' % msg)
 
     def redirect( self, target ):
-        for line in ('Content-type:', 'text/plain'
-                     'Status: 403 Access denied.',
-                     ''):
-            self.outfile.write(line)
-            self.outfile.write('\n')
+        self.addHeader('Location', target)
+        self.write('302 Voila.\n')
 
