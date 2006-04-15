@@ -15,7 +15,6 @@
 
   * Move some of the resources back to hume, to avoid dependencies
 
-
 * Add to my template headers the rendering of the resource-id.
 
 * Implement enum() on all the resource classes everywhere.
@@ -55,6 +54,36 @@
 
   - declare_var() becomes declare_compvar()
   - declare_param( ..., optional=True ) -> adds a query arg
+
+    Only parameters can be optional.  Variables are required.
+
+    Find a way to map the position parameters to the URL, in order.
+
+  - Add a optional parameter 'privileges' which can be used to indicated, for
+    informational purposes only, what privileges are involved/considered during
+    the traversal for a particular leaf resource.
+
+* Add a UrlMapper.handle() method that takes care of the forward mapping.
+  This way, the mapper becomes the central point-of-control after the tree is
+  built.  handle method should create the context and protect the handle call
+  for internal redirects.
+
+
+
+* Mention that this could be used to generate the Google sitemap
+
+
+
+* The documentation could be parsed like a template to fill in links to the demo
+  using a mapper object.  We will have to write a small python program that
+  creates the mapper and that does that..
+
+
+* We will write our own simple test by getting the list of resources and
+  attempting to fetch all of them.  We will need introspection on the list of
+  variables of each resource, so that we can generate random data.
+
+
 
 * Provide a simple template replacement routine that replaces::
 
@@ -102,6 +131,9 @@
          return durl
 
          
+* Consider adding positional arguments to the call to url().  For this you will
+  have to somehow save the order of the parameters somewhere.
+
 
 * Add a function to initialize ::
 

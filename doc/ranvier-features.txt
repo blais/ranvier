@@ -34,6 +34,18 @@ Mapping URLs is an important component of building web applications.
 …
 
 
+
+
+.. figure:: html-code-domains.png
+
+   The goal of this library is to convert between the domains of URLs and code
+   objects (resources).
+
+This is what this library takes care of.
+
+
+
+
 Mapping Forward
 ===============
 
