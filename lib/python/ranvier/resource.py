@@ -21,14 +21,31 @@ class Resource(object):
     """
     Concrete implementation of IResource.
     """
-    resid = None
+    __resid = None
     """Default resource-id used for URL mapping.  You usually do not need to set
     this, you can rely on the automatic class name transformation."""
 
     def __init__( self, **kwds ):
         resid = kwds.pop('resid', None)
         if resid is not None:
-            self.resid = resid
+            self.__resid = resid
+
+    def getresid( self, mapper ):
+        """
+        Given a resource instance, compute the resource-id to which it
+        corresponds.
+
+        Cool idea: this could be used by the template code to render the
+        resource-id, e.g. in the HTML header.  This way the tests can be written
+        to check for particular responses being completely oblivious of the
+        actual URLs being used.
+        """
+        resid = self.__resid
+        if resid is None:
+            # Compute the resource-id from the name of the class.
+            resid = mapper.namexform(self.__class__.__name__)
+        assert resid
+        return resid
 
     def enum( self, enumv ):
         """
@@ -69,7 +86,17 @@ class DelegaterResource(Resource):
         enumv.declare_anon(self._next)
 
     def handle( self, ctxt ):
-        self.handle_this(ctxt)
+        # Handle this resource.
+        rcode = self.handle_this(ctxt)
+
+        # Support errors that does not use exception handling.  Typically it
+        # would be better to raise an exception to unwind the chain of
+        # responsibility, but I'm not one to decide what you like to do.  This
+        # is all about flexibility.
+        if rcode is not None:
+            return True
+
+        # Forwart to the delegate resource.
         self.forward(ctxt)
 
     def forward( self, ctxt ):

@@ -6,6 +6,8 @@
 Resources setup for the Ranvier demo.
 """
 
+# stdlib imports
+import re
 
 # ranvier imports
 from ranvier import *
@@ -27,6 +29,8 @@ def create_application( rootloc ):
         resources=EnumResource(mapper),
         prettyres=DemoPrettyEnumResource(mapper),
         deleg=Augmenter(AnswerBabbler()),
+        users=UsernameRoot(Folder(username=PrintUsername(),
+                                  name=PrintName())),
         )
 
     mapper.initialize(root)
@@ -95,6 +99,19 @@ class DemoFolderWithMenu(FolderWithMenu):
 
 #-------------------------------------------------------------------------------
 #
+class DemoPrettyEnumResource(PrettyEnumResource):
+    """
+    A renderer for pretty resources within our template.
+    """
+    def handle( self, ctxt ):
+        ctxt.page.render_header(ctxt)
+        PrettyEnumResource.handle(self, ctxt)
+FIXME you need to get just the body
+        ctxt.page.render_footer(ctxt)
+
+
+#-------------------------------------------------------------------------------
+#
 class SpecialResource(Resource):
     """
     A resource referred to using an alternate id.
@@ -146,6 +163,8 @@ class Home(Resource):
              'plain': url('@@EnumResource'),
              'altid': url('@@ImSpecial'),
              'answer': url('@@AnswerBabbler'),
+             'username': url('@@PrintUsername', username='martin'),
+             'name': url('@@PrintName', username='martin'),
              }
 
         ctxt.response.write('''
@@ -180,10 +199,19 @@ Here are the resources available here:
   resource class, to back, you need to disambiguate which instance is concerned.
   </li>
 
+  <li> <b>Consumer</b>: In the forward mapping carried out by the chain of
+  responsibility, you can consume part of the URL.  This is useful for building
+  a set of resources referring to the same object.  Check out the follow user\'s
+  <a href="%(username)s">username</a> and <a href="%(name)s">name</a>.
+
+
+  </li>
+
   <li> <b>Delegater</b>: The chain of responsibility pattern does not imply that
   each resource consume a part of the component.  We have a base class that
   makes that process a little bit easier.  Check this one: it provides <a
   href="%(answer)s">the answer to everything<a>!  </li>
+
 
 </ul>
         ''' % m)
@@ -193,13 +221,46 @@ Here are the resources available here:
 
 #-------------------------------------------------------------------------------
 #
-class DemoPrettyEnumResource(PrettyEnumResource):
+class UsernameRoot(DelegaterResource):
     """
-    A renderer for pretty resources within our template.
+    This is an example of consuming part of the locator.  Part of the this
+    resource is a username.  It just accepts any username that is all lowercase
+    letters, and indicates not found for any other.  It could do this with a
+    database, in a real application.
+    """
+    def enum( self, enumv ):
+        enumv.declare_var('username', self.getnext())
+
+    def handle_this( self, ctxt ):
+        username = ctxt.locator.current()
+        ctxt.locator.next()
+        if not re.match('[a-z]+$', username):
+            return ctxt.response.errorNotFound()
+
+        ctxt.username = username
+        ctxt.name = 'Mr or Mrs %s' % username.capitalize()
+
+
+class PrintUsername(Resource):
+    """
+    This resource prints a username that has been consumed along the URL path
+    that maps into this resource..
     """
     def handle( self, ctxt ):
         ctxt.page.render_header(ctxt)
-        PrettyEnumResource.handle(self, ctxt)
+        ctxt.response.write('''<p>The username is %(username)s.</p>''' %
+                            {'username': ctxt.username})
+        ctxt.page.render_footer(ctxt)
+
+class PrintName(Resource):
+    """
+    This resource prints a username that has been consumed along the URL path
+    that maps into this resource..
+    """
+    def handle( self, ctxt ):
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write('''<p>The user\'s name is %(name)s.</p>''' %
+                            {'name': ctxt.name})
         ctxt.page.render_footer(ctxt)
 
 

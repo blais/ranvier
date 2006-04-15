@@ -26,3 +26,11 @@ div#blurb-container {
   font-size: smaller;
   font-style: italic;
 }
+
+ul li { 
+  margin-top: 10px;
+}
+
+a {
+  font-weight: bold;
+}

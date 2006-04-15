@@ -106,6 +106,7 @@ class CGIResponse(ResponseProxy):
         self.addHeader('Status', '404 %s' % msg)
         self.setContentType('text/html')
         self.write('<html><body><p>%s</p></body></html>\n' % msg)
+        return True
 
     def errorForbidden( self, msg=None ):
         if msg is None:
@@ -113,8 +114,10 @@ class CGIResponse(ResponseProxy):
         self.addHeader('Status', '403 %s' % msg)
         self.setContentType('text/html')
         self.write('<html><body><p>%s</p></body></html>\n' % msg)
+        return True
 
     def redirect( self, target ):
         self.addHeader('Location', target)
         self.write('302 Voila.\n')
+        return True
 

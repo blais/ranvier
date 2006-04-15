@@ -12,8 +12,7 @@ from os.path import join, normpath
 import types
 
 # ranvier imports
-import rodict
-import resource
+from ranvier import resource, rodict, RanvierError
 
 
 #-------------------------------------------------------------------------------
@@ -169,7 +168,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                     components.append('%%(%s)s' % varname)
 
             # Calculate the resource-id from the resource at the leaf.
-            resid = self.getresid(path[-1][1])
+            resid = path[-1][1].getresid(self)
 
             # Check that the resource-id has not already been seen.
             if resid in self.mappings:
@@ -180,24 +179,6 @@ class UrlMapper(rodict.ReadOnlyDict):
                                     defaults_dict,
                                     resource)
 
-    def getresid( self, resource ):
-        """
-        Given a resource instance, compute the resource-id to which it
-        corresponds.
-
-        Cool idea: this could be used by the template code to render the
-        resource-id, e.g. in the HTML header.  This way the tests can be written
-        to check for particular responses being completely oblivious of the
-        actual URLs being used.
-        """
-        resid = resource.resid
-        if resid is None:
-            # Compute the resource-id from the name of the class.
-            resid = self.namexform(resource.__class__.__name__)
-        assert resid
-        return resid
-
-
     def _get_url( self, res ):
         """
         Get the URL string and defaults dict for a resource-id, supporting all
@@ -205,9 +186,9 @@ class UrlMapper(rodict.ReadOnlyDict):
         """
         # Support passing in resource instances and resource classes as well.
         if isinstance(res, resource.Resource):
-            resid = self.namexform(res.__class__.__name__)
+            resid = res.getresid(self)
         elif isinstance(res, type) and issubclass(res, resource.Resource):
-            resid = self.namexform(res.__class__.__name__)
+            resid = self.namexform(res.__name__)
         else:
             resid = res
             assert isinstance(res, (str, unicode))
@@ -270,7 +251,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         resid, urlstr, defdict, resobj = self._get_url(res)
 
         # Prepare the defaults dict with the provided values.
-        params = dict((x, x) for x in defdict.iterkeys())
+        params = dict((x, format % x) for x in defdict.iterkeys())
 
         return self._subst_url(urlstr, params)
 
@@ -317,6 +298,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # would be done for generating test cases.  For now we ignore the
         # defdict.
 
+
 #-------------------------------------------------------------------------------
 #
 def slashslash_namexformer( clsname ):
@@ -345,6 +327,7 @@ class EnumResource(resource.Resource):
 
 #-------------------------------------------------------------------------------
 #
+FIXME you need to split this in two 
 def pretty_render_mapper( mapper ):
     """
     Output an HTML representation of the contents of the mapper (a str).
@@ -359,7 +342,7 @@ def pretty_render_mapper( mapper ):
     <title>URL Mapper Resources</title>
     <meta name="generator" content="Ranvier Pretty Resource Renderer" />
     <style type="text/css"><!--
-body { font-family: Luxi Sans, Lucida, Arial, sans-serif; }
+body { font-size: smaller }
 .resource-title { white-space: nowrap; }
 p.docstring { margin-left: 2em; }
 --></style>

@@ -16,6 +16,11 @@
   * Move some of the resources back to hume, to avoid dependencies
 
 
+* What if I want to refer to a page along the path that is not a leaf?  How do
+  we do that?
+
+
+
 * Add to my template headers the rendering of the resource-id.
 
 * Implement enum() on all the resource classes everywhere.
