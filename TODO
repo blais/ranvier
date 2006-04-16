@@ -7,12 +7,36 @@
 * Put ranvier mappings in a Mappings class rather than to use a tuple (it's big
   enough now)
 
+Conversion:
+
+             imports-and-rename  handle
+
+hume         
+walus        x
+carpool
 
 
+imports-and-rename: 
+* rename imports to ranvier, 
 * Replace all Resource to LeafResource where applicable
+
+handle:
 * Revise the names of all the handle* methods
 * Remove all direct calls to handle()
 * Rename all calls to handle_this() to handle() and make sure they are based on DelegaterResource
+
+
+* You need to convert hume's usermgmt.py resources as well as all its other
+  resources!
+
+
+
+* How would we implement a compvar resource at a leaf?  Isn't the model wrong
+  for this?  Should we not allow anonymous compvars?
+
+  This is important, we have this case for the photos…
+
+
 
 
 
