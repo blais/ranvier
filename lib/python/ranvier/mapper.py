@@ -52,12 +52,23 @@ class EnumVisitor(object):
         """
         self._add_delegate(Enumerator.FIXED, delegate, component)
 
-    def declare_var( self, variable, delegate, default=None ):
+    def declare_compvar( self, varname, delegate, default=None ):
         """
         Declare a variable component delegate.  This is used if your resource
         consumes a variable path of the locator.
         """
-        self._add_delegate(Enumerator.VAR, delegate, (variable, default))
+        self._add_delegate(Enumerator.VAR, delegate, (varname, default))
+
+    def declare_queryarg( self, varname, default=None, optional=False ):
+        """
+        Declare an query argument.  Query arguments can be optional, and can
+        have default values only if they're not optional.
+        """
+        assert not (optional and default)
+FIXME todo
+
+            
+
 
     def get_delegates( self ):
         """
@@ -327,7 +338,6 @@ class EnumResource(resource.Resource):
 
 #-------------------------------------------------------------------------------
 #
-FIXME you need to split this in two 
 def pretty_render_mapper( mapper ):
     """
     Output an HTML representation of the contents of the mapper (a str).
@@ -347,9 +357,24 @@ body { font-size: smaller }
 p.docstring { margin-left: 2em; }
 --></style>
  <body>
-  <h1>URL Mapper Resources</h1>
 ''')
 
+    oss.write(pretty_render_mapper_body(mapper))
+
+    oss.write('''
+ </body>
+</html>
+''')
+    return oss.getvalue()
+
+
+def pretty_render_mapper_body( mapper ):
+    """
+    Pretty-render just the body for the page that describes the contents of the
+    mapper.
+    """
+    oss = StringIO.StringIO()
+    oss.write('<h1>URL Mapper Resources</h1>\n')
     for o in mapper.getmappings():
         # Prettify the URL somewhat for user readability.
         url = mapper.url_tmpl(o.resid, '[<i>%s</i>]')
@@ -365,12 +390,8 @@ p.docstring { margin-left: 2em; }
 ''' % m)
         if o.resobj.__doc__:
             oss.write('  <p class="docstring">%s</p>' % o.resobj.__doc__)
-
-    oss.write('''
- </body>
-</html>
-''')
     return oss.getvalue()
+
 
 class PrettyEnumResource(resource.Resource):
     """

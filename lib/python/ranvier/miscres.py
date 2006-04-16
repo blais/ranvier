@@ -198,7 +198,7 @@ class UserRoot(resource.DelegaterResource):
         self._no_error = no_error
 
     def enum( self, enumv ):
-        enumv.declare_var('user', self.getnext())
+        enumv.declare_compvar('user', self.getnext())
 
     def handle_this( self, ctxt ):
         if ctxt.locator.isleaf():

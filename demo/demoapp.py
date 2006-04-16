@@ -105,8 +105,7 @@ class DemoPrettyEnumResource(PrettyEnumResource):
     """
     def handle( self, ctxt ):
         ctxt.page.render_header(ctxt)
-        PrettyEnumResource.handle(self, ctxt)
-FIXME you need to get just the body
+        ctxt.response.write(pretty_render_mapper_body(self.mapper))
         ctxt.page.render_footer(ctxt)
 
 
@@ -229,7 +228,7 @@ class UsernameRoot(DelegaterResource):
     database, in a real application.
     """
     def enum( self, enumv ):
-        enumv.declare_var('username', self.getnext())
+        enumv.declare_compvar('username', self.getnext())
 
     def handle_this( self, ctxt ):
         username = ctxt.locator.current()
