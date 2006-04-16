@@ -12,7 +12,9 @@ from os.path import join, normpath
 import types
 
 # ranvier imports
-from ranvier import resource, rodict, RanvierError
+from ranvier import rodict, RanvierError
+from ranvier.resource import Resource
+from ranvier.miscres import LeafResource
 
 
 #-------------------------------------------------------------------------------
@@ -34,21 +36,24 @@ class EnumVisitor(object):
         type of the delegate."""
 
     def _add_delegate( self, kind, delegate, arg ):
-        if not isinstance(delegate, resource.Resource):
+        if not isinstance(delegate, Resource):
             raise RanvierError("Class %s must be derived from Resource." %
                                delegate.__class__.__name__)
         self.delegates.append( (kind, delegate, arg) )
 
+    # Each of the three following functions declares an individual branch of the
+    # resource tree.
+
     def declare_anon( self, delegate ):
         """
-        Declare an anonymous delegate.
+        Declare an anonymous delegate branch.
         """
         self._add_delegate(Enumerator.ANON, delegate, None)
 
     def declare_fixed( self, component, delegate ):
         """
         Declare the consumption of a fixed component of the locator to a
-        delegate.
+        delegate branch.
         """
         self._add_delegate(Enumerator.FIXED, delegate, component)
 
@@ -59,16 +64,14 @@ class EnumVisitor(object):
         """
         self._add_delegate(Enumerator.VAR, delegate, (varname, default))
 
-    def declare_queryarg( self, varname, default=None, optional=False ):
-        """
-        Declare an query argument.  Query arguments can be optional, and can
-        have default values only if they're not optional.
-        """
-        assert not (optional and default)
-FIXME todo
-
-            
-
+##     def declare_queryargs( self, varname, default=None, optional=False ):
+##         """
+##         Declare query arguments for this resource as a leaf.  Query arguments
+##         can be optional, and can have default values only if they're not
+##         optional.
+##         """
+##         assert not (optional and default)
+## ## FIXME todo
 
     def get_delegates( self ):
         """
@@ -196,9 +199,9 @@ class UrlMapper(rodict.ReadOnlyDict):
         the types described in url().
         """
         # Support passing in resource instances and resource classes as well.
-        if isinstance(res, resource.Resource):
+        if isinstance(res, Resource):
             resid = res.getresid(self)
-        elif isinstance(res, type) and issubclass(res, resource.Resource):
+        elif isinstance(res, type) and issubclass(res, Resource):
             resid = self.namexform(res.__name__)
         else:
             resid = res
@@ -322,12 +325,12 @@ def slashslash_namexformer( clsname ):
 
 #-------------------------------------------------------------------------------
 #
-class EnumResource(resource.Resource):
+class EnumResource(Resource):
     """
     Enumerate all the resources available from a resource tree.
     """
     def __init__( self, mapper, **kwds ):
-        resource.Resource.__init__(self, **kwds)
+        Resource.__init__(self, **kwds)
         self.mapper = mapper
 
     def handle( self, ctxt ):
@@ -391,19 +394,4 @@ def pretty_render_mapper_body( mapper ):
         if o.resobj.__doc__:
             oss.write('  <p class="docstring">%s</p>' % o.resobj.__doc__)
     return oss.getvalue()
-
-
-class PrettyEnumResource(resource.Resource):
-    """
-    Output a rather nice page that describes all the pages that are being served
-    from the given mapper.
-    """
-    def __init__( self, mapper, **kwds ):
-        resource.Resource.__init__(self, **kwds)
-        self.mapper = mapper
-
-    def handle( self, ctxt ):
-        ctxt.response.setContentType('text/html')
-        ctxt.response.write(pretty_render_mapper(self.mapper))
-
 

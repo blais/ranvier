@@ -3,6 +3,11 @@
 ===================
 
 (main features)
+
+* Replace all Resource to LeafResource where applicable
+
+* Move some of the resources back to hume, to avoid dependencies
+
 * Remove dependencies on hume::
 
     13 matches for "response\." in buffer: resource.py
@@ -13,8 +18,6 @@
          50:        response.error(response.code.Forbidden)
         168:                    response.error(response.code.Forbidden)
 
-
-  * Move some of the resources back to hume, to avoid dependencies
 
 
 * Add positional arguments to the call to url().  For this you will
@@ -54,7 +57,11 @@
   built.  handle method should create the context and protect the handle call
   for internal redirects.
 
-* Implement and test internal redirects
+* Implement and test internal redirects.
+
+  Investigate this: when you just return a Location: header without a status,
+  Apache goes into an infinite loop.  What is this implementation of internal
+  redirect?  Look for internal redirection on Wikipedia.
 
 * Provide a simple template replacement routine that replaces::
 

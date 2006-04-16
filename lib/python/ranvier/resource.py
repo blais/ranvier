@@ -19,7 +19,7 @@ from ranvier import verbosity
 #
 class Resource(object):
     """
-    Concrete implementation of IResource.
+    Base class for all resources.
     """
     __resid = None
     """Default resource-id used for URL mapping.  You usually do not need to set
@@ -64,44 +64,5 @@ class Resource(object):
         This is the handler.  This is where you get to do your doo-doo handling
         arguments and spitting HTML and shtuff.  You NEED to override this.
         """
-        raise NotImplementedError
-
-
-#-------------------------------------------------------------------------------
-#
-class DelegaterResource(Resource):
-    """
-    Resource base class for resources which do something and then
-    inconditionally forward to another resource.  It used a template method to
-    implement this simple behaviour.
-    """
-    def __init__( self, next_resource, **kwds ):
-        Resource.__init__(self, **kwds)
-        self._next = next_resource
-
-    def getnext( self ):
-        return self._next
-
-    def enum( self, enumv ):
-        enumv.declare_anon(self._next)
-
-    def handle( self, ctxt ):
-        # Handle this resource.
-        rcode = self.handle_this(ctxt)
-
-        # Support errors that does not use exception handling.  Typically it
-        # would be better to raise an exception to unwind the chain of
-        # responsibility, but I'm not one to decide what you like to do.  This
-        # is all about flexibility.
-        if rcode is not None:
-            return True
-
-        # Forwart to the delegate resource.
-        self.forward(ctxt)
-
-    def forward( self, ctxt ):
-        self._next.handle(ctxt)
-
-    def handle_this( self, ctxt ):
         raise NotImplementedError
 

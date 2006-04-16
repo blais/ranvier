@@ -31,6 +31,7 @@ def create_application( rootloc ):
         deleg=Augmenter(AnswerBabbler()),
         users=UsernameRoot(Folder(username=PrintUsername(),
                                   name=PrintName())),
+        redirtest=Redirect('@@Home', resid='@@RedirectTest'),
         )
 
     mapper.initialize(root)
@@ -145,11 +146,11 @@ class AnswerBabbler(Resource):
 
 #-------------------------------------------------------------------------------
 #
-class Home(Resource):
+class Home(LeafResource):
     """
     Root page of the demo.
     """
-    def handle( self, ctxt ):
+    def handle_leaf( self, ctxt ):
         ctxt.page.render_header(ctxt)
 
         # This could be done globally
@@ -164,6 +165,7 @@ class Home(Resource):
              'answer': url('@@AnswerBabbler'),
              'username': url('@@PrintUsername', username='martin'),
              'name': url('@@PrintName', username='martin'),
+             'red': url('@@RedirectTest'),
              }
 
         ctxt.response.write('''
@@ -201,16 +203,15 @@ Here are the resources available here:
   <li> <b>Consumer</b>: In the forward mapping carried out by the chain of
   responsibility, you can consume part of the URL.  This is useful for building
   a set of resources referring to the same object.  Check out the follow user\'s
-  <a href="%(username)s">username</a> and <a href="%(name)s">name</a>.
-
-
-  </li>
+  <a href="%(username)s">username</a> and <a href="%(name)s">name</a>.  </li>
 
   <li> <b>Delegater</b>: The chain of responsibility pattern does not imply that
   each resource consume a part of the component.  We have a base class that
-  makes that process a little bit easier.  Check this one: it provides <a
-  href="%(answer)s">the answer to everything<a>!  </li>
+  makes that process a little bit easier.  Check this one: it provides
+  <a href="%(answer)s">the answer to everything</a>! </li>
 
+  <li> <b>Redirect</b>: A test for redirection, that should just <a
+  href="%(red)s">redirect here</a>. </li>
 
 </ul>
         ''' % m)
@@ -220,22 +221,21 @@ Here are the resources available here:
 
 #-------------------------------------------------------------------------------
 #
-class UsernameRoot(DelegaterResource):
+class UsernameRoot(CompVarResource):
     """
     This is an example of consuming part of the locator.  Part of the this
     resource is a username.  It just accepts any username that is all lowercase
     letters, and indicates not found for any other.  It could do this with a
     database, in a real application.
     """
-    def enum( self, enumv ):
-        enumv.declare_compvar('username', self.getnext())
+    def __init__( self, next, **kwds ):
+        CompVarResource.__init__(self, 'username', next, **kwds)
 
-    def handle_this( self, ctxt ):
-        username = ctxt.locator.current()
-        ctxt.locator.next()
-        if not re.match('[a-z]+$', username):
+    def handle_component( self, ctxt, component ):
+        if not re.match('[a-z]+$', component):
             return ctxt.response.errorNotFound()
 
+        username = component
         ctxt.username = username
         ctxt.name = 'Mr or Mrs %s' % username.capitalize()
 
@@ -261,5 +261,4 @@ class PrintName(Resource):
         ctxt.response.write('''<p>The user\'s name is %(name)s.</p>''' %
                             {'name': ctxt.name})
         ctxt.page.render_footer(ctxt)
-
 

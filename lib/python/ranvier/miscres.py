@@ -12,40 +12,119 @@ from os.path import join, normpath
 
 # ranvier imports
 from ranvier.resource import Resource
+from ranvier import verbosity
 
-# hume imports
-from hume import authentication, umusers, umprivileges
-from hume.resources.umres import login_redirect
+
+#-------------------------------------------------------------------------------
+#
+class LeafResource(Resource):
+    """
+    Base class for all leaf resources.
+    """
+    def handle( self, ctxt ):
+        # Just check that this resource is a leaf.
+        if not ctxt.locator.isleaf():
+            return ctxt.response.errorNotFound()
+
+        return self.handle_leaf(ctxt)
+
+#-------------------------------------------------------------------------------
+#
+class DelegaterResource(Resource):
+    """
+    Resource base class for resources which do something and then
+    inconditionally forward to another resource.  It used a template method to
+    implement this simple behaviour.
+    """
+    def __init__( self, next_resource, **kwds ):
+        Resource.__init__(self, **kwds)
+        self._next = next_resource
+
+    def getnext( self ):
+        return self._next
+
+    def enum( self, enumv ):
+        enumv.declare_anon(self._next)
+
+    def handle( self, ctxt ):
+        # Handle this resource.
+        rcode = self.handle_this(ctxt)
+
+        # Support errors that does not use exception handling.  Typically it
+        # would be better to raise an exception to unwind the chain of
+        # responsibility, but I'm not one to decide what you like to do.  This
+        # is all about flexibility.
+        if rcode is not None:
+            return True
+
+        # Forwart to the delegate resource.
+        self.forward(ctxt)
+
+    def forward( self, ctxt ):
+        self._next.handle(ctxt)
+
+    def handle_this( self, ctxt ):
+        raise NotImplementedError
+
+
+#-------------------------------------------------------------------------------
+#
+class CompVarResource(DelegaterResource):
+    """
+    Resource base class that inconditionally consumes one path component and
+    that forwards to another resource.  This resource does not allow being a
+    leaf (this would be possible, you could implement that if desired).
+    """
+    def __init__( self, compname, next_resource, **kwds ):
+        """
+        'compname': if specified, we store the component under an attribute with
+                    this name in the context.
+        """
+        DelegaterResource.__init__(self, next_resource, **kwds)
+        assert isinstance(compname, str)
+        self.compname = compname
+
+    def enum( self, enumv ):
+        enumv.declare_compvar(self.compname, self.getnext())
+
+    def handle( self, ctxt ):
+        if verbosity >= 1:
+            ctxt.log("resolver: %s" % ctxt.locator.path[ctxt.locator.index:])
+
+        if ctxt.locator.isleaf():
+            # This is a leaf; No component specified.
+            return ctxt.response.errorNotFound()
+        
+        comp = ctxt.locator.current()
+        if self.handle_component(ctxt, comp):
+            return True
+
+        ctxt.locator.next()
+        return self.forward(ctxt)
+
+    def handle_component( self, ctxt, component ):
+        """
+        Return true if the component fails to validate.
+        Override this method if you want to provide a validation routine.
+        """
+        # By default we always validate and store the component in the context.
+        setattr(ctxt, self.compname, comp)
 
 
 #-------------------------------------------------------------------------------
 #
 class Redirect(Resource):
     """
-    Simply redirect to a fixed location.
+    Simply redirect to a fixed location, identified by a resource-id.  This uses
+    the mapper in the context to map the target to an URL.
     """
-    def __init__( self, target, **kdws ):
+    def __init__( self, targetid, **kwds ):
         Resource.__init__(self, **kwds)
-        self._target = target
+        self.targetid = targetid
 
     def handle( self, ctxt ):
-        ctxt.response.redirect(self._target)
-
-
-#-------------------------------------------------------------------------------
-#
-class TestMapper(Resource):
-    """
-    Test the mapper.
-    """
-    def __init__( self, mapper, **kwds ):
-        Resource.__init__(self, **kwds)
-        self.mapper = mapper
-
-    def handle( self, ctxt ):
-        ctxt.response.setContentType('text/html')
-
-        # FIXME todo
+        target = ctxt.mapper.url(self.targetid)
+        ctxt.response.redirect(target)
 
 
 #-------------------------------------------------------------------------------
@@ -56,6 +135,13 @@ class LogRequests(DelegaterResource):
 
     def handle_this( self, ctxt ):
         ctxt.log(self.fmt % ctxt.locator.uri())
+
+class LogRequestsWithUser(DelegaterResource):
+
+    fmt = '-----------[%05d] %s'
+        
+    def handle_this( self, ctxt ):
+        ctxt.log(self.fmt % (authentication.userid() or 0, ctxt.locator.uri()))
 
 
 #-------------------------------------------------------------------------------
@@ -75,40 +161,41 @@ class RemoveBase(DelegaterResource):
 
 #-------------------------------------------------------------------------------
 #
-class UserObj(Resource):
+class PrettyEnumResource(LeafResource):
     """
-    A resource handler that allows specifying a username in the path.
-    This is more or less an example.
+    Output a rather nice page that describes all the pages that are being served
+    from the given mapper.
     """
-    def __init__( self, users, resource, **kwds ):
+    def __init__( self, mapper, **kwds ):
         Resource.__init__(self, **kwds)
-        self.resource = resource
-        self.users = users
+        self.mapper = mapper
 
     def handle( self, ctxt ):
-        if verbosity >= 1:
-            ctxt.log("resolver: %s" % ctxt.locator.path[ctxt.locator.index:])
-        if ctxt.locator.isleaf():
-            # no username specified
-            return ctxt.response.errorNotFound()
-
-        username = ctxt.locator.current()
-        try:
-            ctxt.user = self.users[username]
-        except KeyError:
-            return ctxt.response.errorNotFound()
-
-        ctxt.locator.next()
-        return self.resource.handle(ctxt)
+        ctxt.response.setContentType('text/html')
+        ctxt.response.write(pretty_render_mapper(self.mapper))
 
 
-#-------------------------------------------------------------------------------
-#
-class LeafPage(Resource):
-    def handle( self, ctxt ):
-        if not ctxt.locator.isleaf():
-            return ctxt.response.errorNotFound()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## # hume imports
+## from hume import authentication, umusers, umprivileges
+## from hume.resources.umres import login_redirect
 
 #-------------------------------------------------------------------------------
 #
@@ -162,6 +249,7 @@ class PrivilegesBase(Resource):
     def enum( self, enumv ):
         enumv.declare_anon(self._nextres)
 
+
 class RequirePrivilege(PrivilegesBase):
     """
     A handler which requires any one of a list of privileges (OR) to follow the
@@ -186,7 +274,7 @@ class RequirePrivilege(PrivilegesBase):
         return self._nextres.handle(ctxt)
 
 
-class UserRoot(resource.DelegaterResource):
+class UserRoot(DelegaterResource):
     """
     A handler that interprets the path component as a username and sets that
     user in the args for consumption by later handlers.
@@ -194,7 +282,7 @@ class UserRoot(resource.DelegaterResource):
     digitsre = re.compile('^\d+$')
 
     def __init__( self, next_resource, no_error=False, **kwds ):
-        resource.DelegaterResource.__init__(self, next_resource, **kwds)
+        DelegaterResource.__init__(self, next_resource, **kwds)
         self._no_error = no_error
 
     def enum( self, enumv ):
@@ -254,13 +342,4 @@ class UserChildren(PrivilegesBase):
 
         return self._nextres.handle(ctxt)
 
-
-#-------------------------------------------------------------------------------
-#
-class LogRequestsWithUser(resource.DelegaterResource):
-
-    fmt = '-----------[%05d] %s'
-        
-    def handle_this( self, ctxt ):
-        ctxt.log(self.fmt % (authentication.userid() or 0, ctxt.locator.uri()))
 

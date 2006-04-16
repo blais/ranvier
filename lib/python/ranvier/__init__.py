@@ -26,7 +26,7 @@ from resource import *
 from context import *
 from mapper import *
 from folders import *
-## from miscres import *
+from miscres import *
 from respproxy import CGIResponse
 
 

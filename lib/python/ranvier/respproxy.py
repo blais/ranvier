@@ -118,6 +118,7 @@ class CGIResponse(ResponseProxy):
 
     def redirect( self, target ):
         self.addHeader('Location', target)
-        self.write('302 Voila.\n')
+        self.addHeader('Status', '302 Redirecting')
+        self.write('Voila.\n')
         return True
 

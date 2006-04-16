@@ -34,3 +34,7 @@ ul li {
 a {
   font-weight: bold;
 }
+
+p.docstring {
+  margin-left: 2em;
+}
