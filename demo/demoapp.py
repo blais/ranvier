@@ -112,7 +112,7 @@ class DemoPrettyEnumResource(PrettyEnumResource):
 
 #-------------------------------------------------------------------------------
 #
-class SpecialResource(Resource):
+class SpecialResource(LeafResource):
     """
     A resource referred to using an alternate id.
     """
@@ -129,10 +129,10 @@ class Augmenter(DelegaterResource):
     A resource that adds the answer to Life, the Universe and Everything to the
     context.
     """
-    def handle_this( self, ctxt ):
+    def handle( self, ctxt ):
         ctxt.answer = 42
 
-class AnswerBabbler(Resource):
+class AnswerBabbler(LeafResource):
     """
     We just print the answer.
     """
@@ -150,7 +150,7 @@ class Home(LeafResource):
     """
     Root page of the demo.
     """
-    def handle_leaf( self, ctxt ):
+    def handle( self, ctxt ):
         ctxt.page.render_header(ctxt)
 
         # This could be done globally
@@ -231,16 +231,14 @@ class UsernameRoot(CompVarResource):
     def __init__( self, next, **kwds ):
         CompVarResource.__init__(self, 'username', next, **kwds)
 
-    def handle_component( self, ctxt, component ):
-        if not re.match('[a-z]+$', component):
+    def handle( self, ctxt ):
+        if not re.match('[a-z]+$', ctxt.username):
             return ctxt.response.errorNotFound()
 
-        username = component
-        ctxt.username = username
-        ctxt.name = 'Mr or Mrs %s' % username.capitalize()
+        ctxt.name = 'Mr or Mrs %s' % ctxt.username.capitalize()
 
 
-class PrintUsername(Resource):
+class PrintUsername(LeafResource):
     """
     This resource prints a username that has been consumed along the URL path
     that maps into this resource..
@@ -251,7 +249,7 @@ class PrintUsername(Resource):
                             {'username': ctxt.username})
         ctxt.page.render_footer(ctxt)
 
-class PrintName(Resource):
+class PrintName(LeafResource):
     """
     This resource prints a username that has been consumed along the URL path
     that maps into this resource..

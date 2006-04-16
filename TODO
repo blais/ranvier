@@ -4,7 +4,17 @@
 
 (main features)
 
+* Put ranvier mappings in a Mappings class rather than to use a tuple (it's big
+  enough now)
+
+
+
 * Replace all Resource to LeafResource where applicable
+* Revise the names of all the handle* methods
+* Remove all direct calls to handle()
+* Rename all calls to handle_this() to handle() and make sure they are based on DelegaterResource
+
+
 
 * Move some of the resources back to hume, to avoid dependencies
 
@@ -42,6 +52,16 @@
 * Add the following methods:
 
   - declare_param( ..., optional=True ) -> adds a query arg
+
+      ##     def declare_queryargs( self, varname, default=None, optional=False ):
+      ##         """
+      ##         Declare query arguments for this resource as a leaf.  Query arguments
+      ##         can be optional, and can have default values only if they're not
+      ##         optional.
+      ##         """
+      ##         assert not (optional and default)
+      ## ## FIXME todo
+
 
     Only parameters can be optional.  Variables are required.
 

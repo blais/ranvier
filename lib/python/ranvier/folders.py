@@ -7,12 +7,12 @@ Folder-style resources, for implementing static paths.
 """
 
 # stdlib imports
-import sys, string, StringIO
+import StringIO
 from os.path import join, normpath
 import types
 
 # ranvier imports
-from ranvier import verbosity
+from ranvier import verbosity, RanvierError
 from ranvier.resource import Resource
 
 
@@ -39,7 +39,7 @@ class FolderBase(Resource, dict):
         for name, resource in self.iteritems():
             enumv.declare_fixed(name, resource)
 
-    def handle( self, ctxt ):
+    def handle_base( self, ctxt ):
         if verbosity >= 1:
             ctxt.log("resolver: %s" %
                         ctxt.locator.path[ctxt.locator.index:])
@@ -53,7 +53,7 @@ class FolderBase(Resource, dict):
                 # relative paths will work in that directory.
                 return ctxt.response.redirect(ctxt.locator.uri() + '/')
 
-            return self.default(ctxt)
+            return self.handle(ctxt)
         # else ...
         name = ctxt.locator.current()
 
@@ -79,9 +79,9 @@ class FolderBase(Resource, dict):
             ctxt.log("resolver: child %s found, calling it" % name)
 
         ctxt.locator.next()
-        return child.handle(ctxt)
+        return self.delegate(child, ctxt)
 
-    def default( self, ctxt ):
+    def handle( self, ctxt ):
         """
         Called to handle when this resource is requested as the leaf.
         """
@@ -94,6 +94,8 @@ class FolderBase(Resource, dict):
         return None
 
 
+#-------------------------------------------------------------------------------
+#
 class Folder(FolderBase):
     """
     A resource handler that simply eats a component of a path.
@@ -123,29 +125,34 @@ class Folder(FolderBase):
             self._default = value
 
     def getdefault( self ):
-        return self._default # Note: this may be the object, not the key
-                             # associated with a default (if there is any, there
-                             # might not be).
+        if isinstance(self._default, str):
+            # The default is a string, the name of the child, this must be
+            # the first time it is called, we replace it by the actual
+            # resource object for the next calls.
+            try:
+                self._default = self[self._default]
+            except KeyError:
+                raise RanvierError(
+                    "Error: folder default child '%s' not found" %
+                    self._default)
 
-    def default( self, ctxt ):
-        if self._default is None:
+        assert isinstance(self._default, (types.NoneType, Resource))
+        return self._default
+
+    def handle( self, ctxt ):
+        default = self.getdefault()
+        if default is None:
             if verbosity >= 1:
                 ctxt.log("resolver: no default page set")
             # no default page submitted, indicate error
             return ctxt.response.errorNotFound()
         else:
-            # we have a default name, call ourselves again to fetch it
-            if type(self._default) in types.StringTypes:
-                # default is a string, call ourselves recursively (for the last
-                # time)
-                ctxt.locator.path.append(self._default)
-                return self.handle(ctxt)
-            else:
-                # default is a Resource, call it directly.
-                assert isinstance(self._default, Resource)
-                self._default.handle(ctxt)
+            # Default is a Resource, delegate to it.
+            self.delegate(default, ctxt)
 
 
+#-------------------------------------------------------------------------------
+#
 class FolderWithMenu(Folder):
     """
     A folder resource handler who can render a default page that lists and
@@ -161,13 +168,13 @@ class FolderWithMenu(Folder):
         print >> oss, '</ul>'
         return oss.getvalue()
 
-    def default( self, ctxt ):
+    def handle( self, ctxt ):
         """
         Render a very simple list of the contents of this page.
         """
         # If we have set a default, use it.
         if self._default is not None:
-            return Folder.default(self, ctxt)
+            return Folder.handle(self, ctxt)
         
         self.default_menu(ctxt)
         

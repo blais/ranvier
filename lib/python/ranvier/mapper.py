@@ -64,15 +64,6 @@ class EnumVisitor(object):
         """
         self._add_delegate(Enumerator.VAR, delegate, (varname, default))
 
-##     def declare_queryargs( self, varname, default=None, optional=False ):
-##         """
-##         Declare query arguments for this resource as a leaf.  Query arguments
-##         can be optional, and can have default values only if they're not
-##         optional.
-##         """
-##         assert not (optional and default)
-## ## FIXME todo
-
     def get_delegates( self ):
         """
         Accessor for delegates.

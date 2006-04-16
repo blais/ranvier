@@ -70,7 +70,7 @@ def main():
     ctxt.mapper = mapper
 
     # Handle the resource.
-    return root.handle(ctxt)
+    return root.handle_base(ctxt)
 
 
 #-------------------------------------------------------------------------------

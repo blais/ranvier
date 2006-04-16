@@ -17,7 +17,7 @@ class ReadOnlyDict(object):
         self.rwdict = dict(*params, **kwds)
 
     def __getitem__( self, resid ):
-        return self.rwdict(resid)
+        return self.rwdict[resid]
 
     def has_key( self, resid ):
         return self.rwdict.has_key(resid)
