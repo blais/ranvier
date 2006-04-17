@@ -29,46 +29,70 @@ class EnumVisitor(object):
     """
 
     def __init__( self ):
-        self.delegates = []
-        """A list of the possible delegates for a specific resource node.  This
+        self.branchs = []
+        """A list of the possible branchs for a specific resource node.  This
         list takes on the form of a triple of (type, resource, arg), where arg
         is either None, a fixed component of a variable name depending on the
-        type of the delegate."""
+        type of the branch."""
 
-    def _add_delegate( self, kind, delegate, arg ):
+        self.leaf = None
+        """Flag that indicates if the visited node can be served as a leaf."""
+
+        self.leaf_var = None
+        """Variable for the leaf, if any."""
+
+
+    def _add_branch( self, kind, delegate, arg ):
         if not isinstance(delegate, Resource):
-            raise RanvierError("Class %s must be derived from Resource." %
-                               delegate.__class__.__name__)
-        self.delegates.append( (kind, delegate, arg) )
+            raise RanvierError("Delegate %s must be derived from Resource." %
+                               delegate)
+        self.branchs.append( (kind, delegate, arg) )
 
     # Each of the three following functions declares an individual branch of the
     # resource tree.
 
-    def declare_anon( self, delegate ):
+    def declare_serve( self, varname=None, default=None ):
+        """
+        Declare that the given resource may serve the contents (at this point in
+        the path).  'varname' can be used to declare that it consumes some path
+        components as well (optional).
+        """
+        assert not self.leaf
+        self.leaf = True
+        if varname is not None:
+            self.leaf_var = (varname, default)
+
+    def branch_anon( self, delegate ):
         """
         Declare an anonymous delegate branch.
         """
-        self._add_delegate(Enumerator.ANON, delegate, None)
+        self._add_branch(Enumerator.BR_ANONYMOUS, delegate, None)
 
-    def declare_fixed( self, component, delegate ):
+    def branch_static( self, component, delegate ):
         """
         Declare the consumption of a fixed component of the locator to a
         delegate branch.
         """
-        self._add_delegate(Enumerator.FIXED, delegate, component)
+        self._add_branch(Enumerator.BR_STATIC, delegate, component)
 
-    def declare_compvar( self, varname, delegate, default=None ):
+    def branch_var( self, varname, delegate, default=None ):
         """
         Declare a variable component delegate.  This is used if your resource
         consumes a variable path of the locator.
         """
-        self._add_delegate(Enumerator.VAR, delegate, (varname, default))
+        self._add_branch(Enumerator.BR_VARIABLE, delegate, (varname, default))
 
-    def get_delegates( self ):
+    def get_branches( self ):
         """
-        Accessor for delegates.
+        Accessor for branches.
         """
-        return self.delegates
+        return self.branchs
+
+    def isleaf( self ):
+        """
+        Returns true if the visited node has declared itself a leaf.
+        """
+        return self.leaf
 
 
 class Enumerator(object):
@@ -76,7 +100,7 @@ class Enumerator(object):
     A class used to visit and enumerate all the possible URL paths that are
     served by a resource tree.
     """
-    ANON, FIXED, VAR = xrange(3)
+    BR_ANONYMOUS, BR_STATIC, BR_VARIABLE = xrange(3)
     """Delegate types."""
 
     def __init__( self ):
@@ -84,32 +108,35 @@ class Enumerator(object):
         """The entire list of accumulated paths resulting from the traversal."""
 
     def visit_root( self, resource ):
-        return self.visit(resource, [])
+        return self.visit(resource, [], 0)
 
-    def visit( self, resource, path ):
+    def visit( self, resource, path, level ):
         """
         Visit a resource node.  This method calls itself recursively.
-
         * 'resources' is the resource node to visit.
-
         * 'path' is the current path of components and variables that this
           visitor is currently at.
         """
         # Visit the resource and let it declare the properties of its
-        # propagation.
-        # search.
+        # propagation/search.
         visitor = EnumVisitor()
         resource.enum(visitor)
-        delegates = visitor.get_delegates()
 
-        # If we have reached a leaf node, add the path to the list of paths.
-        if not delegates:
-            self.accpaths.append(list(path))
-        else:
-            # Process the possible paths.  This is a breadth-first
-            for decl in delegates:
-                kind, delegate, arg = decl
-                self.visit(delegate, path + [decl])
+        # If we have reached a leaf node (i.e. the node has declared itself a
+        # potential leaf), add the path to the list of paths.
+        if visitor.isleaf():
+            if visitor.leaf_var:
+                # Append a path with a variable component at the end.
+                path = path + [(Enumerator.BR_VARIABLE, None, visitor.leaf_var)]
+                self.accpaths.append(path)
+            else:
+                self.accpaths.append(list(path))
+
+        # Process the possible paths.  This is a breadth-first search.
+        branches = visitor.get_branches()
+        for branch in branches:
+            kind, delegate, arg = branch
+            self.visit(delegate, path + [branch], level+1)
 
     def getpaths( self ):
         return self.accpaths
@@ -162,18 +189,27 @@ class UrlMapper(rodict.ReadOnlyDict):
             # Defaults that are unset are left to None.
             components = []
             defaults_dict = {}
+            last_resource = root
+
             for kind, resource, arg in path:
-                if kind is Enumerator.ANON:
+                # Keep a reference to the last resource.
+                if resource is not None:
+                    last_resource = resource
+
+                # Build the URL string.
+                if kind is Enumerator.BR_ANONYMOUS:
                     continue
-                elif kind is Enumerator.FIXED:
+
+                elif kind is Enumerator.BR_STATIC:
                     components.append(arg)
-                elif kind is Enumerator.VAR:
+
+                elif kind is Enumerator.BR_VARIABLE:
                     varname, vardef = arg
                     defaults_dict[varname] = vardef
                     components.append('%%(%s)s' % varname)
 
             # Calculate the resource-id from the resource at the leaf.
-            resid = path[-1][1].getresid(self)
+            resid = last_resource.getresid(self)
 
             # Check that the resource-id has not already been seen.
             if resid in self.mappings:
@@ -182,7 +218,7 @@ class UrlMapper(rodict.ReadOnlyDict):
             # Add the mapping.
             self.mappings[resid] = ('/'.join(components),
                                     defaults_dict,
-                                    resource)
+                                    last_resource)
 
     def _get_url( self, res ):
         """
@@ -240,6 +276,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # Check that all the required values have been provided.
         missing = [cname for cname, cvalue in params.iteritems()
                    if cvalue is None]
+
         if missing:
             raise RanvierError(
                 "Error: Missing values attempting to map to a resource: %s" %
@@ -293,7 +330,10 @@ class UrlMapper(rodict.ReadOnlyDict):
 
         # Format for alignment for nice printing (and this does make the parsing
         # any more complicated.
-        maxidlen = max(len(x.resid) for x in invmap)
+        if invmap:
+            maxidlen = max(len(x.resid) for x in invmap)
+        else:
+            maxidlen = 0
         fmt = '%%-%ds : /%%s' % maxidlen
 
         return [fmt % (o.resid, o.url) for o in invmap]
@@ -316,7 +356,7 @@ def slashslash_namexformer( clsname ):
 
 #-------------------------------------------------------------------------------
 #
-class EnumResource(Resource):
+class EnumResource(LeafResource):
     """
     Enumerate all the resources available from a resource tree.
     """

@@ -19,6 +19,7 @@ any web application framework out there.
 import sys, os, urlparse
 from os.path import dirname, join
 import cgi, cgitb; cgitb.enable()
+import pprint
 import cPickle as pickle
 
 # Add the Ranvier libraries to the load-path to minimize configuration (this is
@@ -62,7 +63,7 @@ def main():
     response = CGIResponse(sys.stdout)
 
 
-## FIXME: this should be moved into mapper.handle()
+## FIXME: this should be moved into mapper.handle_root()
     # Create a handler context for a CGI script.
     ctxt = HandlerContext(path, form, rootloc=rootloc)
     ctxt.response = response
@@ -71,6 +72,18 @@ def main():
 
     # Handle the resource.
     return root.handle_base(ctxt)
+
+
+#-------------------------------------------------------------------------------
+#
+def trace( o ):
+    """
+    A new builtin hack, for debugging.
+    """
+    sys.stderr.write(pprint.pformat(o) + '\n')
+
+import __builtin__
+__builtin__.__dict__['pp'] = trace
 
 
 #-------------------------------------------------------------------------------

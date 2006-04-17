@@ -22,8 +22,8 @@ def create_application( rootloc ):
     is bound on the site.
     """
     mapper = UrlMapper(rootloc=rootloc)
-    root = DemoFolderWithMenu(
-        'home',
+    root = Folder(
+        _default='home',
         home=Home(),
         altit=SpecialResource(resid='@@ImSpecial'),
         resources=EnumResource(mapper),
@@ -32,6 +32,19 @@ def create_application( rootloc ):
         users=UsernameRoot(Folder(username=PrintUsername(),
                                   name=PrintName())),
         redirtest=Redirect('@@Home', resid='@@RedirectTest'),
+        lcomp=LeafPlusOneComponent(),
+
+        fold=DemoFolderWithMenu(
+           greed=SimpleResource("Nature has given enough to meet man's need "
+                                "but not enough to meet man's greed.",
+                                resid="@@SimpleGreed"),
+           think=SimpleResource("There are wavelengths that people cannot see, "
+                                "there are sounds that people cannot hear, and "
+                                "maybe computers have thoughts that people "
+                                "cannot think.", resid="@@SimpleThought"),
+           ham=SimpleResource("The purpose of computing is insight, not "
+                              "numbers.", resid="@@SimpleHamming"),
+           ),
         )
 
     mapper.initialize(root)
@@ -83,18 +96,31 @@ class PageLayout:
 </html>
 """)
 
+
 #-------------------------------------------------------------------------------
 #
 class DemoFolderWithMenu(FolderWithMenu):
     """
     Our prettified folder class.
     """
-    def default_menu( self, ctxt ):
+    def handle_default( self, ctxt ):
         ctxt.page.render_header(ctxt)
-
         menu = self.genmenu(ctxt)
         ctxt.response.write(menu)
+        ctxt.page.render_footer(ctxt)
 
+
+class SimpleResource(LeafResource):
+    """
+    A simplistic resource that just outputs a message.
+    """
+    def __init__( self, msg, **kwds ) :
+        LeafResource.__init__(self, **kwds)
+        self.msg = msg
+
+    def handle( self, ctxt ):
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write(self.msg)
         ctxt.page.render_footer(ctxt)
 
 
@@ -122,6 +148,7 @@ class SpecialResource(LeafResource):
         <p>Well, I'm not that special, really.</p>""")
         ctxt.page.render_footer(ctxt)
         
+
 #-------------------------------------------------------------------------------
 #
 class Augmenter(DelegaterResource):
@@ -166,6 +193,8 @@ class Home(LeafResource):
              'username': url('@@PrintUsername', username='martin'),
              'name': url('@@PrintName', username='martin'),
              'red': url('@@RedirectTest'),
+             'leafcomp': url('@@LeafPlusOneComponent', comp='president'),
+             'folddemo': url('@@DemoFolderWithMenu'),
              }
 
         ctxt.response.write('''
@@ -213,6 +242,14 @@ Here are the resources available here:
   <li> <b>Redirect</b>: A test for redirection, that should just <a
   href="%(red)s">redirect here</a>. </li>
 
+  <li> <b>Leaf Component</b>: Simple test case for a <a
+  href="%(leafcomp)s">component located at the leaf</a>. </li>
+
+  <li> <b>Folder With Menyu</b>: We provide a <a href="%(folddemo)s"> folder
+  resource class</a> that allows you to build hierarchies of resources, like a
+  directory and files.  This one automatically provides a menu of its
+  subresources.</li>
+
 </ul>
         ''' % m)
 
@@ -221,7 +258,7 @@ Here are the resources available here:
 
 #-------------------------------------------------------------------------------
 #
-class UsernameRoot(CompVarResource):
+class UsernameRoot(VarDelegaterResource):
     """
     This is an example of consuming part of the locator.  Part of the this
     resource is a username.  It just accepts any username that is all lowercase
@@ -229,7 +266,7 @@ class UsernameRoot(CompVarResource):
     database, in a real application.
     """
     def __init__( self, next, **kwds ):
-        CompVarResource.__init__(self, 'username', next, **kwds)
+        VarDelegaterResource.__init__(self, 'username', next, **kwds)
 
     def handle( self, ctxt ):
         if not re.match('[a-z]+$', ctxt.username):
@@ -258,5 +295,23 @@ class PrintName(LeafResource):
         ctxt.page.render_header(ctxt)
         ctxt.response.write('''<p>The user\'s name is %(name)s.</p>''' %
                             {'name': ctxt.name})
+        ctxt.page.render_footer(ctxt)
+
+
+#-------------------------------------------------------------------------------
+#
+class LeafPlusOneComponent(VarResource):
+    """
+    Example resource that consumes the leaf of the locator path, i.e. it is not
+    a leaf, but the component itself is the leaf.
+    """
+    def __init__( self, **kwds ):
+        VarResource.__init__(self, 'comp')
+
+    def handle( self, ctxt ):
+        # Render a page with the last component.
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write('''<p>The leaf component is %s.</p>''' %
+                            ctxt.comp)
         ctxt.page.render_footer(ctxt)
 

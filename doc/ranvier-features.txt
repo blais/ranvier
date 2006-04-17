@@ -11,20 +11,21 @@
 .. section-numbering::
 .. contents::
 ..
-    1  Introduction
-    2  Mapping Forward
-      2.1  Chain of Responsibility
-      2.2  Naming of Resources
-    3  Mapping Backward
-      3.1  Optimization of BackMapping
-      3.2  Static Maps
-      3.3  Unique Identifiers
-    4  Listing URLs
-    5  Embedding Security
-    6  Internal Redirects
-    7  Support for Debugging
-    8  A Routes-Like Interface
-    9  (Other)
+    1   Introduction
+    2   Problem Statement and Domains
+    3   Mapping Forward
+      3.1  Chain of Responsibility
+      3.2  Naming of Resources
+    4   Mapping Backward
+      4.1  Optimization of BackMapping
+      4.2  Static Maps
+      4.3  Unique Identifiers
+    5   Listing URLs
+    6   Embedding Security
+    7   Internal Redirects
+    8   Support for Debugging
+    9   A Routes-Like Interface
+    10  (Other)
 
 
 Introduction
@@ -36,14 +37,67 @@ Mapping URLs is an important component of building web applications.
 
 
 
-.. figure:: html-code-domains.png
 
-   The goal of this library is to convert between the domains of URLs and code
-   objects (resources).
+Problem Statement and Domains
+=============================
 
-This is what this library takes care of.
+Let's consider some of the important parts of a typical web application
+framework:
+
+1. Code that serves pages or performs a specific task when a URL is
+   requested.  Let's call the documents served **resources** and the code that
+   serves than **resource handlers**;
+
+2. There is usually a way to **combine** the resource handlers to take advantage
+   of common functionality.  For example, code that fetches a user's preferences
+   may be needed in many places, and we would like to write the code once.  This
+   could be as simple as allowing the definition of functions, or the
+   elaboration of a complex hierarchical object-based system.  This could be
+   done via aggregation/composition or inheritance, or using other paradigms;
+
+3. **Pattern matching the URL** to select a particular resource handler to map it
+   to;
+
+4. **Capturing and validating** the variable components and the query arguments
+   from the URL request string and provide them to the resource handler.  This
+   is a task similar to **parsing**;
+
+5. **Rendering other URLs back to the user**.  These are actually **delayed
+   function calls**, which depend on the user's future actions.
 
 
+.. figure:: domains.png
+
+   The principal goal of this library is to convert between the domain of URLs
+   and the domain of code objects (resource handlers).
+
+
+You can view this problem as mapping back and forth between two domains: the
+domain of URLs and the domain of source code.  As programmers, we should have
+little concern for the particular URLs that our resources are accessed from, if
+not for the correspondence between URL variable components and function
+parameters, or for purely aesthetic reasons.  
+
+All we need is some kind of system for uniquely identifying resources, and
+rendering the appropriate URL given its parameters.  Most computer languages
+provide some form or other of checking of parameter correctness when making
+function calls.  Is it not silly then, that most web application
+frameworks—especially those based on templates—still involve the programmer in
+writing URLs when rendering pages?
+
+The goals of this library are:
+
+* To isolate the programmer's interface from the specifics URLs that the
+  cross-referenced resources are bound to;
+
+* To provide a system that better manages the list of resources that are
+  available from a web application, that can list them, serve them for test
+  programs, etc.
+
+* To implement a simple but efficient forward mapping parsing mechanism based on
+  aggregation of resources (the `chain-of-responsibility design pattern`__).
+
+__ http://en.wikipedia.org/wiki/Chain-of-responsibility_pattern
 
 
 Mapping Forward

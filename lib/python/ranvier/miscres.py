@@ -18,6 +18,10 @@ class LeafResource(Resource):
     """
     Base class for all leaf resources.
     """
+    def enum( self, enumv ):
+        # Declare the node a leaf.
+        enumv.declare_serve()
+
     def handle_base( self, ctxt ):
         # Just check that this resource is a leaf before calling the handler.
         if not ctxt.locator.isleaf():
@@ -42,7 +46,7 @@ class DelegaterResource(Resource):
         return self._next
 
     def enum( self, enumv ):
-        enumv.declare_anon(self._next)
+        enumv.branch_anon(self._next)
 
     def handle_base( self, ctxt ):
         # Call the handler.
@@ -62,35 +66,31 @@ class DelegaterResource(Resource):
 
 #-------------------------------------------------------------------------------
 #
-class CompVarResource(DelegaterResource):
+class VarResource(Resource):
     """
     Resource base class that inconditionally consumes one path component and
-    that forwards to another resource.  This resource does not allow being a
-    leaf (this would be possible, you could implement that if desired).
-
-    If you need to perform some validation, override the handle() method and
-    signal an error if your check fails.  The component has been set on the
-    context object.
+    that serves as a leaf.
     """
-    def __init__( self, compname, next_resource, **kwds ):
+    def __init__( self, compname, **kwds ):
         """
         'compname': if specified, we store the component under an attribute with
                     this name in the context.
         """
-        DelegaterResource.__init__(self, next_resource, **kwds)
+        Resource.__init__(self, **kwds)
+
         assert isinstance(compname, str)
         self.compname = compname
+        """The name of the attribute to store the component as."""
 
     def enum( self, enumv ):
-        enumv.declare_compvar(self.compname, self.getnext())
+        enumv.declare_serve(self.compname)
 
-    def handle_base( self, ctxt ):
+    def consume_component( self, ctxt ):
         if verbosity >= 1:
             ctxt.log("resolver: %s" % ctxt.locator.path[ctxt.locator.index:])
 
         # Make sure we're not at the leaf.
         if ctxt.locator.isleaf():
-            # We're at the leaf; No component specified.
             return ctxt.response.errorNotFound()
         
         # Get the name of the current component.
@@ -105,11 +105,42 @@ class CompVarResource(DelegaterResource):
         # Consume the component.
         ctxt.locator.next()
 
-        # Handle the resource.
+    def handle_base( self, ctxt ):
+        self.consume_component(ctxt)
+        return Resource.handle_base(self, ctxt)
+
+    def handle( self, txt ):
+        pass # Noop.
+
+
+class VarDelegaterResource(DelegaterResource, VarResource):
+    """
+    Resource base class that inconditionally consumes one path component and
+    that forwards to another resource.  This resource does not allow being a
+    leaf (this would be possible, you could implement that if desired).
+
+    If you need to perform some validation, override the handle() method and
+    signal an error if your check fails.  The component has been set on the
+    context object.
+    """
+    def __init__( self, compname, next_resource, **kwds ):
+        """
+        'compname': if specified, we store the component under an attribute with
+                    this name in the context.
+        """
+        VarResource.__init__(self, compname, **kwds)
+        DelegaterResource.__init__(self, next_resource, **kwds)
+
+    def enum( self, enumv ):
+        enumv.branch_var(self.compname, self.getnext())
+
+    def handle_base( self, ctxt ):
+        self.consume_component(ctxt)
         return DelegaterResource.handle_base(self, ctxt)
 
     def handle( self, txt ):
         pass # Noop.
+
 
 #-------------------------------------------------------------------------------
 #
@@ -146,12 +177,12 @@ class RemoveBase(DelegaterResource):
     """
     Resource that removes a fixed number of base components.
     """
-    def __init__( self, count, next, **kwds ):
-        DelegaterResource.__init__(self, next, **kwds)
+    def __init__( self, count, nextres, **kwds ):
+        DelegaterResource.__init__(self, nextres, **kwds)
         self.count = count
 
     def handle( self, ctxt ):
-        while xrange(self.count):
+        for c in xrange(self.count):
             ctxt.locator.next()
 
 

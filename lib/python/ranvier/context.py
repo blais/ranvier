@@ -81,7 +81,7 @@ class PathLocator(object):
     def uri( self, idx=1000 ):
         if self.path:
             rootloc = self.rootloc or '/'
-            r = rootloc + '/'.join(self.path[:idx])
+            r = join(rootloc, '/'.join(self.path[:idx]))
         else:
             r = self.rootloc or ''
         r += (self.trailing and '/' or '')

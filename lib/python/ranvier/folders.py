@@ -24,6 +24,8 @@ class FolderBase(Resource, dict):
     """
     def __init__( self, **children ):
         Resource.__init__(self, **children)
+        children.pop('resid', None)
+
         # Set whether we will redirect the root of the folder (as default) for
         # the client to display a trailing slash.
         self.redirect_leaf_as_dir = children.pop('_training_slash', True)
@@ -37,7 +39,7 @@ class FolderBase(Resource, dict):
 
     def enum( self, enumv ):
         for name, resource in self.iteritems():
-            enumv.declare_fixed(name, resource)
+            enumv.branch_static(name, resource)
 
     def handle_base( self, ctxt ):
         if verbosity >= 1:
@@ -53,7 +55,7 @@ class FolderBase(Resource, dict):
                 # relative paths will work in that directory.
                 return ctxt.response.redirect(ctxt.locator.uri() + '/')
 
-            return self.handle(ctxt)
+            return self.handle_default(ctxt)
         # else ...
         name = ctxt.locator.current()
 
@@ -78,20 +80,30 @@ class FolderBase(Resource, dict):
         if verbosity >= 1:
             ctxt.log("resolver: child %s found, calling it" % name)
 
+        # Let the folder do some custom handling.
+        if self.handle(ctxt):
+            return True
+
         ctxt.locator.next()
         return self.delegate(child, ctxt)
-
-    def handle( self, ctxt ):
-        """
-        Called to handle when this resource is requested as the leaf.
-        """
-        raise NotImplementedError
 
     def notfound( self, ctxt, name ):
         """
         Called when the child is not found, to return some child handler.
         """
         return None
+
+    def handle( self, ctxt ):
+        """
+        Called everytime control passes through this resource.
+        """
+        # Noop.
+
+    def handle_default( self, ctxt ):
+        """
+        Called to handle when this resource is requested as the leaf.
+        """
+        raise NotImplementedError
 
 
 #-------------------------------------------------------------------------------
@@ -104,20 +116,23 @@ class Folder(FolderBase):
     The default value can be either a string or a resource object.
     """
 
-    def __init__( self, _default=None, **children ):
+    def __init__( self, **children ):
         """
-        '_default' can be a string or a resource object.
+        If '_default' is specified, it should be a string or a resource object
+        to the default resource.
         """
+        self._default = children.pop('_default', None)
         FolderBase.__init__(self, **children)
-        self._default = _default
 
         # Try to get the child as a resource the right way, if we can.
-        if isinstance(_default, str):
+        if isinstance(self._default, str):
             try:
-                self._default = children[_default]
+                self._default = children[self._default]
             except KeyError:
+                # We keep the default as a string for the next time we reference
+                # it, we'll try again.
                 pass
-
+            
     def __setitem__( self, key, value ):
         dict.__setitem__(self, key, value)
 
@@ -139,7 +154,7 @@ class Folder(FolderBase):
         assert isinstance(self._default, (types.NoneType, Resource))
         return self._default
 
-    def handle( self, ctxt ):
+    def handle_default( self, ctxt ):
         default = self.getdefault()
         if default is None:
             if verbosity >= 1:
@@ -158,6 +173,12 @@ class FolderWithMenu(Folder):
     A folder resource handler who can render a default page that lists and
     allows access to all the subresources it contains.
     """
+    def enum( self, enumv ):
+        Folder.enum(self, enumv)
+
+        # This menu may be served as a leaf.
+        enumv.declare_serve()
+
     def genmenu( self, ctxt ):
         oss = StringIO.StringIO()
         print >> oss, '<h1>Resources menu</h1>'
@@ -168,17 +189,10 @@ class FolderWithMenu(Folder):
         print >> oss, '</ul>'
         return oss.getvalue()
 
-    def handle( self, ctxt ):
+    def handle_default( self, ctxt ):
         """
         Render a very simple list of the contents of this page.
         """
-        # If we have set a default, use it.
-        if self._default is not None:
-            return Folder.handle(self, ctxt)
-        
-        self.default_menu(ctxt)
-        
-    def default_menu( self, ctxt ):
         menu = self.genmenu(ctxt)
         template = '''
 <html>

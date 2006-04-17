@@ -18,7 +18,7 @@ class RanvierError(Exception):
 #-------------------------------------------------------------------------------
 #
 # For debugging.
-verbosity = 1
+verbosity = 0
 
 #-------------------------------------------------------------------------------
 #
@@ -27,6 +27,6 @@ from context import *
 from mapper import *
 from folders import *
 from miscres import *
-from respproxy import CGIResponse
+from respproxy import *
 
 

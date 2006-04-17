@@ -9,57 +9,48 @@
 
 Conversion:
 
-             imports-and-rename  handle
+             imports-and-rename  handle  enumv
 
-hume         
-walus        x
-carpool
-
-
-imports-and-rename: 
-* rename imports to ranvier, 
-* Replace all Resource to LeafResource where applicable
-
-handle:
-* Revise the names of all the handle* methods
-* Remove all direct calls to handle()
-* Rename all calls to handle_this() to handle() and make sure they are based on DelegaterResource
+hume         x                   x       x
+walus        x                   x
+carpool      x                   x
 
 
-* You need to convert hume's usermgmt.py resources as well as all its other
-  resources!
+X imports-and-rename: 
+X * rename imports to ranvier, 
+X * Replace all Resource to LeafResource where applicable
+X 
+X handle:
+X * Revise the names of all the handle* methods
+X * Remove all direct calls to handle()
 
+X * Review folders, the first arg changed and is now optional (_default).
 
+X * Check the handle methods of all the classes derived from Folder
+X * Rename all calls to handle_this() to handle() and make sure they are based on DelegaterResource
 
-* How would we implement a compvar resource at a leaf?  Isn't the model wrong
-  for this?  Should we not allow anonymous compvars?
+enumv:
+X * Implement all enumv methods, look for all calls to locator.current(), locator.next()
 
-  This is important, we have this case for the photos…
+X * The photo link does not show up in the carpool application
 
 
 
 
-
-* Move some of the resources back to hume, to avoid dependencies
-
-* Remove dependencies on hume::
-
-    13 matches for "response\." in buffer: resource.py
-        432:        response.setContentType('text/plain')
-        435:            response.write('\n')
-        580:                response.error(response.code.NotFound)
-         27:        response.redirect(self._target)
-         50:        response.error(response.code.Forbidden)
-        168:                    response.error(response.code.Forbidden)
 
 
 
 * Add positional arguments to the call to url().  For this you will
-  have to somehow save the order of the parameters somewhere.
+  have to somehow save the order of the parameters somewhere.  Then we need
+  tests for calls to url(), with all possible combinations.
 
 
-* We need to implement a method on the UrlMapper that can load it from it clean
-  rendered description.
+
+* We need to implement a method on the UrlMapper that can load itself from a
+  clean rendered description, the same as served by the enum resources, to work
+  from the tests.
+
+
 
 * Add a call so that the mapper implements the root handle method:
 
@@ -157,14 +148,9 @@ handle:
          return durl
 
 
-(misc)
-* Check out if WSGI dictates some kind of standard interface for implementing a
-  response proxy.
 
 
 (cleanup)
-* Run an import-check before submitting anywhere.
-
 * See if I cannot remove the redundant rootloc stored in the context and
   locator.  This is already stored in the URL mapper.
 
@@ -186,7 +172,6 @@ handle:
 * Send Ranvier information to twill list when the URL mapper for testing is
   complete.
 
-
 (docs)
 * In the docs, mention that the list of URLs can be used by a new developer to
   quickly get acquainted with the layout of a new project.  This could also be
@@ -197,15 +182,34 @@ handle:
 
 
 
+
+
+
+Future
+======
+
+* branch_var should accept a tuple of variable names, and the same should go for
+  declare_serve(), so that we can express consuming more than a single path
+  component:
+
+     /doc/<year>/<month>/<date>
+     /doc/<year>/<month>/<date>/view
+
+Interfaces
+----------
+
+* Check out if WSGI dictates some kind of standard interface for implementing a
+  response proxy.
+
+
 Query Parameters
-================
+----------------
 
 * Think about integrating the parameters with the query arguments at some point,
   so that we can generate URLs like this (maybe this could be done automatically
   by passing in extra arguments instead of raising an error):
 
      /a/bli/blou?myextra=42
-
 
 * The enumerator visitor could be augmented with a method to accept declaration
   of possible query arguments, some being mandatory (this sounds like a cool
@@ -216,40 +220,3 @@ Query Parameters
   resource.  The pretty renderer could take advantage of that by rendering a
   nice table with those, and the fields' titles could even be declared as well,
   so that we can render a good interface of a resource.
-
-
-
-Back into Hume
-==============
-
-* Add these back into hume, to be able to serve the URL mapper contents::
-
-    #-------------------------------------------------------------------------------
-    #
-    class EnumResource( Resource ):
-        """
-        Enumerate all the resources available from a resource tree.
-        """
-        def __init__( self, mapper, **kwds ):
-            Resource.__init__(self, **kwds)
-            self.mapper = mapper
-
-        def handle( self, ctxt ):
-            response.setContentType('text/plain')
-            for line in self.mapper.render():
-                response.write(line)
-                response.write('\n')
-
-
-    class PrettyEnumResource(Resource):
-        """
-        Output a rather nice page that describes all the pages that are being served
-        from the given mapper.
-        """
-        def __init__( self, mapper, **kwds ):
-            Resource.__init__(self, **kwds)
-            self.mapper = mapper
-
-        def handle( self, ctxt ):
-            response.setContentType('text/html')
-            response.write(self.mapper.pretty_render())

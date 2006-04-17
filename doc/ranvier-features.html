@@ -35,47 +35,98 @@
 <div class="contents topic">
 <p class="topic-title first"><a id="contents" name="contents">Contents</a></p>
 <ul class="auto-toc simple">
-<li><a class="reference" href="#introduction" id="id2" name="id2">1&nbsp;&nbsp;&nbsp;Introduction</a></li>
-<li><a class="reference" href="#mapping-forward" id="id3" name="id3">2&nbsp;&nbsp;&nbsp;Mapping Forward</a><ul class="auto-toc">
-<li><a class="reference" href="#chain-of-responsibility" id="id4" name="id4">2.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></li>
-<li><a class="reference" href="#naming-of-resources" id="id5" name="id5">2.2&nbsp;&nbsp;&nbsp;Naming of Resources</a></li>
+<li><a class="reference" href="#introduction" id="id3" name="id3">1&nbsp;&nbsp;&nbsp;Introduction</a></li>
+<li><a class="reference" href="#problem-statement-and-domains" id="id4" name="id4">2&nbsp;&nbsp;&nbsp;Problem Statement and Domains</a></li>
+<li><a class="reference" href="#mapping-forward" id="id5" name="id5">3&nbsp;&nbsp;&nbsp;Mapping Forward</a><ul class="auto-toc">
+<li><a class="reference" href="#chain-of-responsibility" id="id6" name="id6">3.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></li>
+<li><a class="reference" href="#naming-of-resources" id="id7" name="id7">3.2&nbsp;&nbsp;&nbsp;Naming of Resources</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#mapping-backward" id="id6" name="id6">3&nbsp;&nbsp;&nbsp;Mapping Backward</a><ul class="auto-toc">
-<li><a class="reference" href="#optimization-of-backmapping" id="id7" name="id7">3.1&nbsp;&nbsp;&nbsp;Optimization of BackMapping</a></li>
-<li><a class="reference" href="#static-maps" id="id8" name="id8">3.2&nbsp;&nbsp;&nbsp;Static Maps</a></li>
-<li><a class="reference" href="#unique-identifiers" id="id9" name="id9">3.3&nbsp;&nbsp;&nbsp;Unique Identifiers</a></li>
+<li><a class="reference" href="#mapping-backward" id="id8" name="id8">4&nbsp;&nbsp;&nbsp;Mapping Backward</a><ul class="auto-toc">
+<li><a class="reference" href="#optimization-of-backmapping" id="id9" name="id9">4.1&nbsp;&nbsp;&nbsp;Optimization of BackMapping</a></li>
+<li><a class="reference" href="#static-maps" id="id10" name="id10">4.2&nbsp;&nbsp;&nbsp;Static Maps</a></li>
+<li><a class="reference" href="#unique-identifiers" id="id11" name="id11">4.3&nbsp;&nbsp;&nbsp;Unique Identifiers</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#listing-urls" id="id10" name="id10">4&nbsp;&nbsp;&nbsp;Listing URLs</a></li>
-<li><a class="reference" href="#embedding-security" id="id11" name="id11">5&nbsp;&nbsp;&nbsp;Embedding Security</a></li>
-<li><a class="reference" href="#internal-redirects" id="id12" name="id12">6&nbsp;&nbsp;&nbsp;Internal Redirects</a></li>
-<li><a class="reference" href="#support-for-debugging" id="id13" name="id13">7&nbsp;&nbsp;&nbsp;Support for Debugging</a></li>
-<li><a class="reference" href="#a-routes-like-interface" id="id14" name="id14">8&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></li>
-<li><a class="reference" href="#other" id="id15" name="id15">9&nbsp;&nbsp;&nbsp;(Other)</a></li>
+<li><a class="reference" href="#listing-urls" id="id12" name="id12">5&nbsp;&nbsp;&nbsp;Listing URLs</a></li>
+<li><a class="reference" href="#embedding-security" id="id13" name="id13">6&nbsp;&nbsp;&nbsp;Embedding Security</a></li>
+<li><a class="reference" href="#internal-redirects" id="id14" name="id14">7&nbsp;&nbsp;&nbsp;Internal Redirects</a></li>
+<li><a class="reference" href="#support-for-debugging" id="id15" name="id15">8&nbsp;&nbsp;&nbsp;Support for Debugging</a></li>
+<li><a class="reference" href="#a-routes-like-interface" id="id16" name="id16">9&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></li>
+<li><a class="reference" href="#other" id="id17" name="id17">10&nbsp;&nbsp;&nbsp;(Other)</a></li>
 </ul>
 </div>
-<!-- 1  Introduction
-2  Mapping Forward
-  2.1  Chain of Responsibility
-  2.2  Naming of Resources
-3  Mapping Backward
-  3.1  Optimization of BackMapping
-  3.2  Static Maps
-  3.3  Unique Identifiers
-4  Listing URLs
-5  Embedding Security
-6  Internal Redirects
-7  Support for Debugging
-8  A Routes-Like Interface
-9  (Other) -->
+<!-- 1   Introduction
+2   Problem Statement and Domains
+3   Mapping Forward
+  3.1  Chain of Responsibility
+  3.2  Naming of Resources
+4   Mapping Backward
+  4.1  Optimization of BackMapping
+  4.2  Static Maps
+  4.3  Unique Identifiers
+5   Listing URLs
+6   Embedding Security
+7   Internal Redirects
+8   Support for Debugging
+9   A Routes-Like Interface
+10  (Other) -->
 <div class="section">
-<h1><a class="toc-backref" href="#id2" id="introduction" name="introduction">1&nbsp;&nbsp;&nbsp;Introduction</a></h1>
+<h1><a class="toc-backref" href="#id3" id="introduction" name="introduction">1&nbsp;&nbsp;&nbsp;Introduction</a></h1>
 <p>Mapping URLs is an important component of building web applications.
 &#8230;</p>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id3" id="mapping-forward" name="mapping-forward">2&nbsp;&nbsp;&nbsp;Mapping Forward</a></h1>
+<h1><a class="toc-backref" href="#id4" id="problem-statement-and-domains" name="problem-statement-and-domains">2&nbsp;&nbsp;&nbsp;Problem Statement and Domains</a></h1>
+<p>Let's consider some of the important parts of a typical web application
+framework:</p>
+<ol class="arabic simple">
+<li>Code that serves pages or performs a specific task when a URL is
+requested.  Let's call the documents served <strong>resources</strong> and the code that
+serves than <strong>resource handlers</strong>;</li>
+<li>There is usually a way to <strong>combine</strong> the resource handlers to take advantage
+of common functionality.  For example, code that fetches a user's preferences
+may be needed in many places, and we would like to write the code once.  This
+could be as simple as allowing the definition of functions, or the
+elaboration of a complex hierarchical object-based system.  This could be
+done via aggregation/composition or inheritance, or using other paradigms;</li>
+<li><strong>Pattern matching the URL</strong> to select a particular resource handler to map it
+to;</li>
+<li><strong>Capturing and validating</strong> the variable components and the query arguments
+from the URL request string and provide them to the resource handler.  This
+is a task similar to <strong>parsing</strong>;</li>
+<li><strong>Rendering other URLs back to the user</strong>.  These are actually <strong>delayed
+function calls</strong>, which depend on the user's future actions.</li>
+</ol>
+<div class="figure">
+<img alt="domains.png" src="domains.png" />
+<p class="caption">The principal goal of this library is to convert between the domain of URLs
+and the domain of code objects (resource handlers).</p>
+</div>
+<p>You can view this problem as mapping back and forth between two domains: the
+domain of URLs and the domain of source code.  As programmers, we should have
+little concern for the particular URLs that our resources are accessed from, if
+not for the correspondence between URL variable components and function
+parameters, or for purely aesthetic reasons.</p>
+<p>All we need is some kind of system for uniquely identifying resources, and
+rendering the appropriate URL given its parameters.  Most computer languages
+provide some form or other of checking of parameter correctness when making
+function calls.  Is it not silly then, that most web application
+frameworks&#8212;especially those based on templates&#8212;still involve the programmer in
+writing URLs when rendering pages?</p>
+<p>The goals of this library are:</p>
+<ul class="simple">
+<li>To isolate the programmer's interface from the specifics URLs that the
+cross-referenced resources are bound to;</li>
+<li>To provide a system that better manages the list of resources that are
+available from a web application, that can list them, serve them for test
+programs, etc.</li>
+<li>To implement a simple but efficient forward mapping parsing mechanism based on
+aggregation of resources (the <a class="reference" href="http://en.wikipedia.org/wiki/Chain-of-responsibility_pattern">chain-of-responsibility design pattern</a>).</li>
+</ul>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id5" id="mapping-forward" name="mapping-forward">3&nbsp;&nbsp;&nbsp;Mapping Forward</a></h1>
 <p>We can view URLs are function calls into a running computer program, i.e:</p>
 <pre class="literal-block">
 http://mysite.com/accounts/get_balance?user=blais&amp;accno=643843
@@ -104,7 +155,7 @@ resource is said to comply to the principles of REST if it does not have
 significant side-effects, i.e. if it does not rely on global state/variables as
 input.</p>
 <div class="section">
-<h2><a class="toc-backref" href="#id4" id="chain-of-responsibility" name="chain-of-responsibility">2.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></h2>
+<h2><a class="toc-backref" href="#id6" id="chain-of-responsibility" name="chain-of-responsibility">3.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></h2>
 <p>(explain resource system)</p>
 <p>One of the advantages in using a Chain of Responsibility pattern to implement
 the controller search is that complete flexibility is available to the
@@ -115,7 +166,7 @@ is passed along the search, etc.  This is much more powerful (and simpler) than
 a wildcard system.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id5" id="naming-of-resources" name="naming-of-resources">2.2&nbsp;&nbsp;&nbsp;Naming of Resources</a></h2>
+<h2><a class="toc-backref" href="#id7" id="naming-of-resources" name="naming-of-resources">3.2&nbsp;&nbsp;&nbsp;Naming of Resources</a></h2>
 <p>The overwhelmingly general case for leaf resources/controllers is that they are
 instantiated only once.  We thus take the opportunity to forego having the user
 enter resource names for each of these.  Instead, we reuse the names of the
@@ -126,7 +177,7 @@ the instances for later referral.</p>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id6" id="mapping-backward" name="mapping-backward">3&nbsp;&nbsp;&nbsp;Mapping Backward</a></h1>
+<h1><a class="toc-backref" href="#id8" id="mapping-backward" name="mapping-backward">4&nbsp;&nbsp;&nbsp;Mapping Backward</a></h1>
 <p>One problem with web applications is that due to the nature of the web
 application frameworks, they tend to be rather static and difficult to change.
 URLs are cross-referenced from page templates and sometimes build
@@ -142,7 +193,7 @@ appropriate place.</p>
 <p>A web application build this way can be completely rearranged without breaking.</p>
 <p>However, this flexibility makes using templates impossible.</p>
 <div class="section">
-<h2><a class="toc-backref" href="#id7" id="optimization-of-backmapping" name="optimization-of-backmapping">3.1&nbsp;&nbsp;&nbsp;Optimization of BackMapping</a></h2>
+<h2><a class="toc-backref" href="#id9" id="optimization-of-backmapping" name="optimization-of-backmapping">4.1&nbsp;&nbsp;&nbsp;Optimization of BackMapping</a></h2>
 <ul class="simple">
 <li>Ask each resource whether it is<ul>
 <li>Static</li>
@@ -154,13 +205,13 @@ appropriate place.</p>
 <p>FIXME todo</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id8" id="static-maps" name="static-maps">3.2&nbsp;&nbsp;&nbsp;Static Maps</a></h2>
+<h2><a class="toc-backref" href="#id10" id="static-maps" name="static-maps">4.2&nbsp;&nbsp;&nbsp;Static Maps</a></h2>
 <p>Since we already have a global registry of URL maps that we use to generate our
 URLs, we also provide the ability to map names to static and possibly external
 URLs.  This is similar to Routes&#8217; &#8220;static named routes&#8221; feature.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id9" id="unique-identifiers" name="unique-identifiers">3.3&nbsp;&nbsp;&nbsp;Unique Identifiers</a></h2>
+<h2><a class="toc-backref" href="#id11" id="unique-identifiers" name="unique-identifiers">4.3&nbsp;&nbsp;&nbsp;Unique Identifiers</a></h2>
 <p>FIXME do this, talk about the automatic conversion from the class names and the
 possibility to identify instances.</p>
 <blockquote>
@@ -174,7 +225,7 @@ base class.</li>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id10" id="listing-urls" name="listing-urls">4&nbsp;&nbsp;&nbsp;Listing URLs</a></h1>
+<h1><a class="toc-backref" href="#id12" id="listing-urls" name="listing-urls">5&nbsp;&nbsp;&nbsp;Listing URLs</a></h1>
 <p>One nice feature of our system is that we like to be able to get an entire list
 of the URLs served by the system.  This is extremely useful, because:</p>
 <ol class="arabic simple">
@@ -188,20 +239,20 @@ are entirely independent of the application URL layout.</li>
 <p>(#. Can inspect the various security credentials that each URL requires.)</p>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id11" id="embedding-security" name="embedding-security">5&nbsp;&nbsp;&nbsp;Embedding Security</a></h1>
+<h1><a class="toc-backref" href="#id13" id="embedding-security" name="embedding-security">6&nbsp;&nbsp;&nbsp;Embedding Security</a></h1>
 <p>The URLs can be grouped so that they share security access privileges.  For
 example, any URL beginning with <tt class="docutils literal"><span class="pre">/backstore</span></tt> could require administrative
 privileges.</p>
 <p>One way to do this</p>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id12" id="internal-redirects" name="internal-redirects">6&nbsp;&nbsp;&nbsp;Internal Redirects</a></h1>
+<h1><a class="toc-backref" href="#id14" id="internal-redirects" name="internal-redirects">7&nbsp;&nbsp;&nbsp;Internal Redirects</a></h1>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id13" id="support-for-debugging" name="support-for-debugging">7&nbsp;&nbsp;&nbsp;Support for Debugging</a></h1>
+<h1><a class="toc-backref" href="#id15" id="support-for-debugging" name="support-for-debugging">8&nbsp;&nbsp;&nbsp;Support for Debugging</a></h1>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id14" id="a-routes-like-interface" name="a-routes-like-interface">8&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></h1>
+<h1><a class="toc-backref" href="#id16" id="a-routes-like-interface" name="a-routes-like-interface">9&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></h1>
 <p>FIXME answer what is &#8220;Routes&#8221;</p>
 <ul class="simple">
 <li>provide an interface that is similar to routes, but that automatically creates
@@ -209,7 +260,7 @@ all the required resources underneath</li>
 </ul>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id15" id="other" name="other">9&nbsp;&nbsp;&nbsp;(Other)</a></h1>
+<h1><a class="toc-backref" href="#id17" id="other" name="other">10&nbsp;&nbsp;&nbsp;(Other)</a></h1>
 <p>Idea: in our resources traversal, we could put the query args together with the
 parameters in the URL itself&#8230; they are really conceptually the same&#8230;</p>
 </div>
