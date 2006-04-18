@@ -38,6 +38,8 @@ import demoapp
 #-------------------------------------------------------------------------------
 #
 rootloc = '/ranvier/demo'
+
+enable_callgraphs = 0
 callgraph_filename = '/tmp/relations'
 
 #-------------------------------------------------------------------------------
@@ -63,15 +65,17 @@ def main():
     # Ranvier to use.
     response_proxy = respproxy.CGIResponse(sys.stdout)
 
-    # Register a callgraph reporter.
-    relations_file = open(callgraph_filename, 'a')
-    mapper.enable_callgraph(FileCallGraphReporter(relations_file))
+    # Register a resources callgraph reporter.
+    if enable_callgraphs:
+        relations_file = open(callgraph_filename, 'a')
+        mapper.enable_callgraph(FileCallGraphReporter(relations_file))
 
     # Handle the resource.
     mapper.handle_request(path, args, response_proxy,
                           page=demoapp.PageLayout(mapper))
 
-    relations_file.close()
+    if enable_callgraphs:
+        relations_file.close()
 
 #-------------------------------------------------------------------------------
 #

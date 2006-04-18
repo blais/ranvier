@@ -82,8 +82,7 @@ class Resource(object):
         """
         # Register this node to the callgraph reporter, if active.
         if ctxt.callgraph:
-            if self.hasresid():
-                ctxt.callgraph.register_caller(self.getresid(ctxt.mapper))
+            ctxt.callgraph.register_caller(self.getresid(ctxt.mapper))
 
         # Handle this resource.
         return self.handle(ctxt)

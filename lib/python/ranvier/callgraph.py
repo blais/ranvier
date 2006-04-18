@@ -65,3 +65,4 @@ class FileCallGraphReporter(CallGraphReporter):
 
     def publish_relation( self, caller, target ):
         self.outf.write('%s %s\n' % (caller, target))
+
