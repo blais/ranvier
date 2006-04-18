@@ -27,7 +27,7 @@ class LeafResource(Resource):
         if not ctxt.locator.isleaf():
             return ctxt.response.errorNotFound()
 
-        return self.handle(ctxt)
+        return Resource.handle_base(self, ctxt)
 
 
 #-------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ class DelegaterResource(Resource):
 
     def handle_base( self, ctxt ):
         # Call the handler.
-        rcode = self.handle(ctxt)
+        rcode = Resource.handle_base(self, ctxt)
 
         # Support errors that does not use exception handling.  Typically it
         # would be better to raise an exception to unwind the chain of

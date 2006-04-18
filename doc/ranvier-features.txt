@@ -38,6 +38,7 @@ Mapping URLs is an important component of building web applications.
 
 
 
+
 Problem Statement and Domains
 =============================
 
@@ -211,8 +212,11 @@ Optimization of BackMapping
 FIXME todo write docs
 
 
+FIXME add callgraph thing, with a figure
 
+.. figure:: callgraph.png
 
+   The inter-resource call graph for the demo application of this package.
 
 
 

@@ -273,7 +273,12 @@ class UrlMapper(rodict.ReadOnlyDict):
             raise RanvierError(
                 "Error: Missing values attempting to map to a resource: %s" %
                 ', '.join(missing))
+    
+        # Register the target in the call graph, if enabled.
+        if self.callgraph_reporter:
+            self.callgraph_reporter.register_target(resid)
 
+        # Perform the substitution.
         return self._substitute(mapping.urltmpl, params, mapping.absolute)
 
     def mapurl_tmpl( self, resid, format='%s' ):
@@ -403,7 +408,8 @@ class UrlMapper(rodict.ReadOnlyDict):
             ctxt = HandlerContext(uri, args, self.rootloc)
 
             # Setup the callgraph reporter.
-            ctxt.callgraph = ctxt.callgraph_reporter
+            ctxt.callgraph = self.callgraph_reporter
+            ctxt.mapper = self
 
             # Standard stuff that we graft onto the context object.
             ctxt.response = response_proxy
@@ -425,6 +431,9 @@ class UrlMapper(rodict.ReadOnlyDict):
             except InternalRedirect, e:
                 uri, args = e.uri, e.args
                 # Loop again for the internal redirect.
+
+        if ctxt.callgraph:
+            ctxt.callgraph.complete()
 
     def enable_callgraph( self, reporter ):
         """

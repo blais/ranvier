@@ -81,7 +81,7 @@ class FolderBase(Resource, dict):
             ctxt.response.log("resolver: child %s found, calling it" % name)
 
         # Let the folder do some custom handling.
-        if self.handle(ctxt):
+        if Resource.handle_base(self, ctxt):
             return True
 
         ctxt.locator.next()
