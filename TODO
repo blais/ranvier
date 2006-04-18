@@ -2,133 +2,6 @@
    TODO: ranvier
 ===================
 
-(main features)
-
-* Put ranvier mappings in a Mappings class rather than to use a tuple (it's big
-  enough now)
-
-Conversion:
-
-             imports-and-rename  handle  enumv
-
-hume         x                   x       x
-walus        x                   x
-carpool      x                   x
-
-
-X imports-and-rename: 
-X * rename imports to ranvier, 
-X * Replace all Resource to LeafResource where applicable
-X 
-X handle:
-X * Revise the names of all the handle* methods
-X * Remove all direct calls to handle()
-
-X * Review folders, the first arg changed and is now optional (_default).
-
-X * Check the handle methods of all the classes derived from Folder
-X * Rename all calls to handle_this() to handle() and make sure they are based on DelegaterResource
-
-enumv:
-X * Implement all enumv methods, look for all calls to locator.current(), locator.next()
-
-X * The photo link does not show up in the carpool application
-
-
-
-
-
-
-
-* Add positional arguments to the call to url().  For this you will
-  have to somehow save the order of the parameters somewhere.  Then we need
-  tests for calls to url(), with all possible combinations.
-
-
-
-* We need to implement a method on the UrlMapper that can load itself from a
-  clean rendered description, the same as served by the enum resources, to work
-  from the tests.
-
-
-
-* Add a call so that the mapper implements the root handle method:
-
-  - Create a context object
-  - Catch the internal redirects and apply them automatically
-
-* Add tests for everything.
-
-  * We will write our own simple test by getting the list of resources and
-    attempting to fetch all of them.  We will need introspection on the list of
-    variables of each resource, so that we can generate random data.
-
-
-* Add the following methods:
-
-  - declare_param( ..., optional=True ) -> adds a query arg
-
-      ##     def declare_queryargs( self, varname, default=None, optional=False ):
-      ##         """
-      ##         Declare query arguments for this resource as a leaf.  Query arguments
-      ##         can be optional, and can have default values only if they're not
-      ##         optional.
-      ##         """
-      ##         assert not (optional and default)
-      ## ## FIXME todo
-
-
-    Only parameters can be optional.  Variables are required.
-
-    Find a way to map the position parameters to the URL, in order.
-
-  - Add a optional parameter 'extra' which can be used to indicate, for
-    informational purposes only, what extra data is involved/considered during
-    the traversal for a particular leaf resource.  This can be used to display
-    the privileges that are involved in accessing a single resource.
-
-* Add a UrlMapper.handle() method that takes care of the forward mapping.
-  This way, the mapper becomes the central point-of-control after the tree is
-  built.  handle method should create the context and protect the handle call
-  for internal redirects.
-
-* Implement and test internal redirects.
-
-  Investigate this: when you just return a Location: header without a status,
-  Apache goes into an infinite loop.  What is this implementation of internal
-  redirect?  Look for internal redirection on Wikipedia.
-
-* Provide a simple template replacement routine that replaces::
-
-      <a href="@@Profile(username=username, ...)">Search</a>
-
-  This should be configured to use an appropriate mapper.
-
-
-
-* Plop in a global ``url()`` function for doing the inverse mappings::
-
-    from app import url
-    def url( *args, **kwds ):
-        # Use the global URL mapper instance.
-        return mapper.url(*args, **kwds)
-
-* Add a function to initialize ::
-
-    __builtin__.__dict__['url'] = mapper.url()
-
-  Call this function from the carpool app framework.
-
-
-(port all code)
-* Move some resources back into hume
-
-* Implement enum() on all the resource classes everywhere.
-
-* Make sure for all resource classes that we initialize the parent resource
-  class for its resid.
-
-
 (atocha forms)
 
 * We need to figure out some kind of solution for the forms which are defined at
@@ -147,24 +20,10 @@ X * The photo link does not show up in the carpool application
              url(*args, **kwds)
          return durl
 
+  - Make sure the action mapping supports mapping the scriptsdir as well.
 
 
 
-(cleanup)
-* See if I cannot remove the redundant rootloc stored in the context and
-  locator.  This is already stored in the URL mapper.
-
-* Implement all the remaining features described in the docs
-
-
-(problems)
-* What if I want to refer to a page along the path that is not a leaf?  How do
-  we do that?  Like a parent directory
-
-* For folder with default: we should declare the directory as being served as
-  well, but how do we deal with the conflict in names?  It consists in two
-  differents paths leading to the same resource.  Should we perhaps check that
-  resources given during a single visit be unique?  What does it all mean?
 
 
 
@@ -182,11 +41,11 @@ X * The photo link does not show up in the carpool application
 
 
 
-
-
-
 Future
 ======
+
+Multiple Components in a Row
+----------------------------
 
 * branch_var should accept a tuple of variable names, and the same should go for
   declare_serve(), so that we can express consuming more than a single path
@@ -195,6 +54,13 @@ Future
      /doc/<year>/<month>/<date>
      /doc/<year>/<month>/<date>/view
 
+
+Features in Docs
+----------------
+
+* Implement all the remaining features described in the docs
+
+
 Interfaces
 ----------
 
@@ -202,8 +68,17 @@ Interfaces
   response proxy.
 
 
+Random Tests
+------------
+
+* We could use the introspection provided by url_variables() to generate
+  fetchers with random data for urls that require arguments.
+
+
 Query Parameters
 ----------------
+
+* We also need to support query parameters for static mappings.
 
 * Think about integrating the parameters with the query arguments at some point,
   so that we can generate URLs like this (maybe this could be done automatically
@@ -220,3 +95,50 @@ Query Parameters
   resource.  The pretty renderer could take advantage of that by rendering a
   nice table with those, and the fields' titles could even be declared as well,
   so that we can render a good interface of a resource.
+
+* Add the following methods::
+
+    declare_param( ..., optional=True ) -> adds a query arg
+
+      ##     def declare_queryargs( self, varname, default=None, optional=False ):
+      ##         """
+      ##         Declare query arguments for this resource as a leaf.  Query arguments
+      ##         can be optional, and can have default values only if they're not
+      ##         optional.
+      ##         """
+      ##         assert not (optional and default)
+      ## ## FIXME todo
+
+
+    Only parameters can be optional.  Variables are required.
+
+    Find a way to map the position parameters to the URL, in order.
+
+Extra and Privileges
+--------------------
+
+- Add a optional parameter 'extra' which can be used to indicate, for
+  informational purposes only, what extra data is involved/considered during
+  the traversal for a particular leaf resource.  This can be used to display
+  the privileges that are involved in accessing a single resource.
+
+
+Template Replacement
+--------------------
+
+* We could provide a simple template replacement library in this package that
+  replaces a simple syntax embedded in HTML::
+
+      <a href="@@Profile(username=username, ...)">Search</a>
+
+  This should be configured to use an appropriate mapper beforehand.  This
+  should be trivial to implement.  Templates are a really stupid idea though--at
+  least for a programmer--so this should be given low priority.
+
+
+Redirection Oddity
+------------------
+
+* Investigate this: when you just return a Location: header without a status,
+  Apache goes into an infinite loop.  What is this implementation of internal
+  redirect?  Look for internal redirection on Wikipedia.

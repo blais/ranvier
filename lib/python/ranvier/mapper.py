@@ -7,143 +7,25 @@ URL mapper and enumerator classes.
 """
 
 # stdlib imports
-import sys, string, StringIO
+import sys, string, StringIO, re
 from os.path import join, normpath
 import types
 
 # ranvier imports
-from ranvier import rodict, RanvierError
+from ranvier import rodict, RanvierError, respproxy
 from ranvier.resource import Resource
 from ranvier.miscres import LeafResource
+from ranvier.context import HandlerContext, InternalRedirect
+from ranvier.enumerator import Enumerator
+
+
+__all__ = ['UrlMapper', 'EnumResource']
 
 
 #-------------------------------------------------------------------------------
 #
-class EnumVisitor(object):
-    """
-    Visitor for enumerators.  This class has methods so that the resources may
-    declare what resources they delegate to, what path components they consume
-    and which are variables.  This is meant to be the interface that the
-    resource object uses to declare possible delegations to other handlers in
-    the chain of responsibility.
-    """
+compre = re.compile('^\\(([a-z]+?)\\)$')
 
-    def __init__( self ):
-        self.branchs = []
-        """A list of the possible branchs for a specific resource node.  This
-        list takes on the form of a triple of (type, resource, arg), where arg
-        is either None, a fixed component of a variable name depending on the
-        type of the branch."""
-
-        self.leaf = None
-        """Flag that indicates if the visited node can be served as a leaf."""
-
-        self.leaf_var = None
-        """Variable for the leaf, if any."""
-
-
-    def _add_branch( self, kind, delegate, arg ):
-        if not isinstance(delegate, Resource):
-            raise RanvierError("Delegate %s must be derived from Resource." %
-                               delegate)
-        self.branchs.append( (kind, delegate, arg) )
-
-    # Each of the three following functions declares an individual branch of the
-    # resource tree.
-
-    def declare_serve( self, varname=None, default=None ):
-        """
-        Declare that the given resource may serve the contents (at this point in
-        the path).  'varname' can be used to declare that it consumes some path
-        components as well (optional).
-        """
-        assert not self.leaf
-        self.leaf = True
-        if varname is not None:
-            self.leaf_var = (varname, default)
-
-    def branch_anon( self, delegate ):
-        """
-        Declare an anonymous delegate branch.
-        """
-        self._add_branch(Enumerator.BR_ANONYMOUS, delegate, None)
-
-    def branch_static( self, component, delegate ):
-        """
-        Declare the consumption of a fixed component of the locator to a
-        delegate branch.
-        """
-        self._add_branch(Enumerator.BR_STATIC, delegate, component)
-
-    def branch_var( self, varname, delegate, default=None ):
-        """
-        Declare a variable component delegate.  This is used if your resource
-        consumes a variable path of the locator.
-        """
-        self._add_branch(Enumerator.BR_VARIABLE, delegate, (varname, default))
-
-    def get_branches( self ):
-        """
-        Accessor for branches.
-        """
-        return self.branchs
-
-    def isleaf( self ):
-        """
-        Returns true if the visited node has declared itself a leaf.
-        """
-        return self.leaf
-
-
-class Enumerator(object):
-    """
-    A class used to visit and enumerate all the possible URL paths that are
-    served by a resource tree.
-    """
-    BR_ANONYMOUS, BR_STATIC, BR_VARIABLE = xrange(3)
-    """Delegate types."""
-
-    def __init__( self ):
-        self.accpaths = []
-        """The entire list of accumulated paths resulting from the traversal."""
-
-    def visit_root( self, resource ):
-        return self.visit(resource, [], 0)
-
-    def visit( self, resource, path, level ):
-        """
-        Visit a resource node.  This method calls itself recursively.
-        * 'resources' is the resource node to visit.
-        * 'path' is the current path of components and variables that this
-          visitor is currently at.
-        """
-        # Visit the resource and let it declare the properties of its
-        # propagation/search.
-        visitor = EnumVisitor()
-        resource.enum(visitor)
-
-        # If we have reached a leaf node (i.e. the node has declared itself a
-        # potential leaf), add the path to the list of paths.
-        if visitor.isleaf():
-            if visitor.leaf_var:
-                # Append a path with a variable component at the end.
-                path = path + [(Enumerator.BR_VARIABLE, None, visitor.leaf_var)]
-                self.accpaths.append(path)
-            else:
-                self.accpaths.append(list(path))
-
-        # Process the possible paths.  This is a breadth-first search.
-        branches = visitor.get_branches()
-        for branch in branches:
-            kind, delegate, arg = branch
-            self.visit(delegate, path + [branch], level+1)
-
-    def getpaths( self ):
-        return self.accpaths
-
-
-#-------------------------------------------------------------------------------
-#
 class UrlMapper(rodict.ReadOnlyDict):
     """
     A class that contains mappings from the resource names to the URLs to be
@@ -156,8 +38,11 @@ class UrlMapper(rodict.ReadOnlyDict):
     and parameters.  It is also a very safe way to force the creation of URLs
     that are always valid.
     """
-    def __init__( self, resource_root=None, namexform=None, rootloc=None ):
+    def __init__( self, root_resource=None, namexform=None, rootloc=None ):
         rodict.ReadOnlyDict.__init__(self)
+
+        self.root_resource = root_resource
+        """The root resource to start mapping forward from."""
 
         self.rootloc = rootloc
         """A root directory to which the resource tree being handled is
@@ -172,24 +57,28 @@ class UrlMapper(rodict.ReadOnlyDict):
         the resource instance.  You can override this to provide your own
         favourite scheme."""
 
-        if resource_root is not None:
-            self.initialize(resource_root)
+        if root_resource is not None:
+            self.initialize(root_resource)
 
-    def initialize( self, root ):
+    def initialize( self, root_resource ):
         """
         Add the resource from the given root to the current mapper.  You need to
         call this at least once before using the mapper to fill it with some
         values, and with resources at the same resource level.
         """
+        assert root_resource
+        self.root_resource = root_resource
+        
         enumv = Enumerator()
-        enumv.visit_root(root)
+        enumv.visit_root(root_resource)
 
         for path in enumv.getpaths():
             # Compute the URL string and a dictionary with the defaults.
             # Defaults that are unset are left to None.
             components = []
+            positional = []
             defaults_dict = {}
-            last_resource = root
+            last_resource = root_resource
 
             for kind, resource, arg in path:
                 # Keep a reference to the last resource.
@@ -205,25 +94,95 @@ class UrlMapper(rodict.ReadOnlyDict):
 
                 elif kind is Enumerator.BR_VARIABLE:
                     varname, vardef = arg
+
+                    # Check for variable collisions.
+                    if varname in defaults_dict:
+                        raise RanvierError(
+                            "Variable name collision in URI path.")
+
                     defaults_dict[varname] = vardef
-                    components.append('%%(%s)s' % varname)
+                    positional.append(varname)
+                    components.append('(%s)' % varname)
 
             # Calculate the resource-id from the resource at the leaf.
             resid = last_resource.getresid(self)
 
-            # Check that the resource-id has not already been seen.
-            if resid in self.mappings:
-                raise RanvierError("Error: Duplicate resource id '%s'." % resid)
+            mapping = Mapping(resid,
+                              '/'.join(components),
+                              defaults_dict,
+                              positional,
+                              last_resource)
+            self._add_mapping(resid, mapping)
 
-            # Add the mapping.
-            self.mappings[resid] = ('/'.join(components),
-                                    defaults_dict,
-                                    last_resource)
+    def _add_mapping( self, resid, mapping ):
+        """
+        Add the given mapping, check for uniqueness.
+        """
+        # Check that the resource-id has not already been seen.
+        if resid in self.mappings:
+            raise RanvierError("Error: Duplicate resource id '%s'." % resid)
+
+        # Store the mapping.
+        self.mappings[resid] = mapping
+        
+    def add_static( self, resid, urlpattern, defaults={} ):
+        """
+        Add a static URL mapping from 'resid' to the given URL pattern.  This
+        may be an external mapping.  The rootlocation will not be prepended to
+        the resulting mapping.
+
+        'urlpattern' is a string that may contain parenthesized expressions to
+        declare variable component names, for example::
+
+            http://mycatalog.com/book/(isbn)/comments
+
+        This declares a mapping where 'isbn' will be a required argument to
+        produce the mapping.
+        """
+        assert isinstance(resid, str)
+        
+        # Parse the URL pattern.
+        components = []
+        positional = []
+        defaultsc, defaults_dict = defaults.copy(), {}
+
+        for comp in urlpattern.split('/'):
+            mo = compre.match(comp)
+            if mo:
+                varname = mo.group(1)
+
+                # Check for variable collisions.
+                if varname in defaults_dict:
+                    raise RanvierError(
+                        "Variable name collision in URI path.")
+
+                defaults_dict[varname] = defaultsc.pop(varname, None)
+                positional.append(varname)
+                components.append('(%s)' % varname)
+            else:
+                if ')' in comp or '(' in comp:
+                    raise RanvierError(
+                        "Error: Invalid component in static mapping '%s'." %
+                        urlpattern)
+                components.append(comp)
+                
+        # Check that the provided defaults are all valid (i.e. there is no a
+        # default that does not match a variable in the given URL pattern).
+        if defaultsc:
+            raise RanvierError(
+                "Error: invalid defaults for given URL pattern.")
+
+        # Add the mapping.
+        mapping = Mapping(resid,
+                          '/'.join(components),
+                          defaults_dict,
+                          positional, static=True)
+        self._add_mapping(resid, mapping)
 
     def _get_url( self, res ):
         """
         Get the URL string and defaults dict for a resource-id, supporting all
-        the types described in url().
+        the types described in mapurl().
         """
         # Support passing in resource instances and resource classes as well.
         if isinstance(res, Resource):
@@ -236,21 +195,25 @@ class UrlMapper(rodict.ReadOnlyDict):
 
         # Get the desired mapping.
         try:
-            urlstr, defdict, resobj = self.mappings[resid]
+            mapping = self.mappings[resid]
         except KeyError:
             raise RanvierError("Error: invalid resource-id '%s'." % resid)
         
-        return resid, urlstr, defdict, resobj
+        return mapping
 
-    def _subst_url( self, urlstr, params ):
+    def _subst_url( self, urltmpl, params, static=False ):
         """
         Substitute the parameters in the URL string and build and return the
         final URL.
         """
-        mapped_url = urlstr % params
-        return '/'.join((self.rootloc or '', mapped_url))
+        mapped_url = urltmpl % params
 
-    def url( self, res, **kwds ):
+        if not static:
+            return '/'.join((self.rootloc or '', mapped_url))
+        else:
+            return mapped_url
+
+    def mapurl( self, resid, *args, **kwds ):
         """
         Map a resource-id to its URL, filling in the parameters and making sure
         that they are valid.  The keyword arguments are expected to match the
@@ -260,17 +223,33 @@ class UrlMapper(rodict.ReadOnlyDict):
         2. the class object of the resource (if there is only one of them
            instanced in the tree)
         3. the instance of the resource
-        """
-        resid, urlstr, defdict, resobj = self._get_url(res)
 
+        Positional arguments can be used as well, and they are used to fill in
+        the URL string with the missing components, in left-to-right order (root
+        to leaf).
+        """
+        mapping = self._get_url(resid)
+
+        nbpos = len(mapping.positional)
+        if len(args) > nbpos:
+            raise RanvierError("Error: Resource '%s' takes at most '%d' "
+                               "arguments." % (mapping.resid, nbpos))
+
+        for posname, posarg in zip(mapping.positional, args):
+            if posname in kwds:
+                raise RanvierError("Error: Creating URL for '%s', got multiple "
+                                   "values for component '%s'." %
+                                   (mapping.resid, posname))
+            kwds[posname] = posarg
+            
         # Prepare the defaults dict with the provided values.
-        params = defdict.copy()
+        params = mapping.defdict.copy()
         for cname, cvalue in kwds.iteritems():
             # Check all provided values are legal.
             if cname not in params:
                 raise RanvierError(
                     "Error: '%s' is not a valid component key for mapping the "
-                    "'%s' resource.'" % (cname, resid))
+                    "'%s' resource.'" % (cname, mapping.resid))
             params[cname] = cvalue
 
         # Check that all the required values have been provided.
@@ -282,43 +261,35 @@ class UrlMapper(rodict.ReadOnlyDict):
                 "Error: Missing values attempting to map to a resource: %s" %
                 ', '.join(missing))
 
-        return self._subst_url(urlstr, params)
-        
-    def url_tmpl( self, res, format='%s' ):
+        return self._subst_url(mapping.urltmpl, params, mapping.static)
+
+    def mapurl_tmpl( self, resid, format='%s' ):
         """
-        Same as url() above, except that instead of replacing the required
+        Same as mapurl() above, except that instead of replacing the required
         parameters with supplied values, we replace them with their own name.
         This is used for rendering a readable version of the resources.
         """
-        resid, urlstr, defdict, resobj = self._get_url(res)
+        mapping = self._get_url(resid)
 
         # Prepare the defaults dict with the provided values.
-        params = dict((x, format % x) for x in defdict.iterkeys())
+        params = dict((x, format % x) for x in mapping.defdict.iterkeys())
 
-        return self._subst_url(urlstr, params)
+        return self._subst_url(mapping.urltmpl, params, mapping.static)
 
-    def getmappings( self ):
+    def url_variables( self, resid ):
         """
-        Return an inverse mapping of (url, resid, defdict) triples sorted by
-        URL.
+        Returns a tuple of URL variables for a specific resource-id.
+        This is some form of introspection on the URLs.
+        This can be useful for a test program.
         """
-        class ResContainer: pass
-        mappings = []
-        for resid, (url, defdict, resobj) in self.iteritems():
-            o = ResContainer()
-            o.resid = resid
-            o.url = url
-            o.defdict = defdict
-            o.resobj = resobj
-            mappings.append(o)
-        mappings.sort(key=lambda x: x.url)
-        return mappings
+        mapping = self._get_url(resid)
+        return tuple(mapping.positional)
 
     def render( self ):
         """
         Render the contents of the mapper so that it can be reconstructed from
         the given text, to be able to create some URLs.  This returns a list of
-        lines (str) to output.
+        lines (str) of output.
 
         Cool idea: This can be served from a resource (enabled only in test
         mode) on your server, so that the automated tests can use this to
@@ -326,22 +297,132 @@ class UrlMapper(rodict.ReadOnlyDict):
         entirely shuffle the URLs in your web application and your entire test
         suite would still keep working.
         """
-        invmap = self.getmappings()
+        mappings = list(self.itervalues())
+        mappings.sort(key=lambda x: x.urltmpl)
 
         # Format for alignment for nice printing (and this does make the parsing
         # any more complicated.
-        if invmap:
-            maxidlen = max(len(x.resid) for x in invmap)
+        if mappings:
+            maxidlen = max(len(x.resid) for x in mappings)
         else:
             maxidlen = 0
-        fmt = '%%-%ds : /%%s' % maxidlen
+        fmt = '%%-%ds : %%s' % maxidlen
 
-        return [fmt % (o.resid, o.url) for o in invmap]
+        return [fmt % (o.resid, o.urlpattern) for o in mappings]
 
         # Note: we are considering whether rendering the defaults-dict would be
         # interesting for reconstructing the UrlMapper from a list of lines, as
         # would be done for generating test cases.  For now we ignore the
         # defdict.
+
+    @staticmethod
+    def load( lines ):
+        """
+        Load and create URL mapper from the given set of rendered lines.
+        See render() for more details.
+        """
+        ure = re.compile('\\(([a-z]+?)\\)')
+
+        mapper = UrlMapper()
+
+        for line in lines:
+            # Split the id and urlpattern.
+            try:
+                resid, urlpattern = map(str.strip, line.split(':'))
+            except ValueError:
+                raise RanvierError("Warning: Error parsing line '%s' on load." %
+                                   line)
+        
+            # Parse the components in the urlpattern.
+            positional = ure.findall(urlpattern)
+            
+            # Defaults dictionary.  Note: the renderer does not provide the
+            # defaults yet. We could use a pickle eventually, or whatever.  I
+            # simple like readable formats for now.
+            defdict = dict((x, None) for x in positional)
+
+            # Add the mapping to the mapper, without the resource handler
+            # objects.
+            mapping = Mapping(resid, urlpattern, defdict, positional)
+            mapper.mappings[resid] = mapping
+
+        return mapper
+
+
+    def handle_request( self, uri, args, response_proxy=None, **extra ):
+        """
+        Handle a request, via the resource tree.  This is the pattern matching /
+        forward mapping part.
+
+        'uri': the requested URL, including the rootloc, if present.
+
+        'args': a dict of the arguments (POST or GET variables)
+
+        'response_proxy': an adapter for the resources that Ranvier provides.
+
+        'extra': the extra keyword args are added as attribute to the context
+        object that the handlers receive
+        """
+
+        if self.root_resource is None:
+            raise RanvierError("Error: You need to initialize the mapper with "
+                               "a resource to perform forward mapping.")
+
+        assert isinstance(uri, str)
+        # assert isinstance(args, dict) # Note: Also allow dict-like interfaces.
+        assert isinstance(response_proxy,
+                          (types.NoneType, respproxy.ResponseProxy))
+        
+        while True:
+            # Remove the root location if necessary.
+            if self.rootloc is not None:
+                if not uri.startswith(self.rootloc):
+                    raise RanvierError("Error: Incorrect root location '%s' "
+                                       "for requested URI '%s'." %
+                                       (self.rootloc, uri))
+                uri = uri[len(self.rootloc):]
+
+            # Create a context for the handling.
+            ctxt = HandlerContext(uri, args, self.rootloc)
+
+            # Standard stuff that we graft onto the context object.
+            ctxt.response = response_proxy
+
+            # Provide in the context a function to backmap URLs from resource
+            # ids.  We should not need more than this, so we try not to provide
+            # access to the full mapper to resource handlers, at least not until
+            # we really need it.
+            ctxt.mapurl = self.mapurl
+
+            # Add extra payload on the context object.
+            for aname, avalue in extra.iteritems():
+                setattr(ctxt, aname, avalue)
+
+            # Handle the request.
+            try:
+                self.root_resource.handle_base(ctxt)
+                break # Success, break out.
+            except InternalRedirect, e:
+                uri, args = e.uri, e.args
+                # Loop again for the internal redirect.
+
+            
+class Mapping(object):
+    """
+    Internal class used for storing mappings.
+    """
+    def __init__( self, resid, urlpattern, defdict, positional,
+                  resobj=None, static=False ):
+        # Build a usable URL string template.
+        urltmpl = urlpattern.replace('(', '%(').replace(')', ')s')
+
+        self.resid = resid
+        self.urlpattern = urlpattern
+        self.urltmpl = urltmpl
+        self.defdict = defdict
+        self.positional = positional
+        self.resource = resobj
+        self.static = static
 
 
 #-------------------------------------------------------------------------------
@@ -369,60 +450,4 @@ class EnumResource(LeafResource):
         for line in self.mapper.render():
             ctxt.response.write(line)
             ctxt.response.write('\n')
-
-#-------------------------------------------------------------------------------
-#
-def pretty_render_mapper( mapper ):
-    """
-    Output an HTML representation of the contents of the mapper (a str).
-
-    This representation is meant to serve to the user for debugging, and
-    includes the docstrings of the resource classes, if present.
-    """
-    oss = StringIO.StringIO()
-    oss.write('''
-<html>
-  <head>
-    <title>URL Mapper Resources</title>
-    <meta name="generator" content="Ranvier Pretty Resource Renderer" />
-    <style type="text/css"><!--
-body { font-size: smaller }
-.resource-title { white-space: nowrap; }
-p.docstring { margin-left: 2em; }
---></style>
- <body>
-''')
-
-    oss.write(pretty_render_mapper_body(mapper))
-
-    oss.write('''
- </body>
-</html>
-''')
-    return oss.getvalue()
-
-
-def pretty_render_mapper_body( mapper ):
-    """
-    Pretty-render just the body for the page that describes the contents of the
-    mapper.
-    """
-    oss = StringIO.StringIO()
-    oss.write('<h1>URL Mapper Resources</h1>\n')
-    for o in mapper.getmappings():
-        # Prettify the URL somewhat for user readability.
-        url = mapper.url_tmpl(o.resid, '[<i>%s</i>]')
-
-        # Make the URL clickable if it contains no parameters.
-        if not o.defdict:
-            url = '<a href="%s">%s</a>' % (url, url)
-
-        m = {'resid': o.resid,
-             'url': url}
-        oss.write('''
-  <h2 class="resource-title"><tt>%(resid)s: %(url)s</tt></h2>
-''' % m)
-        if o.resobj.__doc__:
-            oss.write('  <p class="docstring">%s</p>' % o.resobj.__doc__)
-    return oss.getvalue()
 

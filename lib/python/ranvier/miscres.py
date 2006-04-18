@@ -87,7 +87,8 @@ class VarResource(Resource):
 
     def consume_component( self, ctxt ):
         if verbosity >= 1:
-            ctxt.log("resolver: %s" % ctxt.locator.path[ctxt.locator.index:])
+            ctxt.response.log("resolver: %s" %
+                              ctxt.locator.path[ctxt.locator.index:])
 
         # Make sure we're not at the leaf.
         if ctxt.locator.isleaf():
@@ -144,7 +145,7 @@ class VarDelegaterResource(DelegaterResource, VarResource):
 
 #-------------------------------------------------------------------------------
 #
-class Redirect(LeafResource):
+class RedirectResource(LeafResource):
     """
     Simply redirect to a fixed location, identified by a resource-id.  This uses
     the mapper in the context to map the target to an URL.
@@ -154,7 +155,7 @@ class Redirect(LeafResource):
         self.targetid = targetid
 
     def handle( self, ctxt ):
-        target = ctxt.mapper.url(self.targetid)
+        target = ctxt.mapurl(self.targetid)
         ctxt.response.redirect(target)
 
 
@@ -168,7 +169,7 @@ class LogRequests(DelegaterResource):
     fmt = '----------------------------- %s'
 
     def handle( self, ctxt ):
-        ctxt.log(self.fmt % ctxt.locator.uri())
+        ctxt.response.log(self.fmt % ctxt.locator.uri())
 
 
 #-------------------------------------------------------------------------------

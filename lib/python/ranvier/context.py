@@ -7,7 +7,7 @@ Path locator class.
 """
 
 # stdlib imports
-import sys
+import sys, types
 from os.path import join, normpath
 
 
@@ -21,15 +21,24 @@ class HandlerContext(object):
     """
     def __init__( self, uri, args, rootloc=None ):
 
-        self.rootloc = rootloc
-        """A root directory to which the resource tree being handled is
-        appended."""
-
-        self.locator = PathLocator.from_uri(uri, rootloc=rootloc)
+        self.locator = PathLocator.from_uri(uri, rootloc)
         """Locator object that is updated between handler to handler."""
 
         self.args = args
         """Arguments, as they come from the framework."""
+
+    def redirect( self, uri, args=None ):
+        """
+        Internal redirect using a Ranvier exception.
+        """
+        raise InternalRedirect(uri, args)
+
+        # Note: We might consider in the future providing a method that accepts
+        # a resource-id, but this will require also providing a way to enter the
+        # resource mapping's parameters.  For now, it's not pretty enough, if
+        # you want to do this, use the following syntax::
+        #
+        #   ctxt.redirect(ctxt.mapurl(resid, ...), args)
 
     def log( self, msg ):
         """
@@ -89,6 +98,22 @@ class PathLocator(object):
 
     def current_uri( self ):
         return self.uri(self.index)
+
+
+#-------------------------------------------------------------------------------
+#
+class InternalRedirect(Exception):
+    """
+    Exception that you can use to perform internal redirects.  It is caught and
+    dealt and handled by the mapper so it's transparent to your application
+    framework.
+    """
+    def __init__( self, uri, args=None ):
+        Exception.__init__(self, "Internal redirection to '%s'." % uri)
+        assert isinstance(uri, str)
+        assert isinstance(args, (types.NoneType, dict))
+        self.uri, self.args = uri, args
+
 
 
 #===============================================================================

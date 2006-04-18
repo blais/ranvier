@@ -33,8 +33,7 @@ Introduction
 
 Mapping URLs is an important component of building web applications.
 …
-
-
+(FIXME add more)
 
 
 
@@ -139,7 +138,7 @@ __ http://en.wikipedia.org/wiki/Representational_State_Transfer
 Chain of Responsibility
 -----------------------
 
-(explain resource system)
+(FIXME explain resource system and pattern matching algorithm)
 
 One of the advantages in using a Chain of Responsibility pattern to implement
 the controller search is that complete flexibility is available to the
@@ -198,7 +197,7 @@ Optimization of BackMapping
   * A fixed name (e.g. user)
   * Programmatic (cannot optimize)
 
-FIXME todo
+FIXME todo write docs
 
 
 
@@ -261,12 +260,14 @@ One way to do this
 Internal Redirects
 ==================
 
+FIXME write it
 
 
 
 Support for Debugging
 =====================
 
+FIXME write it
 
 
 A Routes-Like Interface

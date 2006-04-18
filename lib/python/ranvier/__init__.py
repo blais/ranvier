@@ -8,6 +8,12 @@ Package import.  Just import this and you should be fine.
 
 #-------------------------------------------------------------------------------
 #
+# Global flag used to turn on some debugging and tracing for development.
+verbosity = 0
+
+
+#-------------------------------------------------------------------------------
+#
 class RanvierError(Exception):
     """
     Class used for errors due to the misuse of the Atocha API.  An occurrence of
@@ -15,10 +21,6 @@ class RanvierError(Exception):
     using Atocha.
     """
 
-#-------------------------------------------------------------------------------
-#
-# For debugging.
-verbosity = 0
 
 #-------------------------------------------------------------------------------
 #
@@ -28,5 +30,6 @@ from mapper import *
 from folders import *
 from miscres import *
 from respproxy import *
+from pretty import *
 
 

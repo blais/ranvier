@@ -18,7 +18,7 @@ any web application framework out there.
 # stdlib imports
 import sys, os, urlparse
 from os.path import dirname, join
-import cgi, cgitb; cgitb.enable()
+import cgitb; cgitb.enable()
 import pprint
 import cPickle as pickle
 
@@ -29,6 +29,7 @@ sys.path.append(join(root, 'lib', 'python'))
 
 # ranvier imports
 from ranvier import *
+from ranvier import respproxy
 
 # local imports
 import demoapp
@@ -38,18 +39,15 @@ import demoapp
 #
 rootloc = '/ranvier/demo'
 
+
+#-------------------------------------------------------------------------------
+#
 def main():
     """
     CGI handler for debugging/dumping the contents of the source upload.
     """
     uri = os.environ['SCRIPT_URI']
     scheme, netloc, path, parameters, query, fragid = urlparse.urlparse(uri)
-    
-    assert path.startswith(rootloc)
-    path = path[len(rootloc):]
-
-    # Create a context for resource handling.
-    form = cgi.FieldStorage()
 
     # Create the application.
     #
@@ -58,20 +56,16 @@ def main():
     # long time and this happens only once for every child.
     mapper, root = demoapp.create_application(rootloc)
 
+    # Get the CGI args.
+    args = respproxy.cgi_getargs()
+
     # Create a proxy response object for the default resources provided with
     # Ranvier to use.
-    response = CGIResponse(sys.stdout)
-
-
-## FIXME: this should be moved into mapper.handle_root()
-    # Create a handler context for a CGI script.
-    ctxt = HandlerContext(path, form, rootloc=rootloc)
-    ctxt.response = response
-    ctxt.page = demoapp.PageLayout(rootloc)
-    ctxt.mapper = mapper
+    response_proxy = respproxy.CGIResponse(sys.stdout)
 
     # Handle the resource.
-    return root.handle_base(ctxt)
+    mapper.handle_request(path, args, response_proxy,
+                          page=demoapp.PageLayout(mapper))
 
 
 #-------------------------------------------------------------------------------

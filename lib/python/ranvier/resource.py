@@ -30,6 +30,12 @@ class Resource(object):
         if resid is not None:
             self.__resid = resid
 
+    def hasresid( self ):
+        """
+        Return true if the resource was given an explicit resource-id.
+        """
+        return self.__resid is not None
+
     def getresid( self, mapper ):
         """
         Given a resource instance, compute the resource-id to which it

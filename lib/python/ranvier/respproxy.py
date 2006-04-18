@@ -11,9 +11,10 @@ integrate those default resources into any framework.
 """
 
 # stdlib imports
-import sys, string, StringIO
-from os.path import join, normpath
-import types
+import sys, cgi
+
+
+__all__ = ['ResponseProxy']
 
 
 #-------------------------------------------------------------------------------
@@ -121,4 +122,33 @@ class CGIResponse(ResponseProxy):
         self.addHeader('Status', '302 Redirecting')
         self.write('Voila.\n')
         return True
+
+
+#-------------------------------------------------------------------------------
+#
+def cgi_getargs():
+    """
+    Get the CGI arguments and convert them into a nice dictionary.
+    This is a convenience method.
+    """
+    form = cgi.FieldStorage()
+
+    args = {}
+    for varname in form.keys():
+        value = form[varname]
+
+        if (isinstance(value, cgi.FieldStorage) and
+            isinstance(value.file, file)):
+
+            ovalue = value # FileUpload
+        else:
+            value = form.getlist(varname)
+            if len(value) == 1:
+                ovalue = value[0]
+            else:
+                ovalue = value
+
+        args[varname] = ovalue
+
+    return args
 

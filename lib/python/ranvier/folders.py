@@ -43,12 +43,12 @@ class FolderBase(Resource, dict):
 
     def handle_base( self, ctxt ):
         if verbosity >= 1:
-            ctxt.log("resolver: %s" %
-                        ctxt.locator.path[ctxt.locator.index:])
+            ctxt.response.log("resolver: %s" %
+                              ctxt.locator.path[ctxt.locator.index:])
 
         if ctxt.locator.isleaf():
             if verbosity >= 1:
-                ctxt.log("resolver: at leaf")
+                ctxt.response.log("resolver: at leaf")
 
             if not ctxt.locator.trailing and self.redirect_leaf_as_dir:
                 # If a folder resource is requested by default, redirect so that
@@ -60,12 +60,12 @@ class FolderBase(Resource, dict):
         name = ctxt.locator.current()
 
         if verbosity >= 1:
-            ctxt.log("resolver: getting named child %s" % name)
+            ctxt.response.log("resolver: getting named child %s" % name)
         try:
             child = self[ name ]
             if not isinstance(child, Resource):
                 msg = "resolver: child is not a resource: %s" % child
-                ctxt.log(msg)
+                ctxt.response.log(msg)
                 raise RanvierError(msg)
 
         except KeyError:
@@ -74,11 +74,11 @@ class FolderBase(Resource, dict):
 
             if child is None:
                 if verbosity >= 1:
-                    ctxt.log("resolver: child %s not found" % name)
+                    ctxt.response.log("resolver: child %s not found" % name)
                 return ctxt.response.errorNotFound()
 
         if verbosity >= 1:
-            ctxt.log("resolver: child %s found, calling it" % name)
+            ctxt.response.log("resolver: child %s found, calling it" % name)
 
         # Let the folder do some custom handling.
         if self.handle(ctxt):
@@ -133,6 +133,14 @@ class Folder(FolderBase):
                 # it, we'll try again.
                 pass
             
+    def enum( self, enumv ):
+        FolderBase.enum(self, enumv)
+
+        # In addition, if we explicitly specified a resource-id and we have a
+        # default, declare the folder root as linkable.
+        if self.hasresid():
+            enumv.declare_serve()
+
     def __setitem__( self, key, value ):
         dict.__setitem__(self, key, value)
 
@@ -158,7 +166,7 @@ class Folder(FolderBase):
         default = self.getdefault()
         if default is None:
             if verbosity >= 1:
-                ctxt.log("resolver: no default page set")
+                ctxt.response.log("resolver: no default page set")
             # no default page submitted, indicate error
             return ctxt.response.errorNotFound()
         else:
@@ -176,8 +184,10 @@ class FolderWithMenu(Folder):
     def enum( self, enumv ):
         Folder.enum(self, enumv)
 
-        # This menu may be served as a leaf.
-        enumv.declare_serve()
+        # This menu may always be served as a leaf.  The base folder already
+        # does this if we have set a resource id, so don't do it again.
+        if not self.hasresid():
+            enumv.declare_serve()
 
     def genmenu( self, ctxt ):
         oss = StringIO.StringIO()

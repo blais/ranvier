@@ -7,7 +7,7 @@ Resources setup for the Ranvier demo.
 """
 
 # stdlib imports
-import re
+import re, os
 
 # ranvier imports
 from ranvier import *
@@ -15,7 +15,7 @@ from ranvier import *
 
 #-------------------------------------------------------------------------------
 #
-def create_application( rootloc ):
+def create_application( rootloc=None ):
     """
     Create a tree of application resources and return the corresponding root
     resource.  'rootlocation' is the root directory to which the resource tree
@@ -30,8 +30,10 @@ def create_application( rootloc ):
         prettyres=DemoPrettyEnumResource(mapper),
         deleg=Augmenter(AnswerBabbler()),
         users=UsernameRoot(Folder(username=PrintUsername(),
-                                  name=PrintName())),
-        redirtest=Redirect('@@Home', resid='@@RedirectTest'),
+                                  name=PrintName(),
+                                  data=UserData())),
+        redirtest=RedirectResource('@@Home', resid='@@RedirectTest'),
+        internalredir=InternalRedirectTest(),
         lcomp=LeafPlusOneComponent(),
 
         fold=DemoFolderWithMenu(
@@ -45,6 +47,7 @@ def create_application( rootloc ):
            ham=SimpleResource("The purpose of computing is insight, not "
                               "numbers.", resid="@@SimpleHamming"),
            ),
+        resid='@@Root'
         )
 
     mapper.initialize(root)
@@ -57,8 +60,8 @@ class PageLayout:
     """
     A class that provides common rendering routines for a page's layout.
     """
-    def __init__( self, rootloc ):
-        self.rootloc = rootloc
+    def __init__( self, mapper ):
+        self.mapper = mapper
     
     def render_header( self, ctxt ):
         header = """
@@ -84,7 +87,7 @@ class PageLayout:
     </div>
     
     <div id="main" class="document">
- """ % {'root': self.rootloc}
+ """ % {'root': self.mapper.mapurl('@@Root')}
 
         ctxt.response.setContentType('text/html')
         ctxt.response.write(header)
@@ -123,6 +126,15 @@ class SimpleResource(LeafResource):
         ctxt.response.write(self.msg)
         ctxt.page.render_footer(ctxt)
 
+
+#-------------------------------------------------------------------------------
+#
+class InternalRedirectTest(LeafResource):
+    """
+    A simple internal redirect, with parameters.
+    """
+    def handle( self, ctxt ):
+        ctxt.redirect(ctxt.mapurl('@@PrintUsername', username='martin'))
 
 #-------------------------------------------------------------------------------
 #
@@ -181,20 +193,21 @@ class Home(LeafResource):
         ctxt.page.render_header(ctxt)
 
         # This could be done globally
-        url = ctxt.mapper.url
+        mapurl = ctxt.mapurl
 
         # Creating links to be replaced in the template.  You would have some
         # kind of system specific to your template language here.
-        m = {'home': url('@@Home'),
-             'pretty': url('@@DemoPrettyEnumResource'),
-             'plain': url('@@EnumResource'),
-             'altid': url('@@ImSpecial'),
-             'answer': url('@@AnswerBabbler'),
-             'username': url('@@PrintUsername', username='martin'),
-             'name': url('@@PrintName', username='martin'),
-             'red': url('@@RedirectTest'),
-             'leafcomp': url('@@LeafPlusOneComponent', comp='president'),
-             'folddemo': url('@@DemoFolderWithMenu'),
+        m = {'home': mapurl('@@Home'),
+             'pretty': mapurl('@@DemoPrettyEnumResource'),
+             'plain': mapurl('@@EnumResource'),
+             'altid': mapurl('@@ImSpecial'),
+             'answer': mapurl('@@AnswerBabbler'),
+             'username': mapurl('@@PrintUsername', username='martin'),
+             'name': mapurl('@@PrintName', 'martin'),
+             'extredir': mapurl('@@RedirectTest'),
+             'intredir': mapurl('@@InternalRedirectTest'),
+             'leafcomp': mapurl('@@LeafPlusOneComponent', comp='president'),
+             'folddemo': mapurl('@@DemoFolderWithMenu'),
              }
 
         ctxt.response.write('''
@@ -211,44 +224,49 @@ Here are the resources available here:
 </p>
 <ul>
 
-  <li> <b>Home Page</b>: You are at the <a href="%(home)s">home page</a> </li>
+  <li> <b>Home Page</b>: You are at the <a href="%(home)s" target="testwin">home
+  page</a> </li>
 
   <li> <b>Pretty Print</b>: While the page you\'re currently viewing has been
-  crafted byhand, you can also find an <a
-  href="%(pretty)s">automatically-generated pretty rendering</a> of the
-  resources available in this demo </li>
+  crafted byhand, you can also find an <a href="%(pretty)s"
+  target="testwin">automatically-generated pretty rendering</a> of the resources
+  available in this demo </li>
 
   <li> <b>Plain Sitemap</b>: In the same spirit of generating site maps
-  automatically, we can also generate <a href="%(plain)s">plain text
-  sitemaps</a> that can be served for programs to parse and rebuild a mapper
-  from them.  </li>
+  automatically, we can also generate <a href="%(plain)s" target="testwin">plain
+  text sitemaps</a> that can be served for programs to parse and rebuild a
+  mapper from them.  </li>
 
   <li> <b>Alternate Id</b>:  Some resources can be given user-provided resource
-  ids, for example, <a href="%(altid)s">this link</a> was accessed with the id
-  "ImSpecial".  This is required when you have multiple instances of the same
-  resource class, to back, you need to disambiguate which instance is concerned.
-  </li>
+  ids, for example, <a href="%(altid)s" target="testwin">this link</a> was
+  accessed with the id "ImSpecial".  This is required when you have multiple
+  instances of the same resource class, to back, you need to disambiguate which
+  instance is concerned.  </li>
 
   <li> <b>Consumer</b>: In the forward mapping carried out by the chain of
   responsibility, you can consume part of the URL.  This is useful for building
   a set of resources referring to the same object.  Check out the follow user\'s
-  <a href="%(username)s">username</a> and <a href="%(name)s">name</a>.  </li>
+  <a href="%(username)s" target="testwin">username</a> and <a href="%(name)s"
+  target="testwin">name</a>.  </li>
 
   <li> <b>Delegater</b>: The chain of responsibility pattern does not imply that
   each resource consume a part of the component.  We have a base class that
-  makes that process a little bit easier.  Check this one: it provides
-  <a href="%(answer)s">the answer to everything</a>! </li>
+  makes that process a little bit easier.  Check this one: it provides <a
+  href="%(answer)s" target="testwin">the answer to everything</a>! </li>
 
-  <li> <b>Redirect</b>: A test for redirection, that should just <a
-  href="%(red)s">redirect here</a>. </li>
+  <li> <b>Redirect</b>: A test for <a href="%(extredir)s"
+  target="testwin">external redirection</a>, that should just redirect here, and
+  one for <a href="%(intredir)s" target="testwin">internal redirection</a> that
+  should redirect somewhere else (technically, the location of your
+  client/browser should not change for this one). </li>
 
-  <li> <b>Leaf Component</b>: Simple test case for a <a
-  href="%(leafcomp)s">component located at the leaf</a>. </li>
+  <li> <b>Leaf Component</b>: Simple test case for a <a href="%(leafcomp)s"
+  target="testwin">component located at the leaf</a>. </li>
 
-  <li> <b>Folder With Menyu</b>: We provide a <a href="%(folddemo)s"> folder
-  resource class</a> that allows you to build hierarchies of resources, like a
-  directory and files.  This one automatically provides a menu of its
-  subresources.</li>
+  <li> <b>Folder With Menyu</b>: We provide a <a href="%(folddemo)s"
+  target="testwin"> folder resource class</a> that allows you to build
+  hierarchies of resources, like a directory and files.  This one automatically
+  provides a menu of its subresources.</li>
 
 </ul>
         ''' % m)
@@ -298,6 +316,22 @@ class PrintName(LeafResource):
         ctxt.page.render_footer(ctxt)
 
 
+class UserData(VarResource):
+    """
+    Select some user data.  We do this only to show off getting multiple
+    components in the same path.
+    """
+    def __init__( self, **kwds ):
+        VarResource.__init__(self, 'userdata', **kwds)
+
+    def handle( self, ctxt ):
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write(
+            '''<p>The data for user "%(username)s" is "%(data)s".</p>''' %
+            {'username': ctxt.username, 'data': ctxt.userdata})
+        ctxt.page.render_footer(ctxt)
+
+
 #-------------------------------------------------------------------------------
 #
 class LeafPlusOneComponent(VarResource):
@@ -314,4 +348,119 @@ class LeafPlusOneComponent(VarResource):
         ctxt.response.write('''<p>The leaf component is %s.</p>''' %
                             ctxt.comp)
         ctxt.page.render_footer(ctxt)
+
+
+
+#===============================================================================
+# AUTOMATED TESTS
+
+#-------------------------------------------------------------------------------
+#
+class TestMappings(unittest.TestCase):
+    """
+    Tests backward mapping of URLs.
+    """
+    def _test_backmaps( self, mapper ):
+        "General backmapping tests.."
+        mapurl = mapper.mapurl
+        
+        self.assertEquals(mapurl('@@Home'), '/home')
+        self.assertRaises(RanvierError, mapurl, '@@Home', 'extra')
+        self.assertEquals(mapurl('@@DemoPrettyEnumResource'), '/prettyres')
+        self.assertEquals(mapurl('@@EnumResource'), '/resources')
+        self.assertEquals(mapurl('@@ImSpecial'), '/altit')
+        self.assertEquals(mapurl('@@AnswerBabbler'), '/deleg')
+        self.assertEquals(mapurl('@@PrintUsername', username='martin'),
+                          '/users/martin/username')
+        self.assertEquals(mapurl('@@PrintName', 'martin'),
+                          '/users/martin/name')
+        self.assertEquals(mapurl('@@RedirectTest'), '/redirtest')
+        self.assertEquals(mapurl('@@LeafPlusOneComponent', comp='president'),
+                          '/lcomp/president')
+        self.assertRaises(RanvierError, mapurl,
+                          '@@LeafPlusOneComponent', 'george', comp='junior')
+        self.assertEquals(mapurl('@@DemoFolderWithMenu'), '/fold')
+
+    def test_backmaps( self ):
+        "Testing backmapping URLs."
+        # Create a resource tree.
+        mapper, root = create_application()
+        return self._test_backmaps(mapper)
+    
+    def test_render_reload( self ):
+        "Testing reloading the mapper from a rendered rendition."
+
+        # Render the mapper to a set of lines
+        mapper, root = create_application()
+        lines = mapper.render()
+        rendered = os.linesep.join(lines)
+
+        # Reload the mapper from these lines.
+        loaded_mapper = UrlMapper.load(lines)
+        self._test_backmaps(loaded_mapper)
+
+    def test_static( self ):
+        "Testing static resources."
+
+        # Get some mapper.
+        mapper = UrlMapper()
+        
+        # Test valid cases.
+        mapper.add_static('@@Static1', '/home')
+        self.assertEquals(mapper.mapurl('@@Static1'), '/home')
+
+        mapper.add_static('@@Static2', '/documents/legal')
+        self.assertEquals(mapper.mapurl('@@Static2'), '/documents/legal')
+
+        mapper.add_static('@@Static3', '/documents/faq/questions')
+        mapper.add_static('@@Static4', '/users/(user)')
+        mapper.add_static('@@Static5', '/users/(user)/home')
+        self.assertEquals(mapper.mapurl('@@Static5', 'blais'),
+                          '/users/blais/home')
+
+        mapper.add_static('@@Static6', '/users/(user)/home', {'user': 'blais'})
+        mapper.add_static('@@Static7', '/users/(user)/(address)')
+        mapper.add_static('@@Static8', 'http://aluya.ca/u/(user)/home')
+        self.assertEquals(mapper.mapurl('@@Static8', 'blais'),
+                          'http://aluya.ca/u/blais/home')
+
+        mapper.add_static('@@Missing1', '/users/(user)/home')
+        self.assertRaises(RanvierError, mapper.mapurl, '@@Missing1')
+
+        mapper.add_static('@@Default1', '/users/(user)/home', {'user': 'blais'})
+        self.assertEquals(mapper.mapurl('@@Default1'), '/users/blais/home')
+
+        self.assertRaises(RanvierError, mapper.mapurl, '@@Missing1')
+
+
+        # Test error cases.
+        self.assertRaises(RanvierError, mapper.add_static,
+                          '@@Static1', '/duplicate')
+
+        self.assertRaises(RanvierError, mapper.add_static,
+                          '@@ExtraneousDef1', '/home', {'somevar': 'bli'})
+
+        self.assertRaises(RanvierError, mapper.add_static,
+                          '@@ExtraneousDef2', '/users/(user)', {'user': 'blais',
+                                                                'other': 'bli'})
+        self.assertRaises(RanvierError, mapper.add_static,
+                          '@@InvalidPattern1', '/users/(user)bli')
+
+        self.assertRaises(RanvierError, mapper.add_static,
+                          '@@InvalidPattern2', '/users/bli(user)/home')
+
+        self.assertRaises(RanvierError, mapper.add_static,
+                          '@@Collision', '/users/(user)/document/(user)/home', )
+
+#-------------------------------------------------------------------------------
+#
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(TestMappings("test_backmaps"))
+    suite.addTest(TestMappings("test_render_reload"))
+    suite.addTest(TestMappings("test_static"))
+    return suite
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')
 
