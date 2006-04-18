@@ -2,31 +2,6 @@
    TODO: ranvier
 ===================
 
-(atocha forms)
-
-* We need to figure out some kind of solution for the forms which are defined at
-  module initialization time, to be able to generate the actual URLs later when
-  the mapper has been created.
-
-  (Atocha)
-  - Implement support for a callable to be used for the action= arguments in
-    Atocha.
-
-  - Add a global function that returns a closure to do this::
-
-     def delayed_url( *args, **kwds ):
-         # Capture the parameters and return a callable.
-         def durl():
-             url(*args, **kwds)
-         return durl
-
-  - Make sure the action mapping supports mapping the scriptsdir as well.
-
-
-
-
-
-
 (promotion)
 * Send Ranvier information to twill list when the URL mapper for testing is
   complete.

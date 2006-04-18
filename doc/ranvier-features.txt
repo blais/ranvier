@@ -18,8 +18,9 @@
       3.2  Naming of Resources
     4   Mapping Backward
       4.1  Optimization of BackMapping
-      4.2  Static Maps
-      4.3  Unique Identifiers
+      4.2  Selection of Resource Ids
+      4.3  Static Maps
+      4.4  Unique Identifiers
     5   Listing URLs
     6   Embedding Security
     7   Internal Redirects
@@ -135,6 +136,16 @@ input.
 __ http://en.wikipedia.org/wiki/Representational_State_Transfer
 
 
+
+
+One consequence of using our system is that we do not render *relative* URLs,
+i.e. all the URLs are from the root.  This consists in an advantage:  FIXME add
+more
+
+
+
+
+
 Chain of Responsibility
 -----------------------
 
@@ -198,6 +209,28 @@ Optimization of BackMapping
   * Programmatic (cannot optimize)
 
 FIXME todo write docs
+
+
+
+
+
+
+
+
+Selection of Resource Ids
+-------------------------
+
+You should choose some kind of common string pattern for you resource ids, so
+that if you decide to rename some of them at some point, for example when
+reorganizing a site, simple text-based UNIX tools can do a wonderful job at
+automating some of these replacments if they can be picked out easily.
+
+The default naming transform 
+
+  … describe ``@@<ResourceName>`` scheme
+
+
+
 
 
 

@@ -37,9 +37,9 @@ class FolderBase(Resource, dict):
 
     __repr__ = __str__
 
-    def enum( self, enumv ):
+    def enum_targets( self, enumrator ):
         for name, resource in self.iteritems():
-            enumv.branch_static(name, resource)
+            enumrator.branch_static(name, resource)
 
     def handle_base( self, ctxt ):
         if verbosity >= 1:
@@ -133,13 +133,13 @@ class Folder(FolderBase):
                 # it, we'll try again.
                 pass
             
-    def enum( self, enumv ):
-        FolderBase.enum(self, enumv)
+    def enum_targets( self, enumrator ):
+        FolderBase.enum_targets(self, enumrator)
 
         # In addition, if we explicitly specified a resource-id and we have a
         # default, declare the folder root as linkable.
-        if self.hasresid():
-            enumv.declare_serve()
+        if self._default and self.hasresid():
+            enumrator.declare_target()
 
     def __setitem__( self, key, value ):
         dict.__setitem__(self, key, value)
@@ -181,13 +181,13 @@ class FolderWithMenu(Folder):
     A folder resource handler who can render a default page that lists and
     allows access to all the subresources it contains.
     """
-    def enum( self, enumv ):
-        Folder.enum(self, enumv)
+    def enum_targets( self, enumrator ):
+        Folder.enum_targets(self, enumrator)
 
         # This menu may always be served as a leaf.  The base folder already
         # does this if we have set a resource id, so don't do it again.
-        if not self.hasresid():
-            enumv.declare_serve()
+        if not (self._default and self.hasresid()):
+            enumrator.declare_target()
 
     def genmenu( self, ctxt ):
         oss = StringIO.StringIO()

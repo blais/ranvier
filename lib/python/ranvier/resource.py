@@ -53,7 +53,7 @@ class Resource(object):
         assert resid
         return resid
 
-    def enum( self, enumv ):
+    def enum_targets( self, enumrator ):
         """
         Enumerate all the possible resources that this resource may delegate to.
         This is used to produce the entire set of resources served by a resource
@@ -71,6 +71,7 @@ class Resource(object):
         """
         assert isinstance(nextres, Resource)
 
+        # Handle the next resource (this is where the propagation occurs).
         nextres.handle_base(ctxt)
 
     def handle_base( self, ctxt ):
@@ -79,6 +80,12 @@ class Resource(object):
         custom behaviour.  By default this just calls the handler template
         method.
         """
+        # Register this node to the callgraph reporter, if active.
+        if ctxt.callgraph:
+            if self.hasresid():
+                ctxt.callgraph.register_caller(self.getresid())
+
+        # Handle this resource.
         return self.handle(ctxt)
 
     def handle( self, ctxt ):

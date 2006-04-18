@@ -51,7 +51,7 @@ class EnumVisitor(object):
     # Each of the three following functions declares an individual branch of the
     # resource tree.
 
-    def declare_serve( self, varname=None, default=None ):
+    def declare_target( self, varname=None, default=None ):
         """
         Declare that the given resource may serve the contents at this point in
         the path (this does not have to be a leaf, this could be used for a
@@ -78,7 +78,7 @@ class EnumVisitor(object):
         Declare the consumption of a fixed component of the locator to a
         delegate branch.
         """
-        self._add_branch(Enumerator.BR_STATIC, delegate, component)
+        self._add_branch(Enumerator.BR_FIXED, delegate, component)
 
     def branch_var( self, varname, delegate, default=None ):
         """
@@ -105,7 +105,7 @@ class Enumerator(object):
     A class used to visit and enumerate all the possible URL paths that are
     served by a resource tree.
     """
-    BR_ANONYMOUS, BR_STATIC, BR_VARIABLE = xrange(3)
+    BR_ANONYMOUS, BR_FIXED, BR_VARIABLE = xrange(3)
     """Delegate types."""
 
     def __init__( self ):
@@ -125,7 +125,7 @@ class Enumerator(object):
         # Visit the resource and let it declare the properties of its
         # propagation/search.
         visitor = EnumVisitor()
-        resource.enum(visitor)
+        resource.enum_targets(visitor)
 
         # If we have reached a leaf node (i.e. the node has declared itself a
         # potential leaf), add the path to the list of paths.

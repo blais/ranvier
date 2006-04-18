@@ -18,9 +18,9 @@ class LeafResource(Resource):
     """
     Base class for all leaf resources.
     """
-    def enum( self, enumv ):
+    def enum_targets( self, enumrator ):
         # Declare the node a leaf.
-        enumv.declare_serve()
+        enumrator.declare_target()
 
     def handle_base( self, ctxt ):
         # Just check that this resource is a leaf before calling the handler.
@@ -45,8 +45,8 @@ class DelegaterResource(Resource):
     def getnext( self ):
         return self._next
 
-    def enum( self, enumv ):
-        enumv.branch_anon(self._next)
+    def enum_targets( self, enumrator ):
+        enumrator.branch_anon(self._next)
 
     def handle_base( self, ctxt ):
         # Call the handler.
@@ -82,8 +82,8 @@ class VarResource(Resource):
         self.compname = compname
         """The name of the attribute to store the component as."""
 
-    def enum( self, enumv ):
-        enumv.declare_serve(self.compname)
+    def enum_targets( self, enumrator ):
+        enumrator.declare_target(self.compname)
 
     def consume_component( self, ctxt ):
         if verbosity >= 1:
@@ -132,8 +132,8 @@ class VarDelegaterResource(DelegaterResource, VarResource):
         VarResource.__init__(self, compname, **kwds)
         DelegaterResource.__init__(self, next_resource, **kwds)
 
-    def enum( self, enumv ):
-        enumv.branch_var(self.compname, self.getnext())
+    def enum_targets( self, enumrator ):
+        enumrator.branch_var(self.compname, self.getnext())
 
     def handle_base( self, ctxt ):
         self.consume_component(ctxt)
@@ -177,6 +177,9 @@ class LogRequests(DelegaterResource):
 class RemoveBase(DelegaterResource):
     """
     Resource that removes a fixed number of base components.
+
+    This is rather deprecated.  Instead of using this, you should use the
+    URLMapper's 'rootloc' option.
     """
     def __init__( self, count, nextres, **kwds ):
         DelegaterResource.__init__(self, nextres, **kwds)

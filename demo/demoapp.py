@@ -51,6 +51,8 @@ def create_application( rootloc=None ):
         )
 
     mapper.initialize(root)
+    mapper.add_static('@@External', 'http://paulgraham.com')
+
     return mapper, root
 
 
@@ -208,6 +210,7 @@ class Home(LeafResource):
              'intredir': mapurl('@@InternalRedirectTest'),
              'leafcomp': mapurl('@@LeafPlusOneComponent', comp='president'),
              'folddemo': mapurl('@@DemoFolderWithMenu'),
+             'static': mapurl('@@External'),
              }
 
         ctxt.response.write('''
@@ -263,10 +266,14 @@ Here are the resources available here:
   <li> <b>Leaf Component</b>: Simple test case for a <a href="%(leafcomp)s"
   target="testwin">component located at the leaf</a>. </li>
 
-  <li> <b>Folder With Menyu</b>: We provide a <a href="%(folddemo)s"
+  <li> <b>Folder With Menu</b>: We provide a <a href="%(folddemo)s"
   target="testwin"> folder resource class</a> that allows you to build
   hierarchies of resources, like a directory and files.  This one automatically
   provides a menu of its subresources.</li>
+
+  <li> <b>Static Mappings</b>: You can register static/external mappings with
+  the URL mapper.  For example, <a href="%(static)s" target="testwin">this
+  link</a> should point somewhere interesting on the web. </li>
 
 </ul>
         ''' % m)
@@ -365,7 +372,7 @@ class TestMappings(unittest.TestCase):
         mapurl = mapper.mapurl
         
         self.assertEquals(mapurl('@@Home'), '/home')
-        self.assertRaises(RanvierError, mapurl, '@@Home', 'extra')
+        self.assertRaises(RanvierError, mapurl, '@@Home', 'extraparam')
         self.assertEquals(mapurl('@@DemoPrettyEnumResource'), '/prettyres')
         self.assertEquals(mapurl('@@EnumResource'), '/resources')
         self.assertEquals(mapurl('@@ImSpecial'), '/altit')
@@ -400,14 +407,22 @@ class TestMappings(unittest.TestCase):
         self._test_backmaps(loaded_mapper)
 
     def test_static( self ):
+        self._test_static(None)
+        self._test_static('/root')
+
+    def _test_static( self, rootloc ):
         "Testing static resources."
 
         # Get some mapper.
-        mapper = UrlMapper()
-        
+        mapper = UrlMapper(rootloc=rootloc)
+
         # Test valid cases.
         mapper.add_static('@@Static1', '/home')
         self.assertEquals(mapper.mapurl('@@Static1'), '/home')
+
+        mapper.add_static('@@Relative1', 'home')
+        self.assertEquals(mapper.mapurl('@@Relative1'),
+                          '%s/home' % (rootloc or ''))
 
         mapper.add_static('@@Static2', '/documents/legal')
         self.assertEquals(mapper.mapurl('@@Static2'), '/documents/legal')
@@ -430,10 +445,9 @@ class TestMappings(unittest.TestCase):
         mapper.add_static('@@Default1', '/users/(user)/home', {'user': 'blais'})
         self.assertEquals(mapper.mapurl('@@Default1'), '/users/blais/home')
 
-        self.assertRaises(RanvierError, mapper.mapurl, '@@Missing1')
-
 
         # Test error cases.
+        self.assertRaises(RanvierError, mapper.mapurl, '@@Missing1')
         self.assertRaises(RanvierError, mapper.add_static,
                           '@@Static1', '/duplicate')
 
