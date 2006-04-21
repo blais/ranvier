@@ -192,10 +192,9 @@ class UrlMapper(rodict.ReadOnlyDict):
                           absolute)
         self._add_mapping(resid, mapping)
 
-    def _get_url( self, res ):
+    def getresid( self, res ):
         """
-        Get the URL string and defaults dict for a resource-id, supporting all
-        the types described in mapurl().
+        Get a resource-id, supporting all the types described in mapurl().
         """
         # Support passing in resource instances and resource classes as well.
         if isinstance(res, Resource):
@@ -205,6 +204,13 @@ class UrlMapper(rodict.ReadOnlyDict):
         else:
             resid = res
             assert isinstance(res, (str, unicode))
+        return resid
+        
+    def _get_url( self, res ):
+        """
+        Get the URL string and defaults dict for a 
+        """
+        resid = self.getresid(res)
 
         # Get the desired mapping.
         try:
