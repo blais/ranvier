@@ -7,9 +7,8 @@ URL mapper and enumerator classes.
 """
 
 # stdlib imports
-import sys, string, StringIO, re
+import sys, string, StringIO, re, types
 from os.path import join, normpath
-import types
 
 # ranvier imports
 from ranvier import rodict, RanvierError, respproxy
@@ -240,31 +239,61 @@ class UrlMapper(rodict.ReadOnlyDict):
         Positional arguments can be used as well, and they are used to fill in
         the URL string with the missing components, in left-to-right order (root
         to leaf).
+
+        Alternatively, if a **single** positional argument is provided and it is
+        **an instance or a dict type**, we will fetch the attributes/values from
+        this object to fill in the missing values.  You can combine this with
+        keyword arguments as well.
         """
         mapping = self._get_url(resid)
 
-        nbpos = len(mapping.positional)
-        if len(args) > nbpos:
-            raise RanvierError("Error: Resource '%s' takes at most '%d' "
-                               "arguments." % (mapping.resid, nbpos))
+        # Check for an instance or dict to fetch some positional args from.
+        if len(args) == 1 and isinstance(args[0], (types.InstanceType, dict)):
+            dicmissing = args[0]
+            if isinstance(dicmissing, types.InstanceType):
+                dicmissing = dicmissing.__dict__
+        else:
+            # Normal positional arguments are integrated with the keyword
+            # arguments..
+            dicmissing = None
+            nbpos = len(mapping.positional)
+            if len(args) > nbpos:
+                raise RanvierError("Error: Resource '%s' takes at most '%d' "
+                                   "arguments." % (mapping.resid, nbpos))
 
-        for posname, posarg in zip(mapping.positional, args):
-            if posname in kwds:
-                raise RanvierError("Error: Creating URL for '%s', got multiple "
-                                   "values for component '%s'." %
-                                   (mapping.resid, posname))
-            kwds[posname] = posarg
+            for posname, posarg in zip(mapping.positional, args):
+                if posname in kwds:
+                    raise RanvierError(
+                        "Error: Creating URL for '%s', got multiple "
+                        "values for component '%s'." % (mapping.resid, posname))
+                kwds[posname] = posarg
 
-        # Prepare the defaults dict with the provided values.
+        # Get a copy of the defaults.
         params = mapping.defdict.copy()
+
+        # Attempt to fill in the missing values from the object or dict, if one
+        # was given.  We do this before integrating the keywords, because we
+        # want the keywords to have priority and override the dict/object
+        # values if they are present in both.
+        if dicmissing is not None:
+            for cname, cvalue in params.iteritems():
+                if cvalue is None:
+                    try:
+                        params[cname] = dicmissing[cname]
+                    except KeyError:
+                        pass
+
+        # Override the defaults dict with the provided values.
         for cname, cvalue in kwds.iteritems():
             # Check all provided values are legal.
             if cname not in params:
                 raise RanvierError(
                     "Error: '%s' is not a valid component key for mapping the "
                     "'%s' resource.'" % (cname, mapping.resid))
-            params[cname] = cvalue
 
+            # Fill the slot with the specified value
+            params[cname] = cvalue
+                    
         # Check that all the required values have been provided.
         missing = [cname for cname, cvalue in params.iteritems()
                    if cvalue is None]
@@ -272,7 +301,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         if missing:
             raise RanvierError(
                 "Error: Missing values attempting to map to a resource: %s" %
-                ', '.join(missing))
+                ', '.join("'%s'" % x for x in missing))
     
         # Register the target in the call graph, if enabled.
         if self.callgraph_reporter:

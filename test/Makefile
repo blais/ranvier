@@ -6,5 +6,5 @@
 all: backmappings
 
 backmappings:
-	python ../demo/demoapp.py
+	python ranviertest.py
 

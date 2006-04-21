@@ -2,10 +2,6 @@
    TODO: ranvier
 ===================
 
-* Finish the ranvier check script.
-
-
-
 (promotion)
 * Send Ranvier information to twill list when the URL mapper for testing is
   complete.
@@ -26,27 +22,8 @@
 
 
 
-
-
-
 Future
 ======
-
-Use Map to Fill Defaults
-------------------------
-
-Allow specifying a context object to mapurl() to fill missing defaults.  This
-completes the features to be like RoR.
-
-
-
-Static Checking
----------------
-
-* Write a script that will load the mapper, and cross-check the source code for
-  all the links that map resources that may be dangling.
-
-
 
 Multiple Components in a Row
 ----------------------------
