@@ -129,10 +129,10 @@ This tends to produce nicer URLs and bends the user into conceptually organizing
 the resources he makes available on his server in a hierarchy.  Query arguments
 are best reserved for optional arguments.
 
-Within this view, we can easily explain the concept of RESTfulness__: an
-resource is said to comply to the principles of REST if it does not have
-significant side-effects, i.e. if it does not rely on global state/variables as
-input.
+Within this view, we can easily explain the concept of RESTfulness__: a resource
+is said to comply to the principles of REST if it is not significantly affected
+by global variables / side-effects, i.e. if it does not rely on global
+state/variables as input.
 
 __ http://en.wikipedia.org/wiki/Representational_State_Transfer
 
@@ -310,27 +310,17 @@ FIXME write it
 A Routes-Like Interface
 =======================
 
-FIXME answer what is “Routes”
+FIXME answer what is “Routes”, add link
 
-
-* provide an interface that is similar to routes, but that automatically creates
-  all the required resources underneath
-
-
-
-
-
-
-
-
-
+* FIXME provide a “connect” interface that is similar to Routes, but that
+  automatically creates all the required resources underneath with default
+  Folder objects and such.
 
 
 (Other)
 =======
 
 Idea: in our resources traversal, we could put the query args together with the
-parameters in the URL itself… they are really conceptually the same…
-
-
+parameters in the URL itself… they are really conceptually the same…  checks
+would be added. FIXME TBD
 
