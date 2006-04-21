@@ -2,22 +2,51 @@
    TODO: ranvier
 ===================
 
+* Finish the ranvier check script.
+
+
+
 (promotion)
 * Send Ranvier information to twill list when the URL mapper for testing is
   complete.
+
+* Send on the Routes list, with the list of novel features:
+
+  - Parsing the URL along with the resource tree
+  - Backward mapping
+  - Tests using the resource-ids
+
 
 (docs)
 * In the docs, mention that the list of URLs can be used by a new developer to
   quickly get acquainted with the layout of a new project.  This could also be
   used to generate a site map.
 
-* Mention that this could be used to generate the Google sitemap
+* Mention that this could be used to generate the Google sitemap automatically.
+
+
 
 
 
 
 Future
 ======
+
+Use Map to Fill Defaults
+------------------------
+
+Allow specifying a context object to mapurl() to fill missing defaults.  This
+completes the features to be like RoR.
+
+
+
+Static Checking
+---------------
+
+* Write a script that will load the mapper, and cross-check the source code for
+  all the links that map resources that may be dangling.
+
+
 
 Multiple Components in a Row
 ----------------------------

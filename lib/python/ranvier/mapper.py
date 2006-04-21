@@ -345,6 +345,9 @@ class UrlMapper(rodict.ReadOnlyDict):
         mapper = UrlMapper()
 
         for line in lines:
+            if not line:
+                continue
+            
             # Split the id and urlpattern.
             try:
                 resid, absolute, urlpattern = map(str.strip, line.split(','))

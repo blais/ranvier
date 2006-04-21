@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+# This file is part of the Ranvier package.
+# See http://furius.ca/ranvier/ for license and details.
+
+"""ranvier-static-check [<options>] <URL> <source-file> [<source-file> ...]
+
+Load a mapper from a resource list fetched from an URL, and then grep the given
+source files for resource-id patterns and cross-check that all the resource ids
+are valid ones in the given mapper.  The URL is that which is being served by
+the Ranvier enum resources resource.
+
+Typically, the resource-id patterns are of the form::
+
+   @@ResourceName
+
+But you may customize this with an option.
+"""
+
+# Future: allow a mapper to be created by importing a module and calling a
+# specific function rather than require to fetch it from the a running web app
+# serving it on an URL.
+
+
+# stdlib imports.
+import re, urllib
+
+# ranvier imports.
+from ranvier import *
+
+
+
+#-------------------------------------------------------------------------------
+#
+def check_file( filename, mapper, patre ):
+    """
+    Grep the given filename for resource-id patterns given by 'regexp' and
+    cross-check that they are valid against the 'mapper' URL mapper.
+    """
+    try:
+        text = open(filename, 'r').read()
+    except IOError, e:
+        raise SystemExit("Error: Reading file '%s'." % e)
+        
+    for lnum, line in enumerate(text.splitlines()):
+        mo = patre.search(line)
+        if not mo:
+            continue
+        
+        resid = mo.group(1)
+        if resid not in mapper:
+            sys.stderr.write(
+                '%s:%s: (%s) %s\n' % (filename, lnum+1, 'ERROR',
+                                      "Invalid resource id '%s'." % resid))
+
+
+#-------------------------------------------------------------------------------
+#
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-p', '--pattern', action='store',
+                      default='(@@[A-Za-z0-9]+)\\b',
+                      help="Specify a regexp that matches the typical "
+                      "resource-id patterns")
+
+    opts, args = parser.parse_args()
+
+    if len(args) <= 1:
+        parser.error(
+            "You must specify a URL and a list of Python source files.")
+    url, filenames = args[0], args[1:]
+
+    # Compile the given resource-id regexp.
+    try:
+        patre = re.compile(opts.pattern, re.M)
+    except re.error, e:
+        raise SystemExit("Error: Compiling resource-id regexp: '%s'." % e)
+
+    # Fetch the list of resources and build the URL mapper from it.
+    try:
+        enumrestext = urllib.urlopen(url, 'r').read()
+    except IOError, e:
+        raise SystemExit("Error: Reading resource mapper contents: %s" % e)
+
+    mapper = UrlMapper.load(enumrestext.splitlines())
+
+    # Process input files.
+    for fn in filenames:
+        check_file(fn, mapper, patre)
+
+
+if __name__ == '__main__':
+    main()
