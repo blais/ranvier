@@ -44,16 +44,17 @@
 </li>
 <li><a class="reference" href="#mapping-backward" id="id8" name="id8">4&nbsp;&nbsp;&nbsp;Mapping Backward</a><ul class="auto-toc">
 <li><a class="reference" href="#optimization-of-backmapping" id="id9" name="id9">4.1&nbsp;&nbsp;&nbsp;Optimization of BackMapping</a></li>
-<li><a class="reference" href="#static-maps" id="id10" name="id10">4.2&nbsp;&nbsp;&nbsp;Static Maps</a></li>
-<li><a class="reference" href="#unique-identifiers" id="id11" name="id11">4.3&nbsp;&nbsp;&nbsp;Unique Identifiers</a></li>
+<li><a class="reference" href="#selection-of-resource-ids" id="id10" name="id10">4.2&nbsp;&nbsp;&nbsp;Selection of Resource Ids</a></li>
+<li><a class="reference" href="#static-maps" id="id11" name="id11">4.3&nbsp;&nbsp;&nbsp;Static Maps</a></li>
+<li><a class="reference" href="#unique-identifiers" id="id12" name="id12">4.4&nbsp;&nbsp;&nbsp;Unique Identifiers</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#listing-urls" id="id12" name="id12">5&nbsp;&nbsp;&nbsp;Listing URLs</a></li>
-<li><a class="reference" href="#embedding-security" id="id13" name="id13">6&nbsp;&nbsp;&nbsp;Embedding Security</a></li>
-<li><a class="reference" href="#internal-redirects" id="id14" name="id14">7&nbsp;&nbsp;&nbsp;Internal Redirects</a></li>
-<li><a class="reference" href="#support-for-debugging" id="id15" name="id15">8&nbsp;&nbsp;&nbsp;Support for Debugging</a></li>
-<li><a class="reference" href="#a-routes-like-interface" id="id16" name="id16">9&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></li>
-<li><a class="reference" href="#other" id="id17" name="id17">10&nbsp;&nbsp;&nbsp;(Other)</a></li>
+<li><a class="reference" href="#listing-urls" id="id13" name="id13">5&nbsp;&nbsp;&nbsp;Listing URLs</a></li>
+<li><a class="reference" href="#embedding-security" id="id14" name="id14">6&nbsp;&nbsp;&nbsp;Embedding Security</a></li>
+<li><a class="reference" href="#internal-redirects" id="id15" name="id15">7&nbsp;&nbsp;&nbsp;Internal Redirects</a></li>
+<li><a class="reference" href="#support-for-debugging" id="id16" name="id16">8&nbsp;&nbsp;&nbsp;Support for Debugging</a></li>
+<li><a class="reference" href="#a-routes-like-interface" id="id17" name="id17">9&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></li>
+<li><a class="reference" href="#other" id="id18" name="id18">10&nbsp;&nbsp;&nbsp;(Other)</a></li>
 </ul>
 </div>
 <!-- 1   Introduction
@@ -63,8 +64,9 @@
   3.2  Naming of Resources
 4   Mapping Backward
   4.1  Optimization of BackMapping
-  4.2  Static Maps
-  4.3  Unique Identifiers
+  4.2  Selection of Resource Ids
+  4.3  Static Maps
+  4.4  Unique Identifiers
 5   Listing URLs
 6   Embedding Security
 7   Internal Redirects
@@ -74,7 +76,8 @@
 <div class="section">
 <h1><a class="toc-backref" href="#id3" id="introduction" name="introduction">1&nbsp;&nbsp;&nbsp;Introduction</a></h1>
 <p>Mapping URLs is an important component of building web applications.
-&#8230;</p>
+&#8230;
+(FIXME add more)</p>
 </div>
 <div class="section">
 <h1><a class="toc-backref" href="#id4" id="problem-statement-and-domains" name="problem-statement-and-domains">2&nbsp;&nbsp;&nbsp;Problem Statement and Domains</a></h1>
@@ -150,13 +153,16 @@ http://mysite.com/users/blais/acc/643843/get_balance/
 <p>This tends to produce nicer URLs and bends the user into conceptually organizing
 the resources he makes available on his server in a hierarchy.  Query arguments
 are best reserved for optional arguments.</p>
-<p>Within this view, we can easily explain the concept of <a class="reference" href="http://en.wikipedia.org/wiki/Representational_State_Transfer">RESTfulness</a>: an
-resource is said to comply to the principles of REST if it does not have
-significant side-effects, i.e. if it does not rely on global state/variables as
-input.</p>
+<p>Within this view, we can easily explain the concept of <a class="reference" href="http://en.wikipedia.org/wiki/Representational_State_Transfer">RESTfulness</a>: a resource
+is said to comply to the principles of REST if it is not significantly affected
+by global variables / side-effects, i.e. if it does not rely on global
+state/variables as input.</p>
+<p>One consequence of using our system is that we do not render <em>relative</em> URLs,
+i.e. all the URLs are from the root.  This consists in an advantage:  FIXME add
+more</p>
 <div class="section">
 <h2><a class="toc-backref" href="#id6" id="chain-of-responsibility" name="chain-of-responsibility">3.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></h2>
-<p>(explain resource system)</p>
+<p>(FIXME explain resource system and pattern matching algorithm)</p>
 <p>One of the advantages in using a Chain of Responsibility pattern to implement
 the controller search is that complete flexibility is available to the
 programmer.  We have no need to define a complicated and necessarily limited
@@ -202,16 +208,31 @@ appropriate place.</p>
 </ul>
 </li>
 </ul>
-<p>FIXME todo</p>
+<p>FIXME todo write docs</p>
+<p>FIXME add callgraph thing, with a figure</p>
+<div class="figure">
+<img alt="callgraph.png" src="callgraph.png" />
+<p class="caption">The inter-resource call graph for the demo application of this package.</p>
+</div>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id10" id="static-maps" name="static-maps">4.2&nbsp;&nbsp;&nbsp;Static Maps</a></h2>
+<h2><a class="toc-backref" href="#id10" id="selection-of-resource-ids" name="selection-of-resource-ids">4.2&nbsp;&nbsp;&nbsp;Selection of Resource Ids</a></h2>
+<p>You should choose some kind of common string pattern for you resource ids, so
+that if you decide to rename some of them at some point, for example when
+reorganizing a site, simple text-based UNIX tools can do a wonderful job at
+automating some of these replacments if they can be picked out easily.</p>
+<p>The default naming transform</p>
+<blockquote>
+&#8230; describe <tt class="docutils literal"><span class="pre">&#64;&#64;&lt;ResourceName&gt;</span></tt> scheme</blockquote>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id11" id="static-maps" name="static-maps">4.3&nbsp;&nbsp;&nbsp;Static Maps</a></h2>
 <p>Since we already have a global registry of URL maps that we use to generate our
 URLs, we also provide the ability to map names to static and possibly external
 URLs.  This is similar to Routes&#8217; &#8220;static named routes&#8221; feature.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id11" id="unique-identifiers" name="unique-identifiers">4.3&nbsp;&nbsp;&nbsp;Unique Identifiers</a></h2>
+<h2><a class="toc-backref" href="#id12" id="unique-identifiers" name="unique-identifiers">4.4&nbsp;&nbsp;&nbsp;Unique Identifiers</a></h2>
 <p>FIXME do this, talk about the automatic conversion from the class names and the
 possibility to identify instances.</p>
 <blockquote>
@@ -225,7 +246,7 @@ base class.</li>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id12" id="listing-urls" name="listing-urls">5&nbsp;&nbsp;&nbsp;Listing URLs</a></h1>
+<h1><a class="toc-backref" href="#id13" id="listing-urls" name="listing-urls">5&nbsp;&nbsp;&nbsp;Listing URLs</a></h1>
 <p>One nice feature of our system is that we like to be able to get an entire list
 of the URLs served by the system.  This is extremely useful, because:</p>
 <ol class="arabic simple">
@@ -239,30 +260,34 @@ are entirely independent of the application URL layout.</li>
 <p>(#. Can inspect the various security credentials that each URL requires.)</p>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id13" id="embedding-security" name="embedding-security">6&nbsp;&nbsp;&nbsp;Embedding Security</a></h1>
+<h1><a class="toc-backref" href="#id14" id="embedding-security" name="embedding-security">6&nbsp;&nbsp;&nbsp;Embedding Security</a></h1>
 <p>The URLs can be grouped so that they share security access privileges.  For
 example, any URL beginning with <tt class="docutils literal"><span class="pre">/backstore</span></tt> could require administrative
 privileges.</p>
 <p>One way to do this</p>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id14" id="internal-redirects" name="internal-redirects">7&nbsp;&nbsp;&nbsp;Internal Redirects</a></h1>
+<h1><a class="toc-backref" href="#id15" id="internal-redirects" name="internal-redirects">7&nbsp;&nbsp;&nbsp;Internal Redirects</a></h1>
+<p>FIXME write it</p>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id15" id="support-for-debugging" name="support-for-debugging">8&nbsp;&nbsp;&nbsp;Support for Debugging</a></h1>
+<h1><a class="toc-backref" href="#id16" id="support-for-debugging" name="support-for-debugging">8&nbsp;&nbsp;&nbsp;Support for Debugging</a></h1>
+<p>FIXME write it</p>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id16" id="a-routes-like-interface" name="a-routes-like-interface">9&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></h1>
-<p>FIXME answer what is &#8220;Routes&#8221;</p>
+<h1><a class="toc-backref" href="#id17" id="a-routes-like-interface" name="a-routes-like-interface">9&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></h1>
+<p>FIXME answer what is &#8220;Routes&#8221;, add link</p>
 <ul class="simple">
-<li>provide an interface that is similar to routes, but that automatically creates
-all the required resources underneath</li>
+<li>FIXME provide a &#8220;connect&#8221; interface that is similar to Routes, but that
+automatically creates all the required resources underneath with default
+Folder objects and such.</li>
 </ul>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id17" id="other" name="other">10&nbsp;&nbsp;&nbsp;(Other)</a></h1>
+<h1><a class="toc-backref" href="#id18" id="other" name="other">10&nbsp;&nbsp;&nbsp;(Other)</a></h1>
 <p>Idea: in our resources traversal, we could put the query args together with the
-parameters in the URL itself&#8230; they are really conceptually the same&#8230;</p>
+parameters in the URL itself&#8230; they are really conceptually the same&#8230;  checks
+would be added. FIXME TBD</p>
 </div>
 </div>
 </body>
