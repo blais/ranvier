@@ -7,7 +7,7 @@ URL mapper and enumerator classes.
 """
 
 # stdlib imports
-import sys, os, string, StringIO, re, types, copy
+import sys, os, string, StringIO, re, types, copy, urllib
 from os.path import join, normpath
 
 # ranvier imports
@@ -394,6 +394,21 @@ class UrlMapper(rodict.ReadOnlyDict):
         # interesting for reconstructing the UrlMapper from a list of lines, as
         # would be done for generating test cases.  For now we ignore the
         # defdict.
+
+    @staticmethod
+    def urlload( url ):
+        """
+        Load and create a URL mapper by fetching the specified url via the
+        network.
+        """
+        try:
+            enumres_text = urllib.urlopen(url, 'r').read()
+        except IOError, e:
+            raise RanvierError(
+                "Error: Fetching contents of mapper from URL '%s'." % url)
+
+        return UrlMapper.load(enumres_text.splitlines())
+
 
     @staticmethod
     def load( lines ):

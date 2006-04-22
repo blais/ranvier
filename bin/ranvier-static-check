@@ -22,7 +22,7 @@ But you may customize this with an option.
 
 
 # stdlib imports.
-import re, urllib
+import re
 
 # ranvier imports.
 from ranvier import *
@@ -78,12 +78,7 @@ def main():
         raise SystemExit("Error: Compiling resource-id regexp: '%s'." % e)
 
     # Fetch the list of resources and build the URL mapper from it.
-    try:
-        enumrestext = urllib.urlopen(url, 'r').read()
-    except IOError, e:
-        raise SystemExit("Error: Reading resource mapper contents: %s" % e)
-
-    mapper = UrlMapper.load(enumrestext.splitlines())
+    mapper = UrlMapper.urlload(url)
 
     # Process input files.
     for fn in filenames:
