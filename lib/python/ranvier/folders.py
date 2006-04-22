@@ -138,8 +138,27 @@ class Folder(FolderBase):
 
         # In addition, if we explicitly specified a resource-id and we have a
         # default, declare the folder root as linkable.
-        if self._default and self.hasresid():
-            enumrator.declare_target()
+        if self._default is not None:
+            if self.hasresid():
+                # Add this resource if it has a resource-id.
+                #
+                # Note: even though this folder has a default and we could link
+                # to it, we do not publish it as a valid path unless it has a
+                # resource id.  This is a policy decision.  If we published it,
+                # then all the folders with a default would have to be
+                # disambiguiated with a resid option.  Instead, we let the user
+                # disambiguate only those which will get linked to.  In
+                # practice, this makes the resource listing of the mapper
+                # slightly incomplete.  I'm not sure yet what to do best about
+                # this.
+                enumrator.declare_target()
+
+            elif (isinstance(self._default, Resource) and
+                  self._default not in self.values()):
+
+                # Add the default branch if it is not otherwise linked than by
+                # the default.
+                enumrator.branch_anon(self._default)
 
     def __setitem__( self, key, value ):
         dict.__setitem__(self, key, value)

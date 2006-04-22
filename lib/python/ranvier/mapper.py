@@ -7,7 +7,7 @@ URL mapper and enumerator classes.
 """
 
 # stdlib imports
-import sys, string, StringIO, re, types
+import sys, os, string, StringIO, re, types, copy
 from os.path import join, normpath
 
 # ranvier imports
@@ -128,7 +128,10 @@ class UrlMapper(rodict.ReadOnlyDict):
         """
         # Check that the resource-id has not already been seen.
         if resid in self.mappings:
-            raise RanvierError("Error: Duplicate resource id '%s'." % resid)
+            lines = ("Error: Duplicate resource id '%s':" % resid,
+                     "  Existing mapping: %s" % self.mappings[resid].urlpattern,
+                     "  New mapping     : %s" % mapping.urlpattern)
+            raise RanvierError(os.linesep.join(lines))
 
         # Store the mapping.
         self.mappings[resid] = mapping
@@ -192,6 +195,22 @@ class UrlMapper(rodict.ReadOnlyDict):
                           absolute)
         self._add_mapping(resid, mapping)
 
+    def add_alias( self, new_resid, existing_resid ):
+        """
+        Add an alias to a mapping, that is, another resource-id which will point
+        to the same mapping.  The target mapping must already be existing.
+        """
+        try:
+            mapping = self.mappings[existing_resid]
+        except KeyError:
+            raise RanvierError(
+                "Error: Target mapping '%s' must exist for alias '%s'." %
+                (existing_resid, new_resid))
+        
+        new_mapping = copy.copy(mapping)
+        new_mapping.resid = new_resid
+        self._add_mapping(new_resid, new_mapping)
+
     def getresid( self, res ):
         """
         Get a resource-id, supporting all the types described in mapurl().
@@ -254,7 +273,8 @@ class UrlMapper(rodict.ReadOnlyDict):
         mapping = self._get_url(resid)
 
         # Check for an instance or dict to fetch some positional args from.
-        if len(args) == 1 and not isinstance(args[0], (str, unicode)):
+        if len(args) == 1 and not isinstance(args[0],
+                                             (str, unicode, int, long)):
             dicmissing = args[0]
             if not isinstance(dicmissing, dict):
                 # Then we must have hold of a user defined class.
