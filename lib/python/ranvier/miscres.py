@@ -7,7 +7,7 @@ Miscallenious useful generic resource classes.
 """
 
 # ranvier imports
-import ranvier.mapper
+from ranvier.pretty import pretty_render_mapper
 from ranvier.resource import Resource
 from ranvier import verbosity, RanvierError
 
@@ -203,5 +203,5 @@ class PrettyEnumResource(LeafResource):
 
     def handle( self, ctxt ):
         ctxt.response.setContentType('text/html')
-        ctxt.response.write(ranvier.mapper.pretty_render_mapper(self.mapper))
+        ctxt.response.write(pretty_render_mapper(self.mapper))
 

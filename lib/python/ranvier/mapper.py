@@ -254,9 +254,10 @@ class UrlMapper(rodict.ReadOnlyDict):
         mapping = self._get_url(resid)
 
         # Check for an instance or dict to fetch some positional args from.
-        if len(args) == 1 and isinstance(args[0], (types.InstanceType, dict)):
+        if len(args) == 1 and not isinstance(args[0], (str, unicode)):
             dicmissing = args[0]
-            if isinstance(dicmissing, types.InstanceType):
+            if not isinstance(dicmissing, dict):
+                # Then we must have hold of a user defined class.
                 dicmissing = dicmissing.__dict__
         else:
             # Normal positional arguments are integrated with the keyword
@@ -338,7 +339,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         mapping = self._get_url(resid)
         return tuple(mapping.positional)
 
-    def render( self ):
+    def render( self, sort_by_url=True ):
         """
         Render the contents of the mapper so that it can be reconstructed from
         the given text, to be able to create some URLs.  This returns a list of
@@ -351,7 +352,12 @@ class UrlMapper(rodict.ReadOnlyDict):
         suite would still keep working.
         """
         mappings = list(self.itervalues())
-        mappings.sort(key=lambda x: x.urltmpl)
+        if sort_by_url:
+            sortfun = lambda x: x.urltmpl
+        else:
+            sortfun = lambda x: x.resid
+        mappings.sort(key=sortfun)
+            
 
         # Format for alignment for nice printing (and this does make the parsing
         # any more complicated.

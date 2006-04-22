@@ -1,0 +1,139 @@
+To: pylons-discuss
+
+
+Hi
+
+(BTW sorry if this appears twice, I sent yesterday and it did not get
+through somehow.)
+
+
+I've had a few ideas over the weekend about a routing system for URL
+mapping for my application, that shares a lot of similarities with
+the Routes system.  I implemented it, wrote some tests, and converted
+my web application code to use it and I'm thorougly happy with it and
+will release it soon.  I thought some of the Pyloners might be
+interested in having a look, because it is very similar to Routes and
+there may be some synergy opportunities/ideas that we may feed each
+other's projects on.  Here are the key differences (I won't list the
+similarities, there are many):
+
+* There is no forced concept of controller/action/view, etc.  A path
+is just a list of components and variables embedded in it.  Any
+pattern of components/fixed names in the URL is legal.  I'm not sure
+Routes also does that, I suspect it does, but the documentation is
+ambiguous about this, it seems to assume some stuff from Ruby, like
+that of having a controller/action/id pattern, which IMO is not
+necessary, but the tests indicate otherwise (in any case, this should
+be clarified in your docs IMO, you should explain what controllers and
+actions mean in your context, I'm not super familiar with RoR so this is a
+bit confusing, I'm guessing, but maybe I'm guessing wrong)
+
+* There is no "connect" method like in Routes.  Rather, the pattern
+matching algorithm for matching a URL forward to a request string is
+by using a resource tree with a chain-of-responsibility pattern, where
+each resource may "eat up" zero, one or more components and delegate
+to the next in the chain -- from the root of the tree toward leaves.
+I think Twisted has something like that.   The resource (controller)
+classes declare the possible branches that they can propagate and this
+is how the mapper builds itself, by visiting the tree and asking each
+node for its possibilities.
+ You establish the tree of resources on your site by creating this
+resource tree, once for your app.  IMO an advantage of this is that
+you can easily combine resources to put common code in the path of a
+subtree of URLs, which can e.g. fetch stuff from a database and
+propagate it on a context object that is passed along the chain of
+resources (what you call controllers).    I find that this is also a
+nice way to setup security privileges for entire subtrees (resources
+don't have to eat up path components at all, I can have a resource
+just check for some credentials and delegate if ok, return a not-found
+error if not).
+
+* All linkable resources (e.g. leafs, indexes) are unconditionally
+assigned a unique resource-id.  By default this uses the name of the
+resource handler class, which for the most part there is a single
+instance of.  The resource ids are used to generate URLs from the web
+application code.  This way the web app code NEVER has to see ANY
+urls, there is total and complete decoupling between the "world of
+URLs" and the "world of source code/handlers" (I see them as
+callbacks, really).  You could completely rearrange the layout of the
+resource tree/URLs and all the pages will still keep working (as long
+as you always use the mapper to generate the URLs).  Moreover, this
+means -- like in Routes -- the all URLs generated via the mapper are
+valid.
+
+* My mapper can list the render the entire set of resources that the
+web app may serve.  I think this is extremely cool, to be able to see
+all the pages that your server offers (Routes does that too, no?  I
+haven't seen it on the site).  Also, there is a fancier resource that
+uses the resource handlers docstrings to provide a human-readable
+version of the list of resources on the server, and what their role
+is.
+ One of the coolest applications of this is that my automated
+mechanize test program fetches this list before running, and the
+mapper can accept it and reload itself from that text (apart from the
+resource objects themselves, of course, the test program does not
+share code with the web app at all).  Then the test program uses that
+reconstructed mapper to fetch the required resources using only
+resource-ids.  This means that if the URLs change the test programs
+keep working, no worries.  Also, I can more easily reuse the test
+program for e.g. user management resources over different web
+applications, even if their URL layout is completely different.
+
+* I did not implement getting the defaults from the request object
+like Ruby/Routes (i.e. specifying only some of the parameters), simply
+because I find it a bit too implicit for my taste (this is rather
+personal).   The mapper, however, can accept to be passed an object or
+dict to fetch missing values.  Since the default behaviour of the
+resources that "eat up" URL components is to add them as attributes to
+a context object that is passed along, I can just pass in that object
+to provide similar behaviour.
+
+* Static validation in code: I provide a script that given a URL of
+the resource mapper rendering, will reload a mapper, grep all your
+source code for resource ids (given that you use a unique pattern, by
+default they are strings like this: @@ResourceName) and will warn you
+if your code is attempting to generate links to resources which do not
+exist.  I have found this extremely quick and useful to prevent
+errors.
+
+* Like Atocha and other of my web app components, the code is
+completely and entirely orthogonal to any web app framework out there.
+ You can even use it with CGI scripts if you like (the demo app does
+that).
+
+
+Anyway, if anyone is interested, here is the link:
+http://furius.ca/ranvier/
+
+There is a simple running demo here:
+http://furius.dyndns.biz/ranvier/demo/
+
+In particular:
+http://furius.dyndns.biz/ranvier/demo/resources
+http://furius.dyndns.biz/ranvier/demo/prettyres
+
+An unfinished design document here:
+http://furius.ca/ranvier/doc/ranvier-features.html
+
+
+For now this is just a one-man project but if some people would like
+to contribute new stuff to it I'm very open to patches.   I'll release
+this as soon as I find time to complete the documentation nicely.  If
+you see opportunities for merging some of the stuff let me know.  In
+particular, I think it would be possible to build an interface for
+Ranvier that is similar to the connect() interface of Routes, creating
+a tree of resources dynamically, but I'm not sure of some of the
+issues if I did that (and I don't need it now, so I won't indulge).
+
+Anyway, I would be interested in comments or criticisms about it,
+whether you think it has disadvantages, advantages, etc.  Any comments
+and discussion
+welcome.
+
+cheers,
+
+
+
+
+P.S. Anybody going to the Iceland sprints interested in talking about
+that stuff grab a hold of me there.

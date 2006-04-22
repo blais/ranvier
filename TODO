@@ -2,15 +2,18 @@
    TODO: ranvier
 ===================
 
+(code)
+
+* Extent static checker script to look for parameters and to warn when it is
+  likely that parameters have been forgotten or are missing or extraneous
+
+
+
 (promotion)
 * Send Ranvier information to twill list when the URL mapper for testing is
   complete.
 
-* Send on the Routes list, with the list of novel features:
-
-  - Parsing the URL along with the resource tree
-  - Backward mapping
-  - Tests using the resource-ids
+* Save original Routes email for docs, it contains lots of info
 
 
 (docs)
