@@ -39,6 +39,13 @@ Multiple Components in a Row
      /doc/<year>/<month>/<date>/view
 
 
+Map Multiple URLs
+-----------------
+
+* Add a simple interface to be able to map “n” URLs (``mapurln(..)``) with the
+  same arguments.
+
+
 Features in Docs
 ----------------
 
