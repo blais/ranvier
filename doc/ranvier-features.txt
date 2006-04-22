@@ -21,7 +21,7 @@
       4.2  Selection of Resource Ids
       4.3  Static Maps
       4.4  Unique Identifiers
-    5   Listing URLs
+    5   Listing Available Resources and URLs
     6   Embedding Security
     7   Internal Redirects
     8   Support for Debugging
@@ -264,8 +264,8 @@ possibility to identify instances.
 
 
 
-Listing URLs
-============
+Listing Available Resources and URLs
+====================================
 
 One nice feature of our system is that we like to be able to get an entire list
 of the URLs served by the system.  This is extremely useful, because:
@@ -279,6 +279,11 @@ of the URLs served by the system.  This is extremely useful, because:
    are entirely independent of the application URL layout.
 
 (#. Can inspect the various security credentials that each URL requires.)
+
+
+
+* FIXME mention pretty resource renderer and defaults
+
 
 
 Embedding Security

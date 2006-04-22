@@ -5,3 +5,6 @@
 Current
 =======
 
+* Added option for sorting pretty render resources
+
+* Made the pretty render resources accept default values as args

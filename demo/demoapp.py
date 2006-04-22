@@ -27,7 +27,7 @@ def create_application( rootloc=None ):
         home=Home(),
         altit=SpecialResource(resid='@@ImSpecial'),
         resources=EnumResource(mapper),
-        prettyres=DemoPrettyEnumResource(mapper),
+        prettyres=DemoPrettyEnumResource(mapper, True),
         deleg=Augmenter(AnswerBabbler()),
         users=UsernameRoot(Folder(username=PrintUsername(),
                                   name=PrintName(),
@@ -51,7 +51,7 @@ def create_application( rootloc=None ):
         )
 
     mapper.initialize(root)
-    mapper.add_static('@@External', 'http://paulgraham.com')
+    mapper.add_static('@@ExternalExample', 'http://paulgraham.com')
 
     return mapper, root
 
@@ -146,7 +146,9 @@ class DemoPrettyEnumResource(PrettyEnumResource):
     """
     def handle( self, ctxt ):
         ctxt.page.render_header(ctxt)
-        ctxt.response.write(pretty_render_mapper_body(self.mapper))
+        ctxt.response.write(pretty_render_mapper_body(self.mapper,
+                                                      dict(ctxt.args),
+                                                      self.sorturls))
         ctxt.page.render_footer(ctxt)
 
 
@@ -210,7 +212,7 @@ class Home(LeafResource):
              'intredir': mapurl('@@InternalRedirectTest'),
              'leafcomp': mapurl('@@LeafPlusOneComponent', comp='president'),
              'folddemo': mapurl('@@DemoFolderWithMenu'),
-             'static': mapurl('@@External'),
+             'static': mapurl('@@ExternalExample'),
              }
 
         ctxt.response.write('''

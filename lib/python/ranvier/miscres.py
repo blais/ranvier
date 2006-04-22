@@ -7,7 +7,6 @@ Miscallenious useful generic resource classes.
 """
 
 # ranvier imports
-from ranvier.pretty import pretty_render_mapper
 from ranvier.resource import Resource
 from ranvier import verbosity, RanvierError
 
@@ -188,20 +187,4 @@ class RemoveBase(DelegaterResource):
     def handle( self, ctxt ):
         for c in xrange(self.count):
             ctxt.locator.next()
-
-
-#-------------------------------------------------------------------------------
-#
-class PrettyEnumResource(LeafResource):
-    """
-    Output a rather nice page that describes all the pages that are being served
-    from the given mapper.
-    """
-    def __init__( self, mapper, **kwds ):
-        Resource.__init__(self, **kwds)
-        self.mapper = mapper
-
-    def handle( self, ctxt ):
-        ctxt.response.setContentType('text/html')
-        ctxt.response.write(pretty_render_mapper(self.mapper))
 

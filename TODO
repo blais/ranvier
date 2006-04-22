@@ -30,13 +30,22 @@ Future
 
 Multiple Components in a Row
 ----------------------------
-
+s
 * branch_var should accept a tuple of variable names, and the same should go for
   declare_serve(), so that we can express consuming more than a single path
   component:
 
      /doc/<year>/<month>/<date>
      /doc/<year>/<month>/<date>/view
+
+
+Validate on Back-Mapping
+------------------------
+
+* It would provide even more robustness and verification if it was possible for
+  the resources that consume components to provide some kind of validation for
+  those components, so that when we back-map URLs for rendering more
+  verification is performed that just “we have the parameter”.
 
 
 Map Multiple URLs
