@@ -17,8 +17,8 @@ But you may customize this with an option.
 """
 
 # Future: allow a mapper to be created by importing a module and calling a
-# specific function rather than require to fetch it from the a running web app
-# serving it on an URL.
+# function to create the resource tree, rather than require to fetch it from the
+# a running web app serving it on an URL.
 
 
 # stdlib imports.
@@ -52,6 +52,9 @@ def check_file( filename, mapper, patre ):
                 '%s:%s: (%s) %s\n' % (filename, lnum+1, 'ERROR',
                                       "Invalid resource id '%s'." % resid))
 
+        # Note: we need to check some of the parameters, the number, etc.  Parse
+        # some of this by hand (e.g. the number of params, keyword arguments),
+        # to provide more extensive warnings.
 
 #-------------------------------------------------------------------------------
 #

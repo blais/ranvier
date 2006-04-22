@@ -4,9 +4,17 @@
 
 (code)
 
+* We need to provide a format string declaration for a component, e.g. for the
+  ride-ids and event-ids, %08d
+
+* Move the namexform outside of the mapper, and maybe as a global parameter that
+  has to be set by glue code
+
+  * Then you can add the resid from the delegate method, so that a resource and
+    the template could render the resource id in the meta fields.
+
 * Extent static checker script to look for parameters and to warn when it is
   likely that parameters have been forgotten or are missing or extraneous
-
 
 
 (promotion)

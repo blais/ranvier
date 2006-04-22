@@ -26,13 +26,14 @@ class Resource(object):
     this, you can rely on the automatic class name transformation."""
 
     def __init__( self, **kwds ):
-        resid = kwds.pop('resid', None)
+        resid = kwds.pop('resid', None) # Explicitly-set resource-id.
         if resid is not None:
             self.__resid = resid
 
     def hasresid( self ):
         """
-        Return true if the resource was given an explicit resource-id.
+        Return true if the resource was given a resource-id explicitly, that is,
+        not to be derived from the class' name.
         """
         return self.__resid is not None
 

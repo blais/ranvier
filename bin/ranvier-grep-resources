@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+# This file is part of the Ranvier package.
+# See http://furius.ca/ranvier/ for license and details.
+
+"""ranvier-grep-resources [<options>] <source-file> [<source-file> ...]
+
+Return a list of resource ids found in the given files.  There are options to
+compute the unique set of resource ids as well.
+
+Typically, the resource-id patterns are of the form::
+
+   @@ResourceName
+
+But you may customize this with an option.
+"""
+
+
+# stdlib imports.
+import re
+
+# ranvier imports.
+from ranvier import *
+
+
+#-------------------------------------------------------------------------------
+#
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-p', '--pattern', action='store',
+                      default='(@@[A-Za-z0-9]+)\\b',
+                      help="Specify a regexp that matches the typical "
+                      "resource-id patterns")
+
+    parser.add_option('-u', '--unique', action='store_true',
+                      help="Print the set of unique resource-ids from the "
+                      "union of all files.  This does not print the filenames.")
+
+    # grep options.
+    parser.add_option('-n', '--line-number', action='store_true',
+                      help="Prefix each line of output with the line number "
+                      "within its input file.")
+    parser.add_option('-H', '--with-filename', action='store_true',
+                      help="Print the filename for each match.")
+
+    opts, args = parser.parse_args()
+
+    if opts.unique and (opts.line_number or opts.with_filename):
+        parser.error("You cannot print the filename or line numbers when "
+                     "using --unique")
+    if not args:
+        parser.error("You must specify a list of Python source files.")
+    filenames = args
+
+    if len(filenames) > 1:
+        opts.with_filename = True
+
+    # Compile the given resource-id regexp.
+    try:
+        patre = re.compile(opts.pattern, re.M)
+    except re.error, e:
+        raise SystemExit("Error: Compiling resource-id regexp: '%s'." % e)
+
+    # Process input files, generating the list of ids.
+    reslist = []
+    for fn in filenames:
+        try:
+            text = open(fn, 'r').read()
+        except IOError, e:
+            raise SystemExit("Error: Reading file '%s'." % e)
+
+        for lnum, line in enumerate(text.splitlines()):
+            mo = patre.search(line)
+            if not mo:
+                continue
+
+            resid = mo.group(1)
+            reslist.append( (fn, lnum, resid) )
+
+    if opts.unique:
+        for resid in sorted(set(x[2] for x in reslist)):
+            print resid
+    else:
+        fmt = []
+        if opts.with_filename:
+            fmt.append('%(filename)s')
+        if opts.line_number:
+            fmt.append('%(line)s')
+        fmt.append('%(resid)s')
+        fmt = ':'.join(fmt)
+        
+        for filename, line, resid in reslist:
+            print fmt % locals()
+
+if __name__ == '__main__':
+    main()
