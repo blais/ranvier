@@ -4,6 +4,22 @@
 
 (code)
 
+* ranvier: Add formatting to components upon declaration and remove all %08d
+  strings everywhere
+
+* Implement forward matching without going via the resource tree, and return a
+  dict of the matched values.  Do this with a regexp, you give it a URL and it
+  attempts to match it and return the components.  Should be easy
+
+  The test can use this in order to check for specified resulting URLs with
+  values.
+
+
+
+
+
+
+
 * Implement Coverage Analysis, two separate statistics can be collected:
 
   - Coverage for a resource being callde

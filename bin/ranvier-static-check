@@ -45,8 +45,13 @@ def check_file( filename, mapper, patre ):
         mo = patre.search(line)
         if not mo:
             continue
-        
         resid = mo.group(1)
+
+        # Skip resource-ids which contain replacement patterns.
+        if '%' in resid:
+            continue
+        
+        # Warn if the resource-id is not present.
         if resid not in mapper:
             sys.stderr.write(
                 '%s:%s: (%s) %s\n' % (filename, lnum+1, 'ERROR',
@@ -63,7 +68,7 @@ def main():
     parser = optparse.OptionParser(__doc__.strip())
 
     parser.add_option('-p', '--pattern', action='store',
-                      default='(@@[A-Za-z0-9]+)\\b',
+                      default='(@@[A-Za-z0-9\\.\\-\\%]+)\\b',
                       help="Specify a regexp that matches the typical "
                       "resource-id patterns")
 
