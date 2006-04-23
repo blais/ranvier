@@ -4,6 +4,24 @@
 
 (code)
 
+* Implement Coverage Analysis, two separate statistics can be collected:
+
+  - Coverage for a resource being callde
+  - Coverage for rendering URLs
+
+  These should be stored in a DBM database or a file, and then be collected for
+  display.
+
+  - Provide a tool to report coverage from the cmdline
+  - Provide a resource to report coverage nicely in an HTML table
+
+  You will need to set ctxt.resid in Resource.delegate() (you need this).
+
+* Force initialization and raise an exception if the library is used without
+  having been initialized properly.
+
+* Move namexform somewhere else than the mapper, it should probably be global.
+
 * We need to provide a format string declaration for a component, e.g. for the
   ride-ids and event-ids, %08d
 
