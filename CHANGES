@@ -5,6 +5,15 @@
 Current
 =======
 
+* Arrange to automatically append a trailing slash to non-leaf resources that
+  get served, in order to minimize redirection if _training_slash is true.
+
+* Implement forward matching without going via the resource tree, and return a
+  dict of the matched values.  Do this with a regexp, you give it a URL and it
+  attempts to match it and return the components.  Should be easy
+  The tests can use this in order to check for specified resulting URLs with
+  values.
+
 * Added option for sorting pretty render resources
 
 * Made the pretty render resources accept default values as args
