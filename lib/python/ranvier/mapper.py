@@ -35,7 +35,8 @@ class UrlMapper(rodict.ReadOnlyDict):
     and parameters.  It is also a very safe way to force the creation of URLs
     that are always valid.
     """
-    def __init__( self, root_resource=None, namexform=None, rootloc=None ):
+    def __init__( self, root_resource=None, namexform=None, rootloc=None,
+                  render_trailing=True ):
         rodict.ReadOnlyDict.__init__(self)
 
         self.root_resource = root_resource
@@ -58,6 +59,10 @@ class UrlMapper(rodict.ReadOnlyDict):
         """An object used to log inter-resource references in order to produce a
         call graph."""
 
+        self.render_trailing = render_trailing
+        """If this is true, automatically render a trailing slash for resources
+        that are not leafs."""
+
         if root_resource is not None:
             self.initialize(root_resource)
 
@@ -73,7 +78,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         enumrator = Enumerator()
         enumrator.visit_root(root_resource)
 
-        for path in enumrator.getpaths():
+        for path, isterminal in enumrator.getpaths():
             # Compute the URL string and a dictionary with the defaults.
             # Defaults that are unset are left to None.
             components = []
@@ -107,7 +112,7 @@ class UrlMapper(rodict.ReadOnlyDict):
             absolute = None
 
             unparsed = ('', '', absolute, components, '', '')
-            mapping = Mapping(resid, unparsed, last_resource)
+            mapping = Mapping(resid, unparsed, isterminal, last_resource)
             self._add_mapping(mapping)
 
     def inject_builtins( self, mapname=None ):
@@ -153,10 +158,10 @@ class UrlMapper(rodict.ReadOnlyDict):
         assert isinstance(resid, str)
 
         # Parse the URL pattern.
-        unparsed = urlpattern_to_components(urlpattern, defaults)
+        unparsed, isterminal = urlpattern_to_components(urlpattern, defaults)
 
         # Add the mapping.
-        mapping = Mapping(resid, unparsed)
+        mapping = Mapping(resid, unparsed, isterminal)
         self._add_mapping(mapping)
 
     def add_alias( self, new_resid, existing_resid ):
@@ -381,10 +386,10 @@ class UrlMapper(rodict.ReadOnlyDict):
             # representation.
 
             # Parse the loaded line.
-            unparsed = urlpattern_to_components(urlpattern)
+            unparsed, isterminal = urlpattern_to_components(urlpattern)
 
             # Create and add the new mapping.
-            mapping = Mapping(resid, unparsed)
+            mapping = Mapping(resid, unparsed, isterminal)
             mapper._add_mapping(mapping)
 
         return mapper
@@ -472,7 +477,7 @@ class UrlMapper(rodict.ReadOnlyDict):
 
         # Note: we do not match the beginning and end because this might be used
         # to match links within a document (e.g. in some test).
-        mre = re.compile('%s/?' % restring)
+        mre = re.compile(restring)
         return mre
     
     def match( self, resid, url ):
@@ -488,7 +493,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # Get the mapping and build a regexp for matching.
         mapping = self._get_mapping(resid)
         restring = mapping.render_regexp_matcher(self.rootloc)
-        mre = re.compile('^%s/?$' % restring)
+        mre = re.compile('^%s$' % restring)
 
         # Match against just the given path.
         scheme, netloc, path, query, frag = urlparse.urlsplit(url)
@@ -515,7 +520,7 @@ class Mapping(object):
     """
     Internal class used for storing mappings.
     """
-    def __init__( self, resid, unparsed, resobj=None ):
+    def __init__( self, resid, unparsed, isterminal, resobj=None ):
         """
         'unparsed' is a tuple of ::
 
@@ -539,6 +544,9 @@ class Mapping(object):
         # Resource-id and resource object (if specified)
         self.resid = resid
         self.resource = resobj
+
+        # True if this resource does not have any further branches
+        self.isterminal = isterminal
 
         #
         # Pre-calculate stuff for faster backmapping when rendering pages.
@@ -622,9 +630,14 @@ class Mapping(object):
                 elif format.endswith('f'):
                     params[name] = '(?P<%s>[0-9\\.\\+\\-]+)' % name
 
-        return self._render(self.urltmpl_untyped, params, rootloc)
+        restring = self._render(self.urltmpl_untyped, params, rootloc)
+        if restring.endswith('/'):
+            restring += '?'
+        else:
+            restring += '/?'
+        return restring
 
-    def _render( self, template, params, rootloc=None ):
+    def _render( self, template, params, rootloc=None, render_trailing=True ):
         """
         Render the final URL using the given params.  The dict should exactly
         match the variables in the template.
@@ -635,6 +648,11 @@ class Mapping(object):
         else:
             first_comp = rootloc or ''
         rendered_path = '/'.join((first_comp, rendered_path))
+
+        # Add a trailing slash if the resource if not a leaf
+        if render_trailing and self.isterminal:
+            if not rendered_path.endswith('/'):
+                rendered_path += '/'
 
         unparsed = self.prefix + (rendered_path,) + self.suffix
 
@@ -698,6 +716,11 @@ def urlpattern_to_components( urlpattern, defaults=None ):
     if path.startswith('/'):
         path = path[1:]
 
+    # Find out if this is a terminal and remove the extra slash.
+    isterminal = path.endswith('/')
+    if isterminal:
+        path = path[:-1]
+
     # Parse the URL pattern.
     components = []
     indefs = defaults and defaults.copy() or {}
@@ -725,7 +748,7 @@ def urlpattern_to_components( urlpattern, defaults=None ):
         raise RanvierError(
             "Error: invalid extra defaults for given URL pattern.")
 
-    return scheme, netloc, absolute, components, query, fragment
+    return (scheme, netloc, absolute, components, query, fragment), isterminal
 
 
 #-------------------------------------------------------------------------------

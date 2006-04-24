@@ -65,7 +65,7 @@ class DelegaterResource(Resource):
 
 #-------------------------------------------------------------------------------
 #
-class VarResource(Resource):
+class VarResource(LeafResource):
     """
     Resource base class that inconditionally consumes one path component and
     that serves as a leaf.

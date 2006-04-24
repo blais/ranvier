@@ -133,18 +133,26 @@ class Enumerator(object):
         visitor = EnumVisitor()
         resource.enum_targets(visitor)
 
+        # Get the accumulated branches.
+        branches = visitor.get_branches()
+
         # If we have reached a leaf node (i.e. the node has declared itself a
         # potential leaf), add the path to the list of paths.
         if visitor.isleaf():
+
+            # If this resource is a leaf and it does not have any other possible
+            # branches, it is a terminal resource.  This is used later to
+            # determine if we need append a trailing slash or not.
+            isterminal = bool(branches)
+
             if visitor.leaf_var:
                 # Append a path with a variable component at the end.
                 path = path + [(Enumerator.BR_VARIABLE, None, visitor.leaf_var)]
-                self.accpaths.append(path)
+                self.accpaths.append( (path, isterminal) )
             else:
-                self.accpaths.append(list(path))
+                self.accpaths.append( (list(path), isterminal) )
 
         # Process the possible paths.  This is a breadth-first search.
-        branches = visitor.get_branches()
         for branch in branches:
             kind, delegate, arg = branch
             self.visit(delegate, path + [branch], level+1)

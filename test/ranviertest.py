@@ -45,7 +45,7 @@ class TestMappings(unittest.TestCase):
                           '/lcomp/president')
         self.assertRaises(RanvierError, mapurl,
                           '@@LeafPlusOneComponent', 'george', comp='junior')
-        self.assertEquals(mapurl('@@DemoFolderWithMenu'), '/fold')
+        self.assertEquals(mapurl('@@DemoFolderWithMenu'), '/fold/')
 
     def test_backmaps( self ):
         "Testing backmapping URLs."
@@ -64,6 +64,10 @@ class TestMappings(unittest.TestCase):
         # Reload the mapper from these lines.
         loaded_mapper = UrlMapper.load(lines)
         self._test_backmaps(loaded_mapper)
+
+        # Round-trip: render and compare to the original file.
+        loaded_lines = loaded_mapper.render()
+        self.assertEquals(loaded_lines, lines)
 
     def test_static( self ):
         self._test_static(None)
@@ -151,44 +155,56 @@ class TestConversions(unittest.TestCase):
         fun = ranvier.mapper.urlpattern_to_components
 
         # All fixed.
-        assert( fun('/documents/faq/part1') ==
-                ('', '', True, [('documents', False, None, None),
-                                ('faq', False, None, None),
-                                ('part1', False, None, None)], '', '') )
+        self.assertEquals(
+            fun('/documents/faq/part1'), 
+            (('', '', True, [('documents', False, None, None),
+                             ('faq', False, None, None),
+                             ('part1', False, None, None)], '', ''), False) )
+        
+        # Non-terminal
+        self.assertEquals(
+            fun('/documents/faq/'), 
+            (('', '', True, [('documents', False, None, None),
+                             ('faq', False, None, None),], '', ''), True) )
 
         # With one variable.
-        assert( fun('/users/(username)/profile') ==
-                ('', '', True, [('users', False, None, None),
-                                ('username', True, None, None),
-                                ('profile', False, None, None)], '', '') )
+        self.assertEquals(
+            fun('/users/(username)/profile'), 
+            (('', '', True, [('users', False, None, None),
+                             ('username', True, None, None),
+                             ('profile', False, None, None)], '', ''), False) )
 
         # Variable with default
-        assert( fun('/users/(username)/profile', {'username': 'martin'}) ==
-                ('', '', True, [('users', False, None, None),
+        self.assertEquals(
+            fun('/users/(username)/profile', {'username': 'martin'}), 
+            (('', '', True, [('users', False, None, None),
                                 ('username', True, 'martin', None),
-                                ('profile', False, None, None)], '', '') )
+                                ('profile', False, None, None)], '', ''), False) )
 
         # Variable with formatting
-        assert( fun('/users/(userid%08d)/profile') ==
-                ('', '', True, [('users', False, None, None),
+        self.assertEquals(
+            fun('/users/(userid%08d)/profile'), 
+            (('', '', True, [('users', False, None, None),
                                 ('userid', True, None, '08d'),
-                                ('profile', False, None, None)], '', '') )
+                                ('profile', False, None, None)], '', ''), False) )
 
         # Test with multiple components
-        assert( fun('/users/(username)/trip/(id)/view') ==
-                ('', '', True, [('users', False, None, None),
+        self.assertEquals(
+            fun('/users/(username)/trip/(id)/view'), 
+            (('', '', True, [('users', False, None, None),
                                 ('username', True, None, None),
                                 ('trip', False, None, None),
                                 ('id', True, None, None),
-                                ('view', False, None, None)], '', '') )
+                                ('view', False, None, None)], '', ''), False) )
 
         # Test with many components, defaults and formatting.
-        assert( fun('/users/(username)/trip/(id%08d)/view', {'id': 4}) ==
-                ('', '', True, [('users', False, None, None),
+        self.assertEquals(
+            fun('/users/(username)/trip/(id%08d)/view', {'id': 4}), 
+            (('', '', True, [('users', False, None, None),
                                 ('username', True, None, None),
                                 ('trip', False, None, None),
                                 ('id', True, 4, '08d'),
-                                ('view', False, None, None)], '', '') )
+                                ('view', False, None, None)], '', ''), False) )
 
         # All fixed, external.
         fun('http://domain.com/users')
@@ -197,10 +213,11 @@ class TestConversions(unittest.TestCase):
         fun('http://domain.com/users/(username)/view')
 
         # Relative.
-        assert( fun('users/(username)/profile') ==
-                ('', '', False, [('users', False, None, None),
+        self.assertEquals(
+            fun('users/(username)/profile'), 
+            (('', '', False, [('users', False, None, None),
                                  ('username', True, None, None),
-                                 ('profile', False, None, None)], '', '') )
+                                 ('profile', False, None, None)], '', ''), False) )
 
         # Test with invalid defaults.
         assertRaises(RanvierError, fun,
@@ -225,7 +242,7 @@ class TestConversions(unittest.TestCase):
             ('@@AnswerBabbler', (),
              '/demo/deleg', '/demo/deleg'),
             ('@@DemoFolderWithMenu', (),
-             '/demo/fold', '/demo/fold'),
+             '/demo/fold/', '/demo/fold/'),
             ('@@SimpleGreed', (),
              '/demo/fold/greed', '/demo/fold/greed'),
             ('@@SimpleHamming', (),
