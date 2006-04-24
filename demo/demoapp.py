@@ -48,6 +48,7 @@ def create_application( rootloc=None ):
                               "numbers.", resid="@@SimpleHamming"),
            ),
         formatted=IntegerComponent(),
+        source=SourceCode(),
         resid='@@Root'
         )
 
@@ -57,6 +58,17 @@ def create_application( rootloc=None ):
     mapper.add_static('@@Atocha', '/atocha/index.html')
 
     return mapper, root
+
+
+#-------------------------------------------------------------------------------
+#
+class SourceCode(FolderWithMenu):
+    """
+    Output the source code to a browser window.
+    """
+    def handle_default( self, ctxt ):
+        ctxt.response.setContentType('text/plain')
+        ctxt.response.write(open(__file__, 'r').read())
 
 
 #-------------------------------------------------------------------------------
@@ -219,20 +231,19 @@ class Home(LeafResource):
              'static': mapurl('@@ExternalExample'),
              'formatted': mapurl('@@IntegerComponent', 1042),
              'unrooted': mapurl('@@Atocha'),
+             'source': mapurl('@@SourceCode'),
              }
 
         ctxt.response.write('''
 <h1>Demo Home</h1>
 
-<p>
-This is the root of the Ranvier demo program.  This tree is served by using the
-mapper and the links contained are also rendered using the mapper.  This is
-actually not very exciting unless you have a look at the source code.
-</p>
+<p> This is the root of the Ranvier demo program.  This tree is served by using
+the mapper and the links contained are also rendered using the mapper.  This is
+actually not very exciting <a href="%(source)s" target="sourcewin">unless you
+have a look at the source code</a> at the same time. All the links on this page
+manipulate an external browser window, so you don't have to do that yourself;
+new windows will be open automatically.  Click on the links below to start:</p>
 
-<p>
-Here are the resources available here:
-</p>
 <ul>
 
   <li> <b>Home Page</b>: You are at the <a href="%(home)s" target="testwin">home
