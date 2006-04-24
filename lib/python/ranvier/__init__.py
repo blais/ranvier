@@ -9,7 +9,7 @@ Package import.  Just import this and you should be fine.
 #-------------------------------------------------------------------------------
 #
 # Global flag used to turn on some debugging and tracing for development.
-verbosity = 0
+verbosity = 2
 
 
 #-------------------------------------------------------------------------------

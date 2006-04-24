@@ -264,6 +264,26 @@ class TestConversions(unittest.TestCase):
             assertEquals(mapurl(resid, *args), rendered)
             assertEquals(mapurl_pattern(resid), pattern)
 
+    def test_match( self ):
+        "Test matching known URLs."
+
+        mapper, root = demoapp.create_application(rootloc='/demo')
+        match = mapper.match
+
+        tests = (
+            ('@@ImSpecial', '/demo/altit', {}),
+            ('@@SimpleThought', '/demo/fold/think', {}),
+            ('@@IntegerComponent', '/demo/formatted/00001042', {'uid': 1042}),
+            ('@@LeafPlusOneComponent', '/demo/lcomp/bli', {'comp': 'bli'}),
+            ('@@UserData', '/demo/users/rachel/data/school',
+             {'username': 'rachel', 'userdata': 'school'}),
+            ('@@LeafPlusOneComponent', 'http://furius.ca/demo/lcomp/bli',
+             {'comp': 'bli'}),
+            )
+
+        for resid, url, expected in tests:
+            assertEquals(match(resid, url), expected)
+
 
 #-------------------------------------------------------------------------------
 #
@@ -291,6 +311,7 @@ def suite():
     suite.addTest(TestMappings("test_static"))
     suite.addTest(TestConversions("test_urlpattern"))
     suite.addTest(TestConversions("test_template"))
+    suite.addTest(TestConversions("test_match"))
     return suite
 
 if __name__ == '__main__':

@@ -68,9 +68,18 @@
 Future
 ======
 
+Emacs Helper Mode
+-----------------
+
+- Provide some kind of hook in emacs to fetch the list of resources from my
+  running web app, and then interactively insert by proposing amongst one of the
+  valid forms.  At least I want to be able to view the complete list in an emacs
+  buffer without having to cut-n-paste and open a file manually.
+
+
 Multiple Components in a Row
 ----------------------------
-s
+
 * branch_var should accept a tuple of variable names, and the same should go for
   declare_serve(), so that we can express consuming more than a single path
   component:

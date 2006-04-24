@@ -7,7 +7,7 @@ URL mapper and enumerator classes.
 """
 
 # stdlib imports
-import sys, os, string, StringIO, re, types, copy, urllib, urlparse
+import sys, __builtin__, os, string, StringIO, re, types, copy, urllib, urlparse
 from os.path import join, normpath
 
 # ranvier imports
@@ -110,6 +110,20 @@ class UrlMapper(rodict.ReadOnlyDict):
             mapping = Mapping(resid, unparsed, last_resource)
             self._add_mapping(mapping)
 
+    def inject_builtins( self, mapname=None ):
+        """
+        Inject some variables into the builtins namespace for global access.  It
+        makes it possible to access the backward mapping function everywhere in
+        a single process by invoking the global functions, which only works for
+        a single mapper instance (and that is not a problem in general, since we
+        pretty much never need more than one mapper in a running application).
+
+        Warning: this is a useful kludge, but it is nevertheless a kludge.  Know
+        what you are doing.
+        """
+        mapname = mapname or 'mapurl'
+        __builtin__.__dict__[mapname] = self.mapurl
+
     def _add_mapping( self, mapping ):
         """
         Add the given mapping, check for uniqueness.
@@ -175,7 +189,7 @@ class UrlMapper(rodict.ReadOnlyDict):
             assert isinstance(res, (str, unicode))
         return resid
 
-    def _get_url( self, res ):
+    def _get_mapping( self, res ):
         """
         Get the mapping for a particular resource-id.
         """
@@ -209,7 +223,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         this object to fill in the missing values.  You can combine this with
         keyword arguments as well.
         """
-        mapping = self._get_url(resid)
+        mapping = self._get_mapping(resid)
 
         # Check for an instance or dict to fetch some positional args from.
         if len(args) == 1 and not isinstance(args[0],
@@ -282,7 +296,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         parameters with supplied values, we replace them with their own name.
         This is used for rendering a readable version of the resources.
         """
-        mapping = self._get_url(resid)
+        mapping = self._get_mapping(resid)
         return mapping.render_pattern(self.rootloc)
 
     def url_variables( self, resid ):
@@ -291,7 +305,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         This is some form of introspection on the URLs.
         This can be useful for a test program.
         """
-        mapping = self._get_url(resid)
+        mapping = self._get_mapping(resid)
         return tuple(mapping.positional)
 
     def render( self, sort_by_url=True ):
@@ -449,6 +463,51 @@ class UrlMapper(rodict.ReadOnlyDict):
     def disable_callgraph( self ):
         self.callgraph_reporter = None
 
+    def get_match_regexp( self, resid ):
+        """
+        Return a regular expression to match the URL for the given resource-id.
+        """
+        mapping = self._get_mapping(resid)
+        restring = mapping.render_regexp_matcher(self.rootloc)
+
+        # Note: we do not match the beginning and end because this might be used
+        # to match links within a document (e.g. in some test).
+        mre = re.compile('%s/?' % restring)
+        return mre
+    
+    def match( self, resid, url ):
+        """
+        Attempt to match the given URL to the pattern that resid produces.  On
+        success return a dictionary of the matched values, where the keys are
+        the variable names and the values the matched components of the URL.  On
+        failure, return None.
+
+        Important note: this ignores the hostname in the given url and anything
+        other than the path.
+        """
+        # Get the mapping and build a regexp for matching.
+        mapping = self._get_mapping(resid)
+        restring = mapping.render_regexp_matcher(self.rootloc)
+        mre = re.compile('^%s/?$' % restring)
+
+        # Match against just the given path.
+        scheme, netloc, path, query, frag = urlparse.urlsplit(url)
+        mo = mre.match(path)
+        if not mo:
+            return None
+        else:
+            # Convert the match to the target type, guessed using the format.
+            results = {}
+            for name, value in zip(mapping.positional, mo.groups()):
+                format = mapping.formats.get(name)
+                if format and format.endswith('d'):
+                    value = int(value)
+                elif format and format.endswith('f'):
+                    value = float(value)
+                results[name] = value
+
+        return results
+
 
 #-------------------------------------------------------------------------------
 #
@@ -486,7 +545,7 @@ class Mapping(object):
         #
 
         # Build a usable URL string template.
-        self.urltmpl, self.urltmpl_generic = self.create_path_templates()
+        self.urltmpl, self.urltmpl_untyped = self.create_path_templates()
 
         # Get positional args, defaults and formats dicts.
         positional, defdict, formats = [], {}, {}
@@ -511,23 +570,25 @@ class Mapping(object):
     def create_path_templates( self ):
         """
         Render a string template that can be used with a mapping to perform the
-        final rendering.
+        final rendering.  This returns two formatting strings: one contains
+        spaces with the target types, and one that contains generic string
+        types.
         """
-        rcomps, rcomps_generic = [], []
+        rcomps, rcomps_untyped = [], []
         for name, var, default, format in self.components:
             if var:
                 if format:
                     repl = '%%(%s)%s' % (name, format)
-                    repl_generic = '(%s%%%%%s)' % (name, format)
+                    repl_untyped = '%%(%s)s' % name # ignore format
                 else:
                     repl = '%%(%s)s' % name
-                    repl_generic = '(%s)' % name
+                    repl_untyped = repl
                 rcomps.append(repl)
-                rcomps_generic.append(repl_generic)
+                rcomps_untyped.append(repl_untyped)
             else:
                 rcomps.append(name)
-                rcomps_generic.append(name)
-        return '/'.join(rcomps), '/'.join(rcomps_generic)
+                rcomps_untyped.append(name)
+        return '/'.join(rcomps), '/'.join(rcomps_untyped)
 
     def render( self, params, rootloc=None ):
         return self._render(self.urltmpl, params, rootloc)
@@ -539,8 +600,29 @@ class Mapping(object):
         params = {}
         for name, var, default, format in self.components:
             if var:
-                params[name] = name
-        return self._render(self.urltmpl_generic, params, rootloc)
+                if format:
+                    repl = '(%s%%%s)' % (name, format)
+                else:
+                    repl = '(%s)' % name
+                params[name] = repl
+
+        return self._render(self.urltmpl_untyped, params, rootloc)
+
+    def render_regexp_matcher( self, rootloc=None ):
+        """
+        Render a regular expression string for matching against a known URL.
+        """
+        params = {}
+        for name, var, default, format in self.components:
+            if var:
+                if format is None or format.endswith('s'):
+                    params[name] = '(?P<%s>[^/]+)' % name
+                elif format.endswith('d'):
+                    params[name] = '(?P<%s>[0-9]+)' % name
+                elif format.endswith('f'):
+                    params[name] = '(?P<%s>[0-9\\.\\+\\-]+)' % name
+
+        return self._render(self.urltmpl_untyped, params, rootloc)
 
     def _render( self, template, params, rootloc=None ):
         """

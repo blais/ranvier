@@ -27,6 +27,7 @@
     8   Support for Debugging
     9   A Routes-Like Interface
     10  (Other)
+      10.1  Writing Tests
 
 
 Introduction
@@ -334,3 +335,9 @@ would be added. FIXME TBD
 
 * Document URL pattern format
 
+
+
+Writing Tests
+-------------
+
+* Matching against a known URL
