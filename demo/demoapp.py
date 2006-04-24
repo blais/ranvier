@@ -47,11 +47,14 @@ def create_application( rootloc=None ):
            ham=SimpleResource("The purpose of computing is insight, not "
                               "numbers.", resid="@@SimpleHamming"),
            ),
+        formatted=IntegerComponent(),
         resid='@@Root'
         )
 
     mapper.initialize(root)
+    mapper.add_static('@@Stylesheet', 'style.css')
     mapper.add_static('@@ExternalExample', 'http://paulgraham.com')
+    mapper.add_static('@@Atocha', '/atocha/index.html')
 
     return mapper, root
 
@@ -66,11 +69,11 @@ class PageLayout:
         self.mapper = mapper
     
     def render_header( self, ctxt ):
-        header = """
+        header = '''
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" href="%(root)s/style.css" type="text/css" />
+    <link rel="stylesheet" href="%(style)s" type="text/css" />
   </head>
   <body>
 
@@ -89,17 +92,18 @@ class PageLayout:
     </div>
     
     <div id="main" class="document">
- """ % {'root': self.mapper.mapurl('@@Root')}
+''' % {'root': self.mapper.mapurl('@@Root'),
+       'style': self.mapper.mapurl('@@Stylesheet')}
 
         ctxt.response.setContentType('text/html')
         ctxt.response.write(header)
 
     def render_footer( self, ctxt ):
-        ctxt.response.write("""
+        ctxt.response.write('''
     </div>
   </body>
 </html>
-""")
+''')
 
 
 #-------------------------------------------------------------------------------
@@ -213,6 +217,8 @@ class Home(LeafResource):
              'leafcomp': mapurl('@@LeafPlusOneComponent', comp='president'),
              'folddemo': mapurl('@@DemoFolderWithMenu'),
              'static': mapurl('@@ExternalExample'),
+             'formatted': mapurl('@@IntegerComponent', 1042),
+             'unrooted': mapurl('@@Atocha'),
              }
 
         ctxt.response.write('''
@@ -274,8 +280,15 @@ Here are the resources available here:
   provides a menu of its subresources.</li>
 
   <li> <b>Static Mappings</b>: You can register static/external mappings with
-  the URL mapper.  For example, <a href="%(static)s" target="testwin">this
-  link</a> should point somewhere interesting on the web. </li>
+  the URL mapper.  They can point to <a href="%(static)s" target="testwin">
+  somewhere interesting on the web (external links)</a>, and to <a
+  href="%(unrooted)s" target="testwin">somewhere else on the same
+  site</a>. </li>
+
+  <li> <b>Formatted Components</b>: You can specify formats for the rendering of
+  components of URLS.  For example, <a href="%(formatted)s"
+  target="testwin">this page</a> should contain an integer in the target that is
+  formatted with lots of 0 digits.</li>
 
 </ul>
         ''' % m)
@@ -359,4 +372,32 @@ class LeafPlusOneComponent(VarResource):
         ctxt.page.render_footer(ctxt)
 
 
+#-------------------------------------------------------------------------------
+#
+class IntegerComponent(VarResource):
+    """
+    This is an example of using a formatting string for the URL path.
+    """
+    def __init__( self, **kwds ):
+        VarResource.__init__(self, 'uid', compfmt='%08d', **kwds)
+        
+    def handle( self, ctxt ):
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write('''<p>The leaf component is %s.</p>''' %
+                            repr(ctxt.uid))
+        ctxt.page.render_footer(ctxt)
+
+
+#-------------------------------------------------------------------------------
+#
+def trace( o ):
+    """
+    Inject a new builtin, this is a hack, for debugging only.
+    """
+    import pprint
+    sys.stderr.write(pprint.pformat(o) + '\n')
+    sys.stderr.flush()
+
+import __builtin__
+__builtin__.__dict__['pprint'] = trace
 

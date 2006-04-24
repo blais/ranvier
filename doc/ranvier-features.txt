@@ -329,3 +329,8 @@ Idea: in our resources traversal, we could put the query args together with the
 parameters in the URL itself… they are really conceptually the same…  checks
 would be added. FIXME TBD
 
+
+
+
+* Document URL pattern format
+

@@ -51,7 +51,7 @@ class EnumVisitor(object):
     # Each of the three following functions declares an individual branch of the
     # resource tree.
 
-    def declare_target( self, varname=None, default=None ):
+    def declare_target( self, varname=None, default=None, format=None ):
         """
         Declare that the given resource may serve the contents at this point in
         the path (this does not have to be a leaf, this could be used for a
@@ -62,10 +62,15 @@ class EnumVisitor(object):
         as well (optional).
         """
         if self.leaf:
-            raise RanvierError("Error: resource is twice declared as a leaf.")
+            raise RanvierError("Error: Resource is twice declared as a leaf.")
         self.leaf = True
+
         if varname is not None:
-            self.leaf_var = (varname, default)
+            self.leaf_var = (varname, default, format)
+
+        elif not (default is None and format is None):
+                raise RanvierError("Error: You cannot declare a default or "
+                                   "format without a variable.")
 
     def branch_anon( self, delegate ):
         """
@@ -80,12 +85,13 @@ class EnumVisitor(object):
         """
         self._add_branch(Enumerator.BR_FIXED, delegate, component)
 
-    def branch_var( self, varname, delegate, default=None ):
+    def branch_var( self, varname, delegate, default=None, format=None ):
         """
         Declare a variable component delegate.  This is used if your resource
         consumes a variable path of the locator.
         """
-        self._add_branch(Enumerator.BR_VARIABLE, delegate, (varname, default))
+        self._add_branch(Enumerator.BR_VARIABLE, delegate,
+                         (varname, default, format))
 
     def get_branches( self ):
         """

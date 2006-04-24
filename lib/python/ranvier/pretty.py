@@ -72,11 +72,19 @@ def pretty_render_mapper_body( mapper, defaults, sorturls ):
     Pretty-render just the body for the page that describes the contents of the
     mapper.
     """
+    # Try to convert the defaults to ints if some are, this won't hurt.
+    for name, value in defaults.iteritems():
+        try:
+            value = int(value)
+            defaults[name] = value
+        except ValueError:
+            pass
+    
     oss = StringIO.StringIO()
     oss.write('<h1>URL Mapper Resources</h1>\n')
     mappings = list(mapper.itervalues())
     if sorturls:
-        sortkey = lambda x: x.urlpattern
+        sortkey = lambda x: x.urltmpl
         titfmt = ('<h2 class="resource-title"><tt>%(url)s</tt> '
                   '(<tt>%(resid)s</tt>)</h2>')
     else:
@@ -86,7 +94,7 @@ def pretty_render_mapper_body( mapper, defaults, sorturls ):
 
     for o in mappings:
         # Prettify the URL somewhat for user readability.
-        url = mapper.mapurl_tmpl(o.resid, '(<i>%s</i>)')
+        url = mapper.mapurl_pattern(o.resid)
 
         # Try to fill in missing values from in the defaults dict
         defdict = o.defdict.copy()

@@ -79,18 +79,6 @@ def main():
 
 #-------------------------------------------------------------------------------
 #
-def trace( o ):
-    """
-    A new builtin hack, for debugging.
-    """
-    sys.stderr.write(pprint.pformat(o) + '\n')
-
-import __builtin__
-__builtin__.__dict__['pp'] = trace
-
-
-#-------------------------------------------------------------------------------
-#
 if __name__ == '__main__':
     main()
 

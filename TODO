@@ -15,9 +15,8 @@
   values.
 
 
-
-
-
+* Move namexform somewhere else than the mapper, it should probably be global,
+  add setting the resid() to ctxt.
 
 
 * Implement Coverage Analysis, two separate statistics can be collected:
@@ -36,7 +35,6 @@
 * Force initialization and raise an exception if the library is used without
   having been initialized properly.
 
-* Move namexform somewhere else than the mapper, it should probably be global.
 
 * We need to provide a format string declaration for a component, e.g. for the
   ride-ids and event-ids, %08d
@@ -184,3 +182,13 @@ Redirection Oddity
 * Investigate this: when you just return a Location: header without a status,
   Apache goes into an infinite loop.  What is this implementation of internal
   redirect?  Look for internal redirection on Wikipedia.
+
+
+Formats for static routes
+-------------------------
+
+* Implement format support for static routes, we will need to detect the format
+  from the given URL pattern, extending that syntax somehow.
+
+
+

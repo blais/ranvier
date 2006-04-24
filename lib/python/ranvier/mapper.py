@@ -7,7 +7,7 @@ URL mapper and enumerator classes.
 """
 
 # stdlib imports
-import sys, os, string, StringIO, re, types, copy, urllib
+import sys, os, string, StringIO, re, types, copy, urllib, urlparse
 from os.path import join, normpath
 
 # ranvier imports
@@ -23,8 +23,6 @@ __all__ = ['UrlMapper', 'EnumResource']
 
 #-------------------------------------------------------------------------------
 #
-compre = re.compile('^\\(([a-z]+?)\\)$')
-
 class UrlMapper(rodict.ReadOnlyDict):
     """
     A class that contains mappings from the resource names to the URLs to be
@@ -79,8 +77,6 @@ class UrlMapper(rodict.ReadOnlyDict):
             # Compute the URL string and a dictionary with the defaults.
             # Defaults that are unset are left to None.
             components = []
-            positional = []
-            defaults_dict = {}
             last_resource = root_resource
 
             for kind, resource, arg in path:
@@ -93,44 +89,40 @@ class UrlMapper(rodict.ReadOnlyDict):
                     continue
 
                 elif kind is Enumerator.BR_FIXED:
-                    components.append(arg)
+                    components.append( (arg, False, None, None) )
 
                 elif kind is Enumerator.BR_VARIABLE:
-                    varname, vardef = arg
+                    varname, vardef, varformat = arg
 
-                    # Check for variable collisions.
-                    if varname in defaults_dict:
-                        raise RanvierError(
-                            "Variable name collision in URI path.")
+                    if varformat and varformat.startswith('%'):
+                        varformat = varformat[1:]
 
-                    defaults_dict[varname] = vardef
-                    positional.append(varname)
-                    components.append('(%s)' % varname)
+                    components.append( (varname, True, vardef, varformat) )
 
             # Calculate the resource-id from the resource at the leaf.
             resid = last_resource.getresid(self)
 
             # Mappings provided by the resource tree are always relative to the
             # rootloc.
-            absolute = False
+            absolute = None
 
-            mapping = Mapping(resid,
-                              '/'.join(components),
-                              defaults_dict,
-                              positional,
-                              absolute,
-                              last_resource)
-            self._add_mapping(resid, mapping)
+            unparsed = ('', '', absolute, components, '', '')
+            mapping = Mapping(resid, unparsed, last_resource)
+            self._add_mapping(mapping)
 
-    def _add_mapping( self, resid, mapping ):
+    def _add_mapping( self, mapping ):
         """
         Add the given mapping, check for uniqueness.
         """
+        resid = mapping.resid
+
         # Check that the resource-id has not already been seen.
         if resid in self.mappings:
             lines = ("Error: Duplicate resource id '%s':" % resid,
-                     "  Existing mapping: %s" % self.mappings[resid].urlpattern,
-                     "  New mapping     : %s" % mapping.urlpattern)
+                     "  Existing mapping: %s" %
+                     self.mappings[resid].render_pattern(self.rootloc),
+                     "  New mapping     : %s" %
+                     mapping.render_pattern(self.rootloc))
             raise RanvierError(os.linesep.join(lines))
 
         # Store the mapping.
@@ -139,61 +131,19 @@ class UrlMapper(rodict.ReadOnlyDict):
     def add_static( self, resid, urlpattern, defaults={} ):
         """
         Add a static URL mapping from 'resid' to the given URL pattern.  This
-        may be an external mapping.  The rootlocation will only be prepended to
+        may be an external mapping.  The root location will only be prepended to
         the resulting mapping if the pattern is a relative path name (i.e. it
-        does not start with '/').
-
-        'urlpattern' is a string that may contain parenthesized expressions to
-        declare variable component names, for example::
-
-            http://mycatalog.com/book/(isbn)/comments
-
-        This declares a mapping where 'isbn' will be a required argument to
-        produce the mapping.
+        does not start with '/').  See urlpattern_to_components() for more
+        details.
         """
         assert isinstance(resid, str)
 
-        # Find out if the URL we're trying to map is absolute
-        absolute = urlpattern.startswith('/') or '://' in urlpattern
-
         # Parse the URL pattern.
-        components = []
-        positional = []
-        defaultsc, defaults_dict = defaults.copy(), {}
-
-        for comp in urlpattern.split('/'):
-            mo = compre.match(comp)
-            if mo:
-                varname = mo.group(1)
-
-                # Check for variable collisions.
-                if varname in defaults_dict:
-                    raise RanvierError(
-                        "Variable name collision in URI path.")
-
-                defaults_dict[varname] = defaultsc.pop(varname, None)
-                positional.append(varname)
-                components.append('(%s)' % varname)
-            else:
-                if ')' in comp or '(' in comp:
-                    raise RanvierError(
-                        "Error: Invalid component in static mapping '%s'." %
-                        urlpattern)
-                components.append(comp)
-
-        # Check that the provided defaults are all valid (i.e. there is no a
-        # default that does not match a variable in the given URL pattern).
-        if defaultsc:
-            raise RanvierError(
-                "Error: invalid defaults for given URL pattern.")
+        unparsed = urlpattern_to_components(urlpattern, defaults)
 
         # Add the mapping.
-        mapping = Mapping(resid,
-                          '/'.join(components),
-                          defaults_dict,
-                          positional,
-                          absolute)
-        self._add_mapping(resid, mapping)
+        mapping = Mapping(resid, unparsed)
+        self._add_mapping(mapping)
 
     def add_alias( self, new_resid, existing_resid ):
         """
@@ -206,10 +156,10 @@ class UrlMapper(rodict.ReadOnlyDict):
             raise RanvierError(
                 "Error: Target mapping '%s' must exist for alias '%s'." %
                 (existing_resid, new_resid))
-        
+
         new_mapping = copy.copy(mapping)
         new_mapping.resid = new_resid
-        self._add_mapping(new_resid, new_mapping)
+        self._add_mapping(new_mapping)
 
     def getresid( self, res ):
         """
@@ -224,10 +174,10 @@ class UrlMapper(rodict.ReadOnlyDict):
             resid = res
             assert isinstance(res, (str, unicode))
         return resid
-        
+
     def _get_url( self, res ):
         """
-        Get the URL string and defaults dict for a 
+        Get the mapping for a particular resource-id.
         """
         resid = self.getresid(res)
 
@@ -238,17 +188,6 @@ class UrlMapper(rodict.ReadOnlyDict):
             raise RanvierError("Error: invalid resource-id '%s'." % resid)
 
         return mapping
-
-    def _substitute( self, urltmpl, params, absolute ):
-        """
-        Substitute the parameters in the URL string and build and return the
-        final URL.
-        """
-        mapped_url = urltmpl % params
-        if absolute:
-            return mapped_url
-        else:
-            return '/'.join((self.rootloc or '', mapped_url))
 
     def mapurl( self, resid, *args, **kwds ):
         """
@@ -320,7 +259,7 @@ class UrlMapper(rodict.ReadOnlyDict):
 
             # Fill the slot with the specified value
             params[cname] = cvalue
-                    
+
         # Check that all the required values have been provided.
         missing = [cname for cname, cvalue in params.iteritems()
                    if cvalue is None]
@@ -329,26 +268,22 @@ class UrlMapper(rodict.ReadOnlyDict):
             raise RanvierError(
                 "Error: Missing values attempting to map to a resource: %s" %
                 ', '.join("'%s'" % x for x in missing))
-    
+
         # Register the target in the call graph, if enabled.
         if self.callgraph_reporter:
             self.callgraph_reporter.register_target(resid)
 
         # Perform the substitution.
-        return self._substitute(mapping.urltmpl, params, mapping.absolute)
+        return mapping.render(params, self.rootloc)
 
-    def mapurl_tmpl( self, resid, format='%s' ):
+    def mapurl_pattern( self, resid ):
         """
         Same as mapurl() above, except that instead of replacing the required
         parameters with supplied values, we replace them with their own name.
         This is used for rendering a readable version of the resources.
         """
         mapping = self._get_url(resid)
-
-        # Prepare the defaults dict with the provided values.
-        params = dict((x, format % x) for x in mapping.defdict.iterkeys())
-
-        return self._substitute(mapping.urltmpl, params, mapping.absolute)
+        return mapping.render_pattern(self.rootloc)
 
     def url_variables( self, resid ):
         """
@@ -377,7 +312,6 @@ class UrlMapper(rodict.ReadOnlyDict):
         else:
             sortfun = lambda x: x.resid
         mappings.sort(key=sortfun)
-            
 
         # Format for alignment for nice printing (and this does make the parsing
         # any more complicated.
@@ -385,10 +319,10 @@ class UrlMapper(rodict.ReadOnlyDict):
             maxidlen = max(len(x.resid) for x in mappings)
         else:
             maxidlen = 0
-        fmt = '%%-%ds , %%c , %%s' % maxidlen
-
-        return [fmt % (o.resid, o.absolute and 'A' or 'R', o.urlpattern)
-                for o in mappings]
+        fmt = '%%-%ds , %%s' % maxidlen
+        
+        return [fmt % (m.resid, m.render_pattern(self.rootloc))
+                for m in mappings]
 
         # Note: we are considering whether rendering the defaults-dict would be
         # interesting for reconstructing the UrlMapper from a list of lines, as
@@ -416,36 +350,28 @@ class UrlMapper(rodict.ReadOnlyDict):
         Load and create URL mapper from the given set of rendered lines.
         See render() for more details.
         """
-        ure = re.compile('\\(([a-z]+?)\\)')
-
         mapper = UrlMapper()
 
         for line in lines:
             if not line:
                 continue
-            
+
             # Split the id and urlpattern.
             try:
-                resid, absolute, urlpattern = map(str.strip, line.split(','))
+                resid, urlpattern = map(str.strip, line.split(','))
             except ValueError:
                 raise RanvierError("Warning: Error parsing line '%s' on load." %
                                    line)
+            
+            # Note: we do not have defaults when loading from the rendered
+            # representation.
 
-            # Parse the components in the urlpattern.
-            positional = ure.findall(urlpattern)
+            # Parse the loaded line.
+            unparsed = urlpattern_to_components(urlpattern)
 
-            # Relative or absolute.
-            absolute = (absolute == 'A')
-
-            # Defaults dictionary.  Note: the renderer does not provide the
-            # defaults yet. We could use a pickle eventually, or whatever.  I
-            # simple like readable formats for now.
-            defdict = dict((x, None) for x in positional)
-
-            # Add the mapping to the mapper, without the resource handler
-            # objects.
-            mapping = Mapping(resid, urlpattern, defdict, positional, absolute)
-            mapper.mappings[resid] = mapping
+            # Create and add the new mapping.
+            mapping = Mapping(resid, unparsed)
+            mapper._add_mapping(mapping)
 
         return mapper
 
@@ -523,25 +449,114 @@ class UrlMapper(rodict.ReadOnlyDict):
     def disable_callgraph( self ):
         self.callgraph_reporter = None
 
-        
+
 #-------------------------------------------------------------------------------
 #
 class Mapping(object):
     """
     Internal class used for storing mappings.
     """
-    def __init__( self, resid, urlpattern, defdict, positional, absolute,
-                  resobj=None,  ):
-        # Build a usable URL string template.
-        urltmpl = urlpattern.replace('(', '%(').replace(')', ')s')
+    def __init__( self, resid, unparsed, resobj=None ):
+        """
+        'unparsed' is a tuple of ::
 
-        self.resid = resid
-        self.urlpattern = urlpattern
-        self.urltmpl = urltmpl
-        self.defdict = defdict
-        self.positional = positional
-        self.resource = resobj
+          (scheme, netloc, absolute -> bool, components, query, fragment).
+
+        Otherwise it is None and means that this is a relative mapping.
+        See urlpattern_to_components() for a description of the components list.
+        """
+        # Unpack and store the prefix/suffix for later
+        scheme, netloc, absolute, components, query, fragment = unparsed
+        self.prefix = scheme, netloc
+        self.suffix = query, fragment
+
+        # Whether the path is relative to the mapper's rootloc or absolute
+        # (without or outside of this site).
         self.absolute = absolute
+
+        # The list of components
+        self.components = components
+
+        # Resource-id and resource object (if specified)
+        self.resid = resid
+        self.resource = resobj
+
+        #
+        # Pre-calculate stuff for faster backmapping when rendering pages.
+        #
+
+        # Build a usable URL string template.
+        self.urltmpl, self.urltmpl_generic = self.create_path_templates()
+
+        # Get positional args, defaults and formats dicts.
+        positional, defdict, formats = [], {}, {}
+        for name, var, default, format in components:
+            if var:
+                # Check for variable collisions.
+                if name in defdict:
+                    raise RanvierError("Variable name collision in URI path.")
+
+                positional.append(name)
+                defdict[name] = default
+                formats[name] = format
+
+        # A list of the positional variable components, in order.
+        self.positional = positional
+
+        # A dictionary for defaults and formats.  All variable names are
+        # present, values are set to None if unset.
+        self.defdict = defdict
+        self.formats = formats
+
+    def create_path_templates( self ):
+        """
+        Render a string template that can be used with a mapping to perform the
+        final rendering.
+        """
+        rcomps, rcomps_generic = [], []
+        for name, var, default, format in self.components:
+            if var:
+                if format:
+                    repl = '%%(%s)%s' % (name, format)
+                    repl_generic = '(%s%%%%%s)' % (name, format)
+                else:
+                    repl = '%%(%s)s' % name
+                    repl_generic = '(%s)' % name
+                rcomps.append(repl)
+                rcomps_generic.append(repl_generic)
+            else:
+                rcomps.append(name)
+                rcomps_generic.append(name)
+        return '/'.join(rcomps), '/'.join(rcomps_generic)
+
+    def render( self, params, rootloc=None ):
+        return self._render(self.urltmpl, params, rootloc)
+
+    def render_pattern( self, rootloc=None ):
+        """
+        Render the URL pattern using the given params.
+        """
+        params = {}
+        for name, var, default, format in self.components:
+            if var:
+                params[name] = name
+        return self._render(self.urltmpl_generic, params, rootloc)
+
+    def _render( self, template, params, rootloc=None ):
+        """
+        Render the final URL using the given params.  The dict should exactly
+        match the variables in the template.
+        """
+        rendered_path = template % params
+        if self.absolute:
+            first_comp = ''
+        else:
+            first_comp = rootloc or ''
+        rendered_path = '/'.join((first_comp, rendered_path))
+
+        unparsed = self.prefix + (rendered_path,) + self.suffix
+
+        return urlparse.urlunsplit(unparsed)
 
 
 #-------------------------------------------------------------------------------
@@ -552,6 +567,83 @@ def slashslash_namexformer( clsname ):
     signs, for easy grepping later on in the codebase/templates.
     """
     return '@@' + clsname
+
+
+#-------------------------------------------------------------------------------
+#
+compre = re.compile('^\\(([a-z]+)(?:%([a-z0-9\\-]+))?\\)$')
+
+def urlpattern_to_components( urlpattern, defaults=None ):
+    """
+    Convert a URL pattern string to a list of components.  Return a tuple of
+
+      (scheme, netloc, absolute, list of components, query, fragment).
+
+    The list of components consists of
+
+       (name -> str, var -> bool, default -> str|None, format -> str|None)
+
+    tuples.  Default values can be specified via 'defaults' if given, until we
+    can add enough to the URL pattern format to provide this.
+
+    Note: We determine solely from the URL pattern whether it is a relative
+    vs. absolute path, and we do this here, e.g.::
+
+       http://domain.com/gizmos         : external link
+       /gizmos                          : absolute link
+       gizmos                           : relative link
+
+    Relative URLs are always considered to be relative to the root of the
+    mapper, and not relative to each other, folder, etc.  Normally, the only
+    relative mappings are those from the resource tree.  When we render out the
+    mappings, however, they are always absolute.
+
+    The format of the variable components is a parenthesized name, e.g.::
+
+         /users/(username)/mygizmos
+
+    You can specify a format for producing URLs for specific components::
+
+         /catalog/gizmos/(id%08d)
+
+    """
+    scheme, netloc, path, query, fragment = urlparse.urlsplit(urlpattern)
+
+    # Find out if the URL we're trying to map is absolute.
+    absolute = scheme or netloc or path.startswith('/')
+
+    # Remove the prepending slash for splitting the components.
+    if path.startswith('/'):
+        path = path[1:]
+
+    # Parse the URL pattern.
+    components = []
+    indefs = defaults and defaults.copy() or {}
+
+    for comp in path.split('/'):
+        mo = compre.match(comp)
+        if not mo:
+            # Catch components with parentheses that are misformed.
+            if ')' in comp or '(' in comp:
+                raise RanvierError(
+                    "Error: Invalid component in static mapping '%s'." %
+                    urlpattern)
+
+            # Add a fixed component
+            components.append( (comp, False, None, None) )
+            continue
+        else:
+            varname, varformat = mo.group(1, 2)
+            vardef = indefs.pop(varname, None)
+            components.append( (varname, True, vardef, varformat) )
+
+    # Check that the provided defaults are all valid (i.e. there is not a
+    # default that does not match a variable in the given URL pattern).
+    if indefs:
+        raise RanvierError(
+            "Error: invalid extra defaults for given URL pattern.")
+
+    return scheme, netloc, absolute, components, query, fragment
 
 
 #-------------------------------------------------------------------------------
