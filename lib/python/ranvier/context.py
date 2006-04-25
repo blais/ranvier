@@ -8,7 +8,7 @@ Path locator class.
 
 # stdlib imports
 import sys, types
-from os.path import join, normpath
+from os.path import join
 
 
 #-------------------------------------------------------------------------------

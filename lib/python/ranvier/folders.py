@@ -8,7 +8,7 @@ Folder-style resources, for implementing static paths.
 
 # stdlib imports
 import StringIO
-from os.path import join, normpath
+from os.path import join
 import types
 
 # ranvier imports
@@ -23,6 +23,7 @@ class FolderBase(Resource, dict):
     Base class for resources which contain other resources.
     """
     def __init__( self, **children ):
+        dict.__init__(self)
         Resource.__init__(self, **children)
         children.pop('resid', None)
 

@@ -7,8 +7,7 @@ URL mapper and enumerator classes.
 """
 
 # stdlib imports
-import sys, __builtin__, os, string, StringIO, re, types, copy, urllib, urlparse
-from os.path import join, normpath
+import __builtin__, os, re, types, copy, urllib, urlparse
 
 # ranvier imports
 from ranvier import rodict, RanvierError, respproxy
@@ -147,7 +146,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # Store the mapping.
         self.mappings[resid] = mapping
 
-    def add_static( self, resid, urlpattern, defaults={} ):
+    def add_static( self, resid, urlpattern, defaults=None ):
         """
         Add a static URL mapping from 'resid' to the given URL pattern.  This
         may be an external mapping.  The root location will only be prepended to
@@ -156,6 +155,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         details.
         """
         assert isinstance(resid, str)
+        defaults = defaults or {}
 
         # Parse the URL pattern.
         unparsed, isterminal = urlpattern_to_components(urlpattern, defaults)
@@ -356,7 +356,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         """
         try:
             enumres_text = urllib.urlopen(url, 'r').read()
-        except IOError, e:
+        except IOError:
             raise RanvierError(
                 "Error: Fetching contents of mapper from URL '%s'." % url)
 
@@ -758,7 +758,7 @@ class EnumResource(LeafResource):
     Enumerate all the resources available from a resource tree.
     """
     def __init__( self, mapper, **kwds ):
-        Resource.__init__(self, **kwds)
+        LeafResource.__init__(self, **kwds)
         self.mapper = mapper
 
     def handle( self, ctxt ):

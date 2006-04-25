@@ -75,7 +75,7 @@ class VarResource(LeafResource):
         'compname': if specified, we store the component under an attribute with
                     this name in the context.
         """
-        Resource.__init__(self, **kwds)
+        LeafResource.__init__(self, **kwds)
 
         assert isinstance(compname, str)
         self.compname = compname
@@ -157,7 +157,7 @@ class RedirectResource(LeafResource):
     the mapper in the context to map the target to an URL.
     """
     def __init__( self, targetid, **kwds ):
-        Resource.__init__(self, **kwds)
+        LeafResource.__init__(self, **kwds)
         self.targetid = targetid
 
     def handle( self, ctxt ):

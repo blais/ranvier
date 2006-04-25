@@ -6,14 +6,6 @@
 Resource file.
 """
 
-# stdlib imports
-import sys, string, StringIO
-from os.path import join, normpath
-import types
-
-# ranvier imports
-from ranvier import verbosity
-
 
 #-------------------------------------------------------------------------------
 #

@@ -6,9 +6,6 @@
 Enumerator classes for making declartions for mapper.
 """
 
-# stdlib imports
-from os.path import join, normpath
-
 # ranvier imports
 from ranvier import RanvierError
 from ranvier.resource import Resource
