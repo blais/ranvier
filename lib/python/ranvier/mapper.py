@@ -252,7 +252,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                         "Error: Creating URL for '%s', got multiple "
                         "values for component '%s'." % (mapping.resid, posname))
                 kwds[posname] = posarg
-
+        
         # Get a copy of the defaults.
         params = mapping.defdict.copy()
 
@@ -285,8 +285,8 @@ class UrlMapper(rodict.ReadOnlyDict):
 
         if missing:
             raise RanvierError(
-                "Error: Missing values attempting to map to a resource: %s" %
-                ', '.join("'%s'" % x for x in missing))
+                "Error: Missing values attempting to map resource '%s': %s" %
+                (resid, ', '.join("'%s'" % x for x in missing)))
 
         # Register the target in the call graph, if enabled.
         if self.callgraph_reporter:
@@ -338,7 +338,7 @@ class UrlMapper(rodict.ReadOnlyDict):
             maxidlen = max(len(x.resid) for x in mappings)
         else:
             maxidlen = 0
-        fmt = '%%-%ds , %%s' % maxidlen
+        fmt = '%%-%ds : %%s' % maxidlen
         
         return [fmt % (m.resid, m.render_pattern(self.rootloc))
                 for m in mappings]
@@ -377,7 +377,7 @@ class UrlMapper(rodict.ReadOnlyDict):
 
             # Split the id and urlpattern.
             try:
-                resid, urlpattern = map(str.strip, line.split(','))
+                resid, urlpattern = map(str.strip, line.split(':'))
             except ValueError:
                 raise RanvierError("Warning: Error parsing line '%s' on load." %
                                    line)
