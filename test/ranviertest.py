@@ -69,6 +69,9 @@ class TestMappings(unittest.TestCase):
         loaded_lines = loaded_mapper.render()
         self.assertEquals(loaded_lines, lines)
 
+        # Load from a file.
+        fromfile_mapper = UrlMapper.urlload('example-resources.txt')
+
     def test_static( self ):
         self._test_static(None)
         self._test_static('/root')

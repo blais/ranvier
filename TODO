@@ -2,6 +2,29 @@
    TODO: ranvier
 ===================
 
+.. contents::
+..
+    1  Current (For Release)
+    2  Future Tasks and Ideas
+      2.1   Node Visitor
+      2.2   Emacs Helper Mode
+      2.3   Multiple Components in a Row
+      2.4   Custom Validation on Back-Mapping URLs
+      2.5   Map Multiple URLs
+      2.6   Features in Docs
+      2.7   Interfaces
+      2.8   Random Tests
+      2.9   Query Parameters
+      2.10  Extra and Privileges
+      2.11  Template Replacement
+      2.12  Redirection Oddity
+      2.13  Formats for static routes
+      2.14  Better Static Checking
+
+
+Current (For Release)
+=====================
+
 (code)
 
 * Move namexform somewhere else than the mapper, it should probably be global,
@@ -17,8 +40,6 @@
 * Force initialization and raise an exception if the library is used without
   having been initialized properly.
 
-
-
 * Implement Coverage Analysis, two separate statistics can be collected:
 
   - Coverage for a resource being callde
@@ -32,29 +53,26 @@
 
   You will need to set ctxt.resid in Resource.delegate() (you need this).
 
-
 * Write a sample test program for the demoapp, that uses mechanize.
-
-
 
 
 (promotion)
 * Send Ranvier information to twill list when the coverage analysis is done.
 
-* Save original Routes email for docs, it contains lots of info
 
+Future Tasks and Ideas
+======================
 
-(docs)
-* In the docs, mention that the list of URLs can be used by a new developer to
-  quickly get acquainted with the layout of a new project.  This could also be
-  used to generate a site map.
+Node Visitor
+------------
 
-* Mention that this could be used to generate the Google sitemap automatically.
+- Provide a way to visit the resource nodes of the entire tree.  We could use
+  this to let the resources specify little bits of CSS code and have the visitor
+  reconstruct the style file from those.  This provides a new opportunity for
+  localizing all this stuff in the resource handler, although we may prefer to
+  let the resources be entirely separate.  I don't know.  But at least we should
+  provide a generic visitor interface.
 
-
-
-Future
-======
 
 Emacs Helper Mode
 -----------------
@@ -76,8 +94,8 @@ Multiple Components in a Row
      /doc/<year>/<month>/<date>/view
 
 
-Validate on Back-Mapping
-------------------------
+Custom Validation on Back-Mapping URLs
+--------------------------------------
 
 * It would provide even more robustness and verification if it was possible for
   the resources that consume components to provide some kind of validation for
@@ -188,8 +206,8 @@ Formats for static routes
   from the given URL pattern, extending that syntax somehow.
 
 
-More Static Checking
---------------------
+Better Static Checking
+----------------------
 
 * Extend static checker script to look for parameters and to warn when it is
   likely that parameters have been forgotten or are missing or extraneous

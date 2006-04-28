@@ -341,3 +341,14 @@ Writing Tests
 -------------
 
 * Matching against a known URL
+
+
+
+
+
+* In the docs, mention that the list of URLs can be used by a new developer to
+  quickly get acquainted with the layout of a new project.  This could also be
+  used to generate a site map.
+
+
+* Mention that this could be used to generate the Google sitemap automatically.

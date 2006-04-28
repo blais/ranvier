@@ -355,7 +355,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         network.
         """
         try:
-            enumres_text = urllib.urlopen(url, 'r').read()
+            enumres_text = urllib.urlopen(url).read()
         except IOError:
             raise RanvierError(
                 "Error: Fetching contents of mapper from URL '%s'." % url)
@@ -370,6 +370,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         See render() for more details.
         """
         mapper = UrlMapper()
+        inpat_re = re.compile('([^:\s]+)\s*:\s*(.*)\s*$')
 
         for line in lines:
             if not line:
@@ -377,7 +378,10 @@ class UrlMapper(rodict.ReadOnlyDict):
 
             # Split the id and urlpattern.
             try:
-                resid, urlpattern = map(str.strip, line.split(':'))
+                mo = inpat_re.match(line.strip())
+                if not mo:
+                    raise ValueError
+                resid, urlpattern = mo.groups()
             except ValueError:
                 raise RanvierError("Warning: Error parsing line '%s' on load." %
                                    line)

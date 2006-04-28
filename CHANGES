@@ -5,6 +5,8 @@
 Current
 =======
 
+* Fixed bug with urlopen() specifying the mode.
+
 * Arrange to automatically append a trailing slash to non-leaf resources that
   get served, in order to minimize redirection if _training_slash is true.
 

@@ -1,0 +1,9 @@
+
+
+* Finish removing all the non-mapped URLs my apps:
+        
+        grep --exclude\=resources.txt  /[a-z]/ *  
+        grep href= * | grep -v mapurl
+        grep action= *
+        grep 'redirect(' *
+        grep 'FormParser' *
