@@ -13,6 +13,9 @@ import StringIO
 from ranvier.miscres import LeafResource
 
 
+__all__ = ('PrettyEnumResource', 'pretty_render_mapper_body')
+
+
 #-------------------------------------------------------------------------------
 #
 class PrettyEnumResource(LeafResource):

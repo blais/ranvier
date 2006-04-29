@@ -10,6 +10,9 @@ be used only for debugging.
 """
 
 
+__all__ = ('CallGraphReporter', 'FileCallGraphReporter')
+
+
 class CallGraphReporter(object):
     """
     Interface for call graph reporters.

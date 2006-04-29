@@ -14,7 +14,7 @@ integrate those default resources into any framework.
 import sys, cgi
 
 
-__all__ = ['ResponseProxy']
+__all__ = ('ResponseProxy', 'CGIResponse')
 
 
 #-------------------------------------------------------------------------------

@@ -8,7 +8,12 @@ Miscallenious useful generic resource classes.
 
 # ranvier imports
 from ranvier.resource import Resource
-from ranvier import verbosity, RanvierError
+from ranvier import _verbosity, RanvierError
+
+
+__all__ = ('LeafResource', 'DelegaterResource',
+           'VarResource', 'VarDelegaterResource',
+           'RedirectResource', 'LogRequests', 'RemoveBase')
 
 
 #-------------------------------------------------------------------------------
@@ -92,7 +97,7 @@ class VarResource(LeafResource):
                                  default=self.compdef, format=self.compfmt)
 
     def consume_component( self, ctxt ):
-        if verbosity >= 1:
+        if _verbosity >= 1:
             ctxt.response.log("resolver: %s" %
                               ctxt.locator.path[ctxt.locator.index:])
 

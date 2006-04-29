@@ -11,6 +11,9 @@ import sys, types
 from os.path import join
 
 
+__all__ = ('HandlerContext', 'InternalRedirect')
+
+
 #-------------------------------------------------------------------------------
 #
 class HandlerContext(object):

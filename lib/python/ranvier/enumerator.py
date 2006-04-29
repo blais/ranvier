@@ -11,7 +11,7 @@ from ranvier import RanvierError
 from ranvier.resource import Resource
 
 
-__all__ = ['Enumerator']
+__all__ = ('Enumerator',)
 
 
 #-------------------------------------------------------------------------------
@@ -103,6 +103,8 @@ class EnumVisitor(object):
         return self.leaf
 
 
+#-------------------------------------------------------------------------------
+#
 class Enumerator(object):
     """
     A class used to visit and enumerate all the possible URL paths that are

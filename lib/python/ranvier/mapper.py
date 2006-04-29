@@ -17,7 +17,7 @@ from ranvier.context import HandlerContext, InternalRedirect
 from ranvier.enumerator import Enumerator
 
 
-__all__ = ['UrlMapper', 'EnumResource']
+__all__ = ('UrlMapper', 'EnumResource')
 
 
 #-------------------------------------------------------------------------------

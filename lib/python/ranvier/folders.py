@@ -12,8 +12,11 @@ from os.path import join
 import types
 
 # ranvier imports
-from ranvier import verbosity, RanvierError
+from ranvier import _verbosity, RanvierError
 from ranvier.resource import Resource
+
+
+__all__ = ('Folder', 'FolderWithMenu')
 
 
 #-------------------------------------------------------------------------------
@@ -43,12 +46,12 @@ class FolderBase(Resource, dict):
             enumrator.branch_static(name, resource)
 
     def handle_base( self, ctxt ):
-        if verbosity >= 1:
+        if _verbosity >= 1:
             ctxt.response.log("resolver: %s" %
                               ctxt.locator.path[ctxt.locator.index:])
 
         if ctxt.locator.isleaf():
-            if verbosity >= 1:
+            if _verbosity >= 1:
                 ctxt.response.log("resolver: at leaf")
 
             if not ctxt.locator.trailing and self.redirect_leaf_as_dir:
@@ -60,7 +63,7 @@ class FolderBase(Resource, dict):
         # else ...
         name = ctxt.locator.current()
 
-        if verbosity >= 1:
+        if _verbosity >= 1:
             ctxt.response.log("resolver: getting named child %s" % name)
         try:
             child = self[ name ]
@@ -74,11 +77,11 @@ class FolderBase(Resource, dict):
             child = self.notfound(ctxt, name)
 
             if child is None:
-                if verbosity >= 1:
+                if _verbosity >= 1:
                     ctxt.response.log("resolver: child %s not found" % name)
                 return ctxt.response.errorNotFound()
 
-        if verbosity >= 1:
+        if _verbosity >= 1:
             ctxt.response.log("resolver: child %s found, calling it" % name)
 
         # Let the folder do some custom handling.
@@ -185,7 +188,7 @@ class Folder(FolderBase):
     def handle_default( self, ctxt ):
         default = self.getdefault()
         if default is None:
-            if verbosity >= 1:
+            if _verbosity >= 1:
                 ctxt.response.log("resolver: no default page set")
             # no default page submitted, indicate error
             return ctxt.response.errorNotFound()
