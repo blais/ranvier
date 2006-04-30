@@ -6,6 +6,7 @@
 Package import.  Just import this and you should be fine.
 """
 
+
 #-------------------------------------------------------------------------------
 #
 # Global flag used to turn on some debugging and tracing for development.
@@ -32,4 +33,10 @@ from miscres import *
 from respproxy import *
 from pretty import *
 from callgraph import *
+
+
+# Remove stuff that we don't want to export in a star-export.
+from types import ModuleType as _modtype
+__all__ = tuple(k for k, v in globals().iteritems()
+                if not k.startswith('_') and not isinstance(v, _modtype))
 
