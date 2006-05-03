@@ -5,6 +5,12 @@
 Current
 =======
 
+* Moved namexform somewhere else than the mapper, it should probably be global,
+  add setting the resid() to ctxt, so that we don't have to pass in the mapper
+  when we want to get a node's resource.  We accept the global variable for this
+  case.  Move the namexform outside of the mapper, and maybe as a global
+  parameter that has to be set by glue code.
+
 * Fixed bug with urlopen() specifying the mode.
 
 * Arrange to automatically append a trailing slash to non-leaf resources that

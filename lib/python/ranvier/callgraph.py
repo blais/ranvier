@@ -9,43 +9,25 @@ This is an object that can be used for the code that reports the call graph.  To
 be used only for debugging.
 """
 
+# ranvier imports
+from ranvier.reporter import SimpleReporter
+
 
 __all__ = ('CallGraphReporter', 'FileCallGraphReporter')
 
 
-class CallGraphReporter(object):
+#-------------------------------------------------------------------------------
+#
+class CallGraphReporter(SimpleReporter):
     """
     Interface for call graph reporters.
+    See base class.
     """
-    def __init__( self ):
-        self.last_caller = None
-        """The last caller resource-id."""
-
-        self.target_list = []
-        """The list of target resource-ids."""
-
-    def register_caller( self, resid ):
-        """
-        Callback for caller resource-ids.
-        """
-        if resid is not None:
-            self.last_caller = resid
-
-    def register_target( self, resid ):
-        """
-        Callback for caller resource-ids.
-        """
-        self.target_list.append(resid)
-
-    def complete( self ):
-        """
-        This method is called when resource handling for a request has been
-        completed.
-        """
-        if self.last_caller is None:
+    def end( self ):
+        if self.last_handled is None:
             return
-        for target in self.target_list:
-            self.publish_relation(self.last_caller, target)
+        for target in self.rendered_list:
+            self.publish_relation(self.last_handled, target)
 
     def publish_relation( self, caller, target ):
         """

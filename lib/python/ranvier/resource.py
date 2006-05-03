@@ -6,6 +6,9 @@
 Resource file.
 """
 
+# ranvier imports
+import ranvier
+
 
 __all__ = ('Resource',)
 
@@ -27,12 +30,12 @@ class Resource(object):
 
     def hasresid( self ):
         """
-        Return true if the resource was given a resource-id explicitly, that is,
-        not to be derived from the class' name.
+        Return true if the resource was given an explicit resource-id, that is,
+        not to be derived from the resource's class name.
         """
         return self.__resid is not None
 
-    def getresid( self, mapper ):
+    def getresid( self ):
         """
         Given a resource instance, compute the resource-id to which it
         corresponds.
@@ -45,7 +48,7 @@ class Resource(object):
         resid = self.__resid
         if resid is None:
             # Compute the resource-id from the name of the class.
-            resid = mapper.namexform(self.__class__.__name__)
+            resid = ranvier._namexform(self.__class__.__name__)
         assert resid
         return resid
 
@@ -61,11 +64,22 @@ class Resource(object):
         """
         # By default, no-op.
 
-    def delegate( self, nextres, ctxt ):
+    @staticmethod
+    def delegate( nextres, ctxt ):
         """
         Pass control onto a given resource.
         """
         assert isinstance(nextres, Resource)
+
+        # Compute this resource's resource-id
+        resid = nextres.getresid()
+
+        # Set the resource id on the context, for the resource's own perusal.
+        ctxt.resid = resid
+
+        # Register this node to the callgraph reporter, if active.
+        for rep in ctxt.reporters:
+            rep.register_handled(resid)
 
         # Handle the next resource (this is where the propagation occurs).
         nextres.handle_base(ctxt)
@@ -76,10 +90,6 @@ class Resource(object):
         custom behaviour.  By default this just calls the handler template
         method.
         """
-        # Register this node to the callgraph reporter, if active.
-        if ctxt.callgraph:
-            ctxt.callgraph.register_caller(self.getresid(ctxt.mapper))
-
         # Handle this resource.
         return self.handle(ctxt)
 

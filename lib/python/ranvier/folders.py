@@ -12,6 +12,7 @@ from os.path import join
 import types
 
 # ranvier imports
+import ranvier.template
 from ranvier import _verbosity, RanvierError
 from ranvier.resource import Resource
 
@@ -226,17 +227,12 @@ class FolderWithMenu(Folder):
         """
         Render a very simple list of the contents of this page.
         """
-        menu = self.genmenu(ctxt)
-        template = '''
-<html>
-  <head>
-    <title>Folder menu</title>
-  </head>
-  <body>
-    %s
-  </body>
-</html>
-'''
         ctxt.response.setContentType('text/html')
-        ctxt.response.write(template % menu)
+        ranvier.template.render_header(ctxt.response,
+                                       'Resource Coverage Results')
+
+        ctxt.response.write(self.genmenu(ctxt))
+
+        ranvier.template.render_footer(ctxt.response)
+        
 

@@ -18,9 +18,10 @@
       3.2  Naming of Resources
     4   Mapping Backward
       4.1  Optimization of BackMapping
-      4.2  Selection of Resource Ids
-      4.3  Static Maps
-      4.4  Unique Identifiers
+      4.2  Reporters
+      4.3  Selection of Resource Ids
+      4.4  Static Maps
+      4.5  Unique Identifiers
     5   Listing Available Resources and URLs
     6   Embedding Security
     7   Internal Redirects
@@ -213,12 +214,20 @@ Optimization of BackMapping
 FIXME todo write docs
 
 
+
+
+Reporters
+---------
+
+
 FIXME add callgraph thing, with a figure
 
 .. figure:: callgraph.png
 
    The inter-resource call graph for the demo application of this package.
 
+
+add coverage analysis details
 
 
 

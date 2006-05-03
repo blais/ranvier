@@ -22,6 +22,34 @@ class RanvierError(Exception):
     using Atocha.
     """
 
+#-------------------------------------------------------------------------------
+#
+def _atat_namexform( clsname ):
+    """
+    Use the class' name, prepended with two @ signs.  This kind of string rarely
+    occurs in Python code and makes it easy to grep for all of them later on in
+    the codebase/templates.  Some of the support tools also assume this function
+    by default.
+    """
+    return '@@' + clsname
+
+# The global function to transform resource instances/classes into names.
+_namexform = _atat_namexform
+
+def set_resource_id_name_function( fun ):
+    """
+    Set the global function that is used to automatically compute the
+    resource-id of a resource object if it has not been given an explicit one.
+
+    The given function should be a callable that is used to calculate an
+    appropriate resource-id from the resource instance.  You can override this
+    to provide your own favourite scheme.
+    """
+    global _namexform
+    _namexform = fun
+
+
+
 
 #-------------------------------------------------------------------------------
 #
@@ -33,6 +61,7 @@ from miscres import *
 from respproxy import *
 from pretty import *
 from callgraph import *
+from coverage import *
 
 
 # Remove stuff that we don't want to export in a star-export.

@@ -7,7 +7,7 @@ Simple automated tests, based on the demoapp resource tree for the most part.
 """
 
 # stdlib imports
-import sys, os
+import sys, os, unittest
 from os.path import *
 # Allow import demoapp.
 sys.path.append(join(dirname(dirname(abspath(__file__))), 'demo'))
@@ -50,14 +50,16 @@ class TestMappings(unittest.TestCase):
     def test_backmaps( self ):
         "Testing backmapping URLs."
         # Create a resource tree.
-        mapper, root = demoapp.create_application()
+        mapper = UrlMapper()
+        root = demoapp.create_application(mapper)
         return self._test_backmaps(mapper)
 
     def test_render_reload( self ):
         "Testing reloading the mapper from a rendered rendition."
 
         # Render the mapper to a set of lines
-        mapper, root = demoapp.create_application()
+        mapper = UrlMapper()
+        root = demoapp.create_application(mapper)
         lines = mapper.render()
         rendered = os.linesep.join(lines)
 
@@ -230,7 +232,8 @@ class TestConversions(unittest.TestCase):
     def test_template( self ):
         "Test conversion to string template."
 
-        mapper, root = demoapp.create_application(rootloc='/demo')
+        mapper = UrlMapper(rootloc='/demo')
+        root = demoapp.create_application(mapper)
         mapurl, mapurl_pattern = mapper.mapurl, mapper.mapurl_pattern
 
         tests = (
@@ -287,7 +290,8 @@ class TestConversions(unittest.TestCase):
     def test_match( self ):
         "Test matching known URLs."
 
-        mapper, root = demoapp.create_application(rootloc='/demo')
+        mapper = UrlMapper(rootloc='/demo')
+        root = demoapp.create_application(mapper)
         match = mapper.match
 
         tests = (

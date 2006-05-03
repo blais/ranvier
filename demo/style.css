@@ -38,3 +38,36 @@ a {
 p.docstring {
   margin-left: 2em;
 }
+
+table#coverage-report {
+  border-collapse: collapse;
+}
+
+table#coverage-report td {
+  padding-left: 2em;
+  padding-right: 2em;
+  border: thin solid black;
+}
+
+table#coverage-report td.cov-resid {
+  font-family: monospace;
+  font-size: larger;
+}
+
+table#coverage-report td.cov-fail {
+  background-color: #F66;
+}
+
+table#coverage-report td.cov-success {
+  background-color: #6F6;
+}
+
+table#coverage-report td.cov-ignore {
+  background-color: #DDD;
+}
+
+table#coverage-report thead {
+  background-color: #EEE;
+  border-bottom: medium solid black;
+}
+

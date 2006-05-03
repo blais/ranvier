@@ -200,3 +200,4 @@ class RemoveBase(DelegaterResource):
         for c in xrange(self.count):
             ctxt.locator.next()
 
+

@@ -34,38 +34,14 @@ class PrettyEnumResource(LeafResource):
 
     def handle( self, ctxt ):
         ctxt.response.setContentType('text/html')
-        self.render_header(ctxt.response)
+        ranvier.template.render_header(ctxt.response,
+                                       'URL Mapper Resources')
+
         ctxt.response.write(pretty_render_mapper_body(self.mapper,
                                                       dict(ctxt.args),
                                                       self.sorturls))
-        self.render_footer(ctxt.response)
 
-    def render_header( self, oss ):
-        """
-        Output an HTML representation of the contents of the mapper (a str).
-
-        This representation is meant to serve to the user for debugging, and
-        includes the docstrings of the resource classes, if present.
-        """
-        oss.write('''
-<html>
-  <head>
-    <title>URL Mapper Resources</title>
-    <meta name="generator" content="Ranvier Pretty Resource Renderer" />
-    <style type="text/css"><!--
-body { font-size: smaller }
-.resource-title { white-space: nowrap; }
-p.docstring { margin-left: 2em; }
---></style>
- <body>
-    ''')
-
-
-    def render_footer( self, oss ):
-        oss.write('''
- </body>
-</html>
-    ''')
+        ranvier.template.render_footer(ctxt.response)
 
 
 #-------------------------------------------------------------------------------
@@ -82,7 +58,7 @@ def pretty_render_mapper_body( mapper, defaults, sorturls ):
             defaults[name] = value
         except ValueError:
             pass
-    
+
     oss = StringIO.StringIO()
     oss.write('<h1>URL Mapper Resources</h1>\n')
     mappings = list(mapper.itervalues())
@@ -104,7 +80,7 @@ def pretty_render_mapper_body( mapper, defaults, sorturls ):
         for cname, cvalue in defaults.iteritems():
             if cname in defdict:
                 defdict[cname] = cvalue
-        
+
         # Make the URL clickable if it contains no parameters.
         if None not in defdict.itervalues():
             url = '<a href="%s">%s</a>' % (mapper.mapurl(o.resid, defdict), url)

@@ -19,7 +19,6 @@ any web application framework out there.
 import sys, os, urlparse
 from os.path import dirname, join
 import cgitb; cgitb.enable()
-import pprint
 import cPickle as pickle
 
 # Add the Ranvier libraries to the load-path to minimize configuration (this is
@@ -39,8 +38,13 @@ import demoapp
 #
 rootloc = '/ranvier/demo'
 
+# Reporters
 enable_callgraphs = 0
-callgraph_filename = '/tmp/relations'
+callgraph_filename = '/tmp/ranvier.callgraph'
+
+# Reporters
+enable_coverage = 1
+coverage_filename = '/tmp/ranvier.coverage.dbm'
 
 #-------------------------------------------------------------------------------
 #
@@ -56,7 +60,22 @@ def main():
     # Note: this is a bit silly, we recreate the entire resource tree on every
     # request.  In a "real" web application, your process is a running for a
     # long time and this happens only once for every child.
-    mapper, root = demoapp.create_application(rootloc)
+    mapper = UrlMapper(rootloc=rootloc)
+
+    # Create a coverage reporter, if requested.
+    if enable_coverage:
+        cov_reporter = DbmCoverageReporter('/tmp/ranvier.coverage.dbm')
+        mapper.add_reporter(cov_reporter)
+    else:
+        cov_reporter = None
+
+    # Register a resources callgraph reporter.
+    if enable_callgraphs:
+        callgraph_f = open(callgraph_filename, 'a')
+        callgraph_reporter = FileCallGraphReporter(callgraph_f)
+        mapper.add_reporter(callgraph_reporter)
+
+    demoapp.create_application(mapper, cov_reporter)
 
     # Get the CGI args.
     args = respproxy.cgi_getargs()
@@ -65,17 +84,17 @@ def main():
     # Ranvier to use.
     response_proxy = respproxy.CGIResponse(sys.stdout)
 
-    # Register a resources callgraph reporter.
-    if enable_callgraphs:
-        relations_file = open(callgraph_filename, 'a')
-        mapper.enable_callgraph(FileCallGraphReporter(relations_file))
-
     # Handle the resource.
     mapper.handle_request(path, args, response_proxy,
                           page=demoapp.PageLayout(mapper))
 
     if enable_callgraphs:
-        relations_file.close()
+        mapper.remove_reporter(callgraph_reporter)
+        callgraph_f.close()
+
+    if enable_coverage:
+        mapper.remove_reporter(cov_reporter)
+        del cov_reporter
 
 #-------------------------------------------------------------------------------
 #

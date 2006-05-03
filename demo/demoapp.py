@@ -15,13 +15,12 @@ from ranvier import *
 
 #-------------------------------------------------------------------------------
 #
-def create_application( rootloc=None ):
+def create_application( mapper, cov_reporter=None ):
     """
     Create a tree of application resources and return the corresponding root
     resource.  'rootlocation' is the root directory to which the resource tree
     is bound on the site.
     """
-    mapper = UrlMapper(rootloc=rootloc)
     root = Folder(
         _default='home',
         home=Home(),
@@ -52,6 +51,13 @@ def create_application( rootloc=None ):
         resid='@@Root'
         )
 
+    if cov_reporter is not None:
+        root['cov'] = Folder(
+            reset=ResetCoverage(mapper, cov_reporter),
+            report=CoverageReport(mapper, cov_reporter, ('@@Root',
+                                                         '@@Stylesheet',)),
+            )
+
     mapper.initialize(root)
     mapper.add_static('@@Stylesheet', 'style.css')
     mapper.add_static('@@ExternalExample', 'http://paulgraham.com')
@@ -62,11 +68,11 @@ def create_application( rootloc=None ):
 
 #-------------------------------------------------------------------------------
 #
-class SourceCode(FolderWithMenu):
+class SourceCode(LeafResource):
     """
     Output the source code to a browser window.
     """
-    def handle_default( self, ctxt ):
+    def handle( self, ctxt ):
         ctxt.response.setContentType('text/plain')
         ctxt.response.write(open(__file__, 'r').read())
 
@@ -75,11 +81,11 @@ class SourceCode(FolderWithMenu):
 #
 class PageLayout:
     """
-    A class that provides common rendering routines for a page's layout.
+    A class that provides common rendering routines for the demo's page layouts.
     """
     def __init__( self, mapper ):
         self.mapper = mapper
-    
+
     def render_header( self, ctxt ):
         header = '''
 <html>
@@ -93,7 +99,7 @@ class PageLayout:
       <a href="%(root)s/">
       <img src="/home/furius-logo-w.png" id="logo"></a>
     </div>
-    
+
     <div id="blurb-container">
     <div id="blurb">
     <p>
@@ -102,9 +108,9 @@ class PageLayout:
     </p>
     </div>
     </div>
-    
+
     <div id="main" class="document">
-''' % {'root': self.mapper.mapurl('@@Root'),
+''' % {'root': self.mapper.mapurl('@@Home'),
        'style': self.mapper.mapurl('@@Stylesheet')}
 
         ctxt.response.setContentType('text/html')
@@ -179,7 +185,7 @@ class SpecialResource(LeafResource):
         ctxt.response.write("""
         <p>Well, I'm not that special, really.</p>""")
         ctxt.page.render_footer(ctxt)
-        
+
 
 #-------------------------------------------------------------------------------
 #
@@ -224,6 +230,7 @@ class Home(LeafResource):
              'answer': mapurl('@@AnswerBabbler'),
              'username': mapurl('@@PrintUsername', username='martin'),
              'name': mapurl('@@PrintName', 'martin'),
+             'multiple': mapurl('@@UserData', 'martin', 'something'),
              'extredir': mapurl('@@RedirectTest'),
              'intredir': mapurl('@@InternalRedirectTest'),
              'leafcomp': mapurl('@@LeafPlusOneComponent', comp='president'),
@@ -232,6 +239,8 @@ class Home(LeafResource):
              'formatted': mapurl('@@IntegerComponent', 1042),
              'unrooted': mapurl('@@Atocha'),
              'source': mapurl('@@SourceCode'),
+             'covreset': mapurl('@@ResetCoverage'),
+             'covreport': mapurl('@@CoverageReport'),
              }
 
         ctxt.response.write('''
@@ -241,7 +250,7 @@ class Home(LeafResource):
 the mapper and the links contained are also rendered using the mapper.  This is
 actually not very exciting <a href="%(source)s" target="sourcewin">unless you
 have a look at the source code</a> at the same time. All the links on this page
-manipulate an external browser window, so you don't have to do that yourself;
+manipulate an external browser window, so you don\'t have to do that yourself;
 new windows will be open automatically.  Click on the links below to start:</p>
 
 <ul>
@@ -269,7 +278,8 @@ new windows will be open automatically.  Click on the links below to start:</p>
   responsibility, you can consume part of the URL.  This is useful for building
   a set of resources referring to the same object.  Check out the follow user\'s
   <a href="%(username)s" target="testwin">username</a> and <a href="%(name)s"
-  target="testwin">name</a>.  </li>
+  target="testwin">name</a>.  We can of course <a href="%(multiple)s"
+  target="testwin">consume multiple parts of the URL</a>.</li>
 
   <li> <b>Delegater</b>: The chain of responsibility pattern does not imply that
   each resource consume a part of the component.  We have a base class that
@@ -300,6 +310,24 @@ new windows will be open automatically.  Click on the links below to start:</p>
   components of URLS.  For example, <a href="%(formatted)s"
   target="testwin">this page</a> should contain an integer in the target that is
   formatted with lots of 0 digits.</li>
+
+  <li> <b>Coverage Analysis</b>: You can enable coverage analysis for the
+  resources.  Once you start it, everytime a resource is handled, a counter gets
+  incremented in some data storage.  In addition, every time you render a URL to
+  a resource a corresponding counter also gets incremented.  This allows you to
+  verify how much of your application your automated tests cover.  A simple page
+  with the coverage results is provided via a Ranvier resource.
+
+    <ul>
+      <li><a href="%(covreset)s" target="testwin">
+        Reset the coverage analyser</a></li>
+
+      <li>Browse some of the demo pages (click on some of the links above)</li>
+
+      <li><a href="%(covreport)s" target="testwin">
+        View the coverage report</a></li>
+    </ul>
+  </li>
 
 </ul>
         ''' % m)
@@ -391,13 +419,57 @@ class IntegerComponent(VarResource):
     """
     def __init__( self, **kwds ):
         VarResource.__init__(self, 'uid', compfmt='%08d', **kwds)
-        
+
     def handle( self, ctxt ):
         ctxt.page.render_header(ctxt)
         ctxt.response.write('''<p>The leaf component is %s.</p>''' %
                             repr(ctxt.uid))
         ctxt.page.render_footer(ctxt)
 
+#-------------------------------------------------------------------------------
+#
+class CoverageResourceBase(LeafResource):
+    """
+    Base calss for all coverage resources.
+    See also ReportCoverage in the coverage.py module.
+    """
+    def __init__( self, mapper, cov_reporter, **kwds ):
+        LeafResource.__init__(self, **kwds)
+
+        self.mapper = mapper
+        self.cov_reporter = cov_reporter
+
+class ResetCoverage(CoverageResourceBase):
+    """
+    Reset the coverage analyser.
+    """
+    def handle( self, ctxt ):
+        # Render the page before we actually start the analyser, so that the
+        # page render itself has no effect on it.
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write('''
+        <p>Coverage analyser reset.</p>
+        ''')
+        ctxt.page.render_footer(ctxt)
+
+        # Start the coverage analyser
+        self.cov_reporter.reset()
+
+class CoverageReport(CoverageResourceBase, ReportCoverage):
+    """
+    Present the coverage analysis.
+    """
+    def __init__( self, mapper, cov_reporter, nohandle=None, **kwds ):
+        CoverageResourceBase.__init__(
+            self, mapper, cov_reporter, **kwds)
+        ReportCoverage.__init__(
+            self, mapper, cov_reporter.get_coverage, nohandle, **kwds)
+
+    def handle( self, ctxt ):
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write('<h1>Coverage Report</h1>')
+        ctxt.response.write(self.get_html_table())
+        ctxt.page.render_footer(ctxt)
 
 #-------------------------------------------------------------------------------
 #
@@ -405,7 +477,7 @@ def trace( o ):
     """
     Inject a new builtin, this is a hack, for debugging only.
     """
-    import pprint
+    import sys, pprint
     sys.stderr.write(pprint.pformat(o) + '\n')
     sys.stderr.flush()
 

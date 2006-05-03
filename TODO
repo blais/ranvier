@@ -6,20 +6,21 @@
 ..
     1  Current (For Release)
     2  Future Tasks and Ideas
-      2.1   Node Visitor
-      2.2   Emacs Helper Mode
-      2.3   Multiple Components in a Row
-      2.4   Custom Validation on Back-Mapping URLs
-      2.5   Map Multiple URLs
-      2.6   Features in Docs
-      2.7   Interfaces
-      2.8   Random Tests
-      2.9   Query Parameters
-      2.10  Extra and Privileges
-      2.11  Template Replacement
-      2.12  Redirection Oddity
-      2.13  Formats for static routes
-      2.14  Better Static Checking
+      2.1   Callback Resource
+      2.2   Node Visitor
+      2.3   Emacs Helper Mode
+      2.4   Multiple Components in a Row
+      2.5   Custom Validation on Back-Mapping URLs
+      2.6   Map Multiple URLs
+      2.7   Features in Docs
+      2.8   Interfaces
+      2.9   Random Tests
+      2.10  Query Parameters
+      2.11  Extra and Privileges
+      2.12  Template Replacement
+      2.13  Redirection Oddity
+      2.14  Formats for static routes
+      2.15  Better Static Checking
 
 
 Current (For Release)
@@ -27,34 +28,30 @@ Current (For Release)
 
 (code)
 
-* Move namexform somewhere else than the mapper, it should probably be global,
-  add setting the resid() to ctxt, so that we don't have to pass in the mapper
-  when we want to get a node's resource.  We accept the global variable for this
-  case.  Move the namexform outside of the mapper, and maybe as a global
-  parameter that has to be set by glue code
+* Provide logging of request path in the resource tree via the reporters, e.g.
 
-  * Then you can add the resid from the delegate method, so that a resource and
-    the template could render the resource id in the meta fields.
+    @@Root -> @@FolderWithMenu -> @@<Resource>
+
+* We need to provide a way to ignore rendered resources as well, not just
+  handled, e.g. @@AdwordsTracking, is never rendered and it's ok.
+
+* We need to provide a way to ignore all the resources located under the 'test'
+  folder.
+
+  1. Provide a delegater resource that disables coverage tracking, so that all
+     mapping performed under that resource will not show up later in the
+     coverage report.    Maybe that's too complicated?
+
+  2. Or perhaps provide a way to obtain all the resources under a specific node
+     of the tree, in order to provide that list to the coverage reporter to
+     ignore.
 
 
-* Force initialization and raise an exception if the library is used without
-  having been initialized properly.
-
-* Implement Coverage Analysis, two separate statistics can be collected:
-
-  - Coverage for a resource being callde
-  - Coverage for rendering URLs
-
-  These should be stored in a DBM database or a file, and then be collected for
-  display.
-
-  - Provide a tool to report coverage from the cmdline
-  - Provide a resource to report coverage nicely in an HTML table
-
-  You will need to set ctxt.resid in Resource.delegate() (you need this).
-
-* Write a sample test program for the demoapp, that uses mechanize.
-
+* We have an issue: a folder with default, that has a target resource-id, will
+  never get marked as handled by the coverage analysis because it always
+  forwards to its default, which ends up being the resource that is being
+  served.  I'm not sure how to untangle this (not that this matters much
+  anyway…).
 
 (promotion)
 * Send Ranvier information to twill list when the coverage analysis is done.
@@ -62,6 +59,13 @@ Current (For Release)
 
 Future Tasks and Ideas
 ======================
+
+Callback Resource
+-----------------
+
+- Maybe we could provide a simple callback caller resource, and implement
+  ResetCoverage using that?
+
 
 Node Visitor
 ------------

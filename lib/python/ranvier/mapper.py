@@ -34,7 +34,7 @@ class UrlMapper(rodict.ReadOnlyDict):
     and parameters.  It is also a very safe way to force the creation of URLs
     that are always valid.
     """
-    def __init__( self, root_resource=None, namexform=None, rootloc=None,
+    def __init__( self, root_resource=None, rootloc=None,
                   render_trailing=True ):
         rodict.ReadOnlyDict.__init__(self)
 
@@ -49,14 +49,11 @@ class UrlMapper(rodict.ReadOnlyDict):
         """Mappings from resource-id to (url, defaults-dict, resource)
         triples."""
 
-        self.namexform = namexform or slashslash_namexformer
-        """A callable that is used to calculate an appropriate resource-id from
-        the resource instance.  You can override this to provide your own
-        favourite scheme."""
-
-        self.callgraph_reporter = None
-        """An object used to log inter-resource references in order to produce a
-        call graph."""
+        self.reporters = []
+        """A lis of interfaces to reporter objects used to do something each
+        time a resource is handled or rendered.  This can be used to
+        automatically produce a graph of the relationships between pages, or a
+        coverage analysis."""
 
         self.render_trailing = render_trailing
         """If this is true, automatically render a trailing slash for resources
@@ -104,7 +101,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                     components.append( (varname, True, vardef, varformat) )
 
             # Calculate the resource-id from the resource at the leaf.
-            resid = last_resource.getresid(self)
+            resid = getresid_any(last_resource)
 
             # Mappings provided by the resource tree are always relative to the
             # rootloc.
@@ -180,25 +177,11 @@ class UrlMapper(rodict.ReadOnlyDict):
         new_mapping.resid = new_resid
         self._add_mapping(new_mapping)
 
-    def getresid( self, res ):
-        """
-        Get a resource-id, supporting all the types described in mapurl().
-        """
-        # Support passing in resource instances and resource classes as well.
-        if isinstance(res, Resource):
-            resid = res.getresid(self)
-        elif isinstance(res, type) and issubclass(res, Resource):
-            resid = self.namexform(res.__name__)
-        else:
-            resid = res
-            assert isinstance(res, (str, unicode))
-        return resid
-
     def _get_mapping( self, res ):
         """
         Get the mapping for a particular resource-id.
         """
-        resid = self.getresid(res)
+        resid = getresid_any(res)
 
         # Get the desired mapping.
         try:
@@ -289,8 +272,8 @@ class UrlMapper(rodict.ReadOnlyDict):
                 (resid, ', '.join("'%s'" % x for x in missing)))
 
         # Register the target in the call graph, if enabled.
-        if self.callgraph_reporter:
-            self.callgraph_reporter.register_target(resid)
+        for rep in self.reporters:
+            rep.register_rendered(resid)
 
         # Perform the substitution.
         return mapping.render(params, self.rootloc)
@@ -399,6 +382,15 @@ class UrlMapper(rodict.ReadOnlyDict):
         return mapper
 
 
+    def getabsoluteids( self ):
+        """
+        Return a list of the absolute-ids registered with the mapper, which
+        cannot never be handled by handle_request() (they are just used for
+        rendering external resources, or resources not rooted at the root).
+        """
+        return [x.resid for x in self.itervalues() if x.absolute]
+
+
     def handle_request( self, uri, args, response_proxy=None, **extra ):
         """
         Handle a request, via the resource tree.  This is the pattern matching /
@@ -424,6 +416,10 @@ class UrlMapper(rodict.ReadOnlyDict):
                           (types.NoneType, respproxy.ResponseProxy))
 
         while True:
+            # Start reporter.
+            for rep in self.reporters:
+                rep.begin()
+
             # Remove the root location if necessary.
             if self.rootloc is not None:
                 if not uri.startswith(self.rootloc):
@@ -434,10 +430,10 @@ class UrlMapper(rodict.ReadOnlyDict):
 
             # Create a context for the handling.
             ctxt = HandlerContext(uri, args, self.rootloc)
-
-            # Setup the callgraph reporter.
-            ctxt.callgraph = self.callgraph_reporter
             ctxt.mapper = self
+
+            # Setup the reporters.
+            ctxt.reporters = self.reporters
 
             # Standard stuff that we graft onto the context object.
             ctxt.response = response_proxy
@@ -454,23 +450,32 @@ class UrlMapper(rodict.ReadOnlyDict):
 
             # Handle the request.
             try:
-                self.root_resource.handle_base(ctxt)
-                break # Success, break out.
-            except InternalRedirect, e:
-                uri, args = e.uri, e.args
-                # Loop again for the internal redirect.
+                try:
+                    Resource.delegate(self.root_resource, ctxt)
+                    break # Success, break out.
+                except InternalRedirect, e:
+                    uri, args = e.uri, e.args
+                    # Loop again for the internal redirect.
+            finally:
+                # Complete reporters.
+                for rep in self.reporters:
+                    rep.end()
 
-        if ctxt.callgraph:
-            ctxt.callgraph.complete()
-
-    def enable_callgraph( self, reporter ):
+    def add_reporter( self, reporter ):
         """
-        Enable callgraph accumulation.
+        Add the given reporter to the active list.
         """
-        self.callgraph_reporter = reporter
+        self.reporters.append(reporter)
 
-    def disable_callgraph( self ):
-        self.callgraph_reporter = None
+    def remove_reporter( self, reporter ):
+        """
+        Remove the given reporter from the list.  The reporter must have been
+        previously added.
+        """
+        try:
+            self.reporters.remove(reporter)
+        except IndexError:
+            raise RanvierError("Trying to remove an unregistered reporter.")
 
     def get_match_regexp( self, resid ):
         """
@@ -516,6 +521,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                 results[name] = value
 
         return results
+
 
 
 #-------------------------------------------------------------------------------
@@ -665,12 +671,26 @@ class Mapping(object):
 
 #-------------------------------------------------------------------------------
 #
-def slashslash_namexformer( clsname ):
+def getresid_any( res ):
     """
-    Use the class' name, separate capwords with dashes and prepend with two at
-    signs, for easy grepping later on in the codebase/templates.
+    Get a resource-id.  This static method accepts 'res' being either of
+
+    - a string type (str or unicode)
+    - some resource class
+    - a resource instance
+
+    This is used to interpret input parameters passed in to the mapper.
+
     """
-    return '@@' + clsname
+    # Support passing in resource instances and resource classes as well.
+    if isinstance(res, Resource):
+        resid = res.getresid()
+    elif isinstance(res, type) and issubclass(res, Resource):
+        resid = ranvier._namexform(res.__name__)
+    else:
+        resid = res
+        assert isinstance(res, (str, unicode))
+    return resid
 
 
 #-------------------------------------------------------------------------------
