@@ -10,7 +10,7 @@ be used only for debugging.
 """
 
 # stdlib imports
-import anydbm, StringIO
+import anydbm, StringIO, re
 
 # ranvier imports
 from ranvier import RanvierError
@@ -20,6 +20,7 @@ import ranvier.template
 
 
 __all__ = ('coverage_render_html_table', 'coverage_render_cmdline',
+           'create_coverage_reporter',
            'ReportCoverage', 'ResetCoverage',
            'DbmCoverageReporter', 'SqlCoverageReporter')
 
@@ -31,14 +32,14 @@ def coverage_output_generator( mapper, coverage, nohandle ):
     Generator that drives the output of the coverage results.
     """
     nohandle = set(nohandle or ())
-        
+
     sortkey = lambda x: x.resid
     mappings = sorted(mapper.itervalues(), key=sortkey)
 
     for mapping in mappings:
         # Get the coverage information.
         hcount, rcount = coverage.get(mapping.resid, (0, 0))
-        
+
         # Render a row.
         tip = mapper.mapurl_pattern(mapping.resid)
 
@@ -104,6 +105,7 @@ def coverage_render_html_table( mapper, coverage, nohandle=None ):
     oss.write('</table>\n')
     return oss.getvalue()
 
+# CSS to be included for rendering the HTML table nicely, with colors.
 coverage_css = '''
 
 table#coverage-report {
@@ -156,20 +158,24 @@ def coverage_render_cmdline( mapper, coverage, nohandle=None ):
     head = '%%-%ds   %%8s   %%8s\n' % maxlen
     output.write(head % ('Resource-Id', 'Handled', 'Rendered'))
     output.write(head % ('-' * maxlen, '-' * 8, '-' * 8))
-    
+
     herrors, rerrors = 0, 0
-    fmt = '%%-%ds   %%8d   %%8d\n' % maxlen
+    fmt = '%%-%ds   %%8d   %%8d  %%s\n' % maxlen
     for resid, tip, (hcount, hstate), (rcount, rstate) in \
             coverage_output_generator(mapper, coverage, nohandle):
 
-        output.write(fmt % (resid, hcount, rcount))
+        marker = ''
+        if rstate == 'fail':
+            errors.write("Warning: '%s' not rendered.\n" % resid)
+            marker = 'WARNING'
+            rerrors += 1
 
         if hstate == 'fail':
             errors.write("Error: '%s' not handled.\n" % resid)
+            marker = 'ERROR'
             herrors += 1
 
-        if rstate == 'fail':
-            rerrors.write("Warning: '%s' not rendered.\n" % resid)
+        output.write(fmt % (resid, hcount, rcount, marker))
 
     return output.getvalue(), errors.getvalue(), herrors, rerrors
 
@@ -257,7 +263,7 @@ class DbmCoverageReporter(SimpleReporter):
     def reset( self ):
         self.dbm.close()
         self.dbm = anydbm.open(self.dbmfn, 'n')
-        
+
     def read_entry( self, resid ):
         try:
             hcount, rcount = map(int, self.dbm[resid].split())
@@ -287,7 +293,6 @@ class DbmCoverageReporter(SimpleReporter):
         for resid in self.dbm.keys():
             allresults[resid] = self.read_entry(resid)
         return allresults
-
 
 #-------------------------------------------------------------------------------
 #
@@ -329,7 +334,7 @@ class SqlCoverageReporter(SimpleReporter):
         if curs.rowcount == 0:
             curs.execute(self.schema)
             self.conn.commit()
-            
+
     def __del__( self ):
         self.conn.close()
 
@@ -344,7 +349,7 @@ class SqlCoverageReporter(SimpleReporter):
         Increment a column for a specific resource-id.
         """
         curs = self.conn.cursor()
-            
+
         curs.execute('''
           UPDATE %s SET %s = %s + 1 WHERE resid = %%s
         ''' % (self.table_name, col, col), (resid,))
@@ -364,7 +369,7 @@ class SqlCoverageReporter(SimpleReporter):
 
         for resid in self.rendered_list:
             self.increment_col(resid, 'rcount')
-            
+
         self.conn.commit()
 
     def get_coverage( self ):
@@ -376,11 +381,66 @@ class SqlCoverageReporter(SimpleReporter):
           SELECT resid, hcount, rcount FROM %s
         ''' % self.table_name)
 
-        pprint(curs.rowcount)
-
         allresults = {}
         for resid, hcount, rcount in curs:
             allresults[resid] = (hcount, rcount)
         return allresults
 
+
+
+
+#-------------------------------------------------------------------------------
+#
+# Regexp for connection string, e.g. postgres://user:password@host/dbname
+type_re = re.compile('([a-z]+)://(.+)$')
+conn_str_re = re.compile(
+    '([a-z]+)(?::([^@]+))?@([a-zA-Z0-9]+)/([a-zA-Z0-9_\-]+)')
+
+def create_coverage_reporter( connection_str ):
+    """
+    Create one of the coverage reporters from a connection string.  This is used
+    by the command-line module to specify a database connection via a single
+    string.
+    """
+    mo = type_re.match(connection_str)
+    if not mo:
+        raise RanvierError("Error: Invalid connection string '%s'." %
+                           connection_str)
+    
+    method, conndesc = mo.groups()
+
+    # Support dbm.
+    if method == 'dbm':
+        # connstr is expected to be the filename.
+        reporter = DbmCoverageReporter(conndesc, True)
+
+    # Support SQL databases.
+    elif method in ('postgres',):
+        try:
+            mo = conn_str_re.match(conndesc)
+            if not mo:
+                raise RanvierError(
+                    "Error: Invalid database description '%s'." % conndesc)
+
+            user, passwd, host, dbname = map(lambda x: x or '', mo.groups())
+
+            if method == 'postgres':
+                import psycopg2 as dbmodule
+                conn = dbmodule.connect(database=dbname,
+                                        host=host,
+                                        user=user,
+                                        password=passwd)
+
+            reporter = SqlCoverageReporter(dbmodule, conn)
+
+        except Exception, e:
+            raise RanvierError(
+                "Error: Could not connect to database: '%s'." % e)
+    else:
+        # Note: I'm sure you could easily add other supported types...  it's
+        # pretty much just a matter of establishing a connection.
+        raise RanvierError(
+            "Error: Method '%s' not supported, invalid method?" % method)
+
+    return reporter
 

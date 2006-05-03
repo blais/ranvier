@@ -2,9 +2,15 @@
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
-"""ranvier-coverage-report [<options>] <URL> <coverage-file>
+"""ranvier-coverage-report [<options>] <URL> <connect-string>
 
 Return coverage report from a Ranvier coverage results database.
+
+The given <connect-string> decides which of the backends to use, e.g.
+
+   dbm:///tmp/ranvier.coverage.dbm
+   postgres://user:password@host/database
+   ...
 
 Note: this supports just some of the basic coverage results.  The return code is
 meant to reflect if therer were errors or not, so that you can use this as part
@@ -17,12 +23,14 @@ import sys
 # ranvier imports.
 from ranvier import *
 
-
 #-------------------------------------------------------------------------------
 #
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-q', '--quiet', action='store_true',
+                      help="Only print errors.")
 
     parser.add_option('-i', '--ignore-id', action='append',
                       default=[],
@@ -38,7 +46,7 @@ def main():
     if len(args) != 2:
         parser.error("You must specify a resource map URL and a single "
                      "coverage database file.")
-    url, filename = args
+    url, connstr = args
 
     # Read the list of resource ids to ignore.
     ignore_ids = opts.ignore_id
@@ -50,7 +58,10 @@ def main():
     mapper = UrlMapper.urlload(url)
     
     # Create a coverage reporter that can read the coverage info.
-    reporter = DbmCoverageReporter(filename, read_only=True)
+    try:
+        reporter = create_coverage_reporter(connstr)
+    except RanvierError, e:
+        raise SystemExit(e)
 
     # Get coverage info.
     coverage = reporter.get_coverage()
@@ -58,7 +69,8 @@ def main():
     # Render the output.
     output, errors, herrors, rerrors = \
             coverage_render_cmdline(mapper, coverage, ignore_ids)
-    sys.stdout.write(output)
+    if not opts.quiet:
+        sys.stdout.write(output)
     sys.stderr.write(errors)
 
     if herrors:
@@ -70,5 +82,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
 
