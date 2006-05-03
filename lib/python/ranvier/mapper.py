@@ -278,6 +278,15 @@ class UrlMapper(rodict.ReadOnlyDict):
         # Perform the substitution.
         return mapping.render(params, self.rootloc)
 
+    def mapurl_noerror( self, resid, *args, **kwds ):
+        """
+        Same as mapurl(), except that we just return None if there is an error.
+        """
+        try:
+            return self.mapurl(resid, *args, **kwds)
+        except RanvierError:
+            return None
+
     def mapurl_pattern( self, resid ):
         """
         Same as mapurl() above, except that instead of replacing the required

@@ -14,7 +14,7 @@ import anydbm, StringIO, re
 
 # ranvier imports
 from ranvier import RanvierError
-from ranvier.reporter import SimpleReporter
+from ranvier.reporters.reporter import SimpleReporter
 from ranvier.miscres import LeafResource
 import ranvier.template
 
@@ -334,9 +334,6 @@ class SqlCoverageReporter(SimpleReporter):
         if curs.rowcount == 0:
             curs.execute(self.schema)
             self.conn.commit()
-
-    def __del__( self ):
-        self.conn.close()
 
     def reset( self ):
         curs = self.conn.cursor()

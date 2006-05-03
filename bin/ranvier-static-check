@@ -22,11 +22,10 @@ But you may customize this with an option.
 
 
 # stdlib imports.
-import re
+import sys, re
 
 # ranvier imports.
 from ranvier import *
-
 
 
 #-------------------------------------------------------------------------------

@@ -10,7 +10,7 @@ be used only for debugging.
 """
 
 # ranvier imports
-from ranvier.reporter import SimpleReporter
+from ranvier.reporters.reporter import SimpleReporter
 
 
 __all__ = ('CallGraphReporter', 'FileCallGraphReporter')

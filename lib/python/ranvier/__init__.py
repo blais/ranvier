@@ -60,8 +60,10 @@ from folders import *
 from miscres import *
 from respproxy import *
 from pretty import *
-from callgraph import *
-from coverage import *
+from reporters.reporter import *
+from reporters.callgraph import *
+from reporters.coverage import *
+from reporters.tracer import *
 
 
 # Remove stuff that we don't want to export in a star-export.

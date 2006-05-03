@@ -62,6 +62,10 @@ def main():
     # long time and this happens only once for every child.
     mapper = UrlMapper(rootloc=rootloc)
 
+    # Add tracing of resource path.
+    tracer = TracerReporter(sys.stderr.write)
+    mapper.add_reporter(tracer)
+
     # Create a coverage reporter, if requested.
     if enable_coverage:
         cov_reporter = DbmCoverageReporter('/tmp/ranvier.coverage.dbm')
@@ -74,6 +78,7 @@ def main():
         callgraph_f = open(callgraph_filename, 'a')
         callgraph_reporter = FileCallGraphReporter(callgraph_f)
         mapper.add_reporter(callgraph_reporter)
+
 
     demoapp.create_application(mapper, cov_reporter)
 
@@ -95,6 +100,9 @@ def main():
     if enable_coverage:
         mapper.remove_reporter(cov_reporter)
         del cov_reporter
+
+    mapper.remove_reporter(tracer)
+
 
 #-------------------------------------------------------------------------------
 #
