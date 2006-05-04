@@ -35,7 +35,7 @@ tests.
       author_email="blais@furius.ca",
       url="http://furius.ca/ranvier",
       package_dir = {'': 'lib/python'},
-      packages = ['ranvier']
+      packages = ['ranvier', 'ranvier.reporters']
      )
 
 
