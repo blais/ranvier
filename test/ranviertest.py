@@ -107,6 +107,11 @@ class TestMappings(unittest.TestCase):
         self.assertEquals(mapper.mapurl('@@Static8', 'blais'),
                           'http://aluya.ca/u/blais/home')
 
+        # static with formatting
+        mapper.add_static('@@Static9', 'http://aluya.ca/r/(rid%04d)/home')
+        self.assertEquals(mapper.mapurl('@@Static9', 317),
+                          'http://aluya.ca/r/0317/home')
+
         mapper.add_static('@@Missing1', '/users/(user)/home')
         self.assertRaises(RanvierError, mapper.mapurl, '@@Missing1')
 

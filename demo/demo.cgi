@@ -79,7 +79,6 @@ def main():
         callgraph_reporter = FileCallGraphReporter(callgraph_f)
         mapper.add_reporter(callgraph_reporter)
 
-
     demoapp.create_application(mapper, cov_reporter)
 
     # Get the CGI args.

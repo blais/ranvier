@@ -10,6 +10,7 @@ Pretty printing the mapper contents.
 import StringIO
 
 # ranvier imports
+import ranvier.template
 from ranvier.miscres import LeafResource
 
 

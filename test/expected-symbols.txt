@@ -1,6 +1,5 @@
 CGIResponse
 CallGraphReporter
-CoverageReportResource
 DbmCoverageReporter
 DelegaterResource
 EnumResource
@@ -15,11 +14,19 @@ PrettyEnumResource
 RanvierError
 RedirectResource
 RemoveBase
+ReportCoverage
+ResetCoverage
 Resource
+ResourceReporter
 ResponseProxy
+SimpleReporter
+SqlCoverageReporter
+TracerReporter
 UrlMapper
 VarDelegaterResource
 VarResource
-coverage_render_table
+coverage_render_cmdline
+coverage_render_html_table
+create_coverage_reporter
 pretty_render_mapper_body
 set_resource_id_name_function

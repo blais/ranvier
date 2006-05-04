@@ -5,6 +5,11 @@
 
 all: runtests symbols
 
+verify:
+	python ../bin/ranvier-static-check			\
+		http://furius.dyndns.biz/ranvier/demo/resources	\
+		$(PWD)/../demo/demoapp.py 
+
 runtests:
 	python ranviertest.py
 

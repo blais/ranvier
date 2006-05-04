@@ -16,11 +16,12 @@
       2.8   Interfaces
       2.9   Random Tests
       2.10  Query Parameters
-      2.11  Extra and Privileges
-      2.12  Template Replacement
-      2.13  Redirection Oddity
-      2.14  Formats for static routes
-      2.15  Better Static Checking
+      2.11  Extra Data and Privileges
+      2.12  A Routes-Like Interface
+      2.13  Template Replacement
+      2.14  Redirection Oddity
+      2.15  Formats for static routes
+      2.16  Better Static Checking
 
 
 Current (For Release)
@@ -58,142 +59,6 @@ Current (For Release)
 * Send Ranvier information to twill list when the coverage analysis is done.
 
 
-Future Tasks and Ideas
-======================
-
-Callback Resource
------------------
-
-- Maybe we could provide a simple callback caller resource, and implement
-  ResetCoverage using that?
-
-
-Node Visitor
-------------
-
-- Provide a way to visit the resource nodes of the entire tree.  We could use
-  this to let the resources specify little bits of CSS code and have the visitor
-  reconstruct the style file from those.  This provides a new opportunity for
-  localizing all this stuff in the resource handler, although we may prefer to
-  let the resources be entirely separate.  I don't know.  But at least we should
-  provide a generic visitor interface.
-
-
-Emacs Helper Mode
------------------
-
-- Provide some kind of hook in emacs to fetch the list of resources from my
-  running web app, and then interactively insert by proposing amongst one of the
-  valid forms.  At least I want to be able to view the complete list in an emacs
-  buffer without having to cut-n-paste and open a file manually.
-
-
-Multiple Components in a Row
-----------------------------
-
-* branch_var should accept a tuple of variable names, and the same should go for
-  declare_serve(), so that we can express consuming more than a single path
-  component:
-
-     /doc/<year>/<month>/<date>
-     /doc/<year>/<month>/<date>/view
-
-
-Custom Validation on Back-Mapping URLs
---------------------------------------
-
-* It would provide even more robustness and verification if it was possible for
-  the resources that consume components to provide some kind of validation for
-  those components, so that when we back-map URLs for rendering more
-  verification is performed that just “we have the parameter”.
-
-
-Map Multiple URLs
------------------
-
-* Add a simple interface to be able to map “n” URLs (``mapurln(..)``) with the
-  same arguments.
-
-
-Features in Docs
-----------------
-
-* Implement all the remaining features described in the docs
-
-
-Interfaces
-----------
-
-* Check out if WSGI dictates some kind of standard interface for implementing a
-  response proxy.
-
-
-Random Tests
-------------
-
-* We could use the introspection provided by url_variables() to generate
-  fetchers with random data for urls that require arguments.
-
-
-Query Parameters
-----------------
-
-* We also need to support query parameters for static mappings.
-
-* Think about integrating the parameters with the query arguments at some point,
-  so that we can generate URLs like this (maybe this could be done automatically
-  by passing in extra arguments instead of raising an error):
-
-     /a/bli/blou?myextra=42
-
-* The enumerator visitor could be augmented with a method to accept declaration
-  of possible query arguments, some being mandatory (this sounds like a cool
-  idea).
-
-  Also, a special function could be provided to do these declarations given an
-  Atocha form, thus providing us with the complete interface to a speciific
-  resource.  The pretty renderer could take advantage of that by rendering a
-  nice table with those, and the fields' titles could even be declared as well,
-  so that we can render a good interface of a resource.
-
-* Add the following methods::
-
-    declare_param( ..., optional=True ) -> adds a query arg
-
-      ##     def declare_queryargs( self, varname, default=None, optional=False ):
-      ##         """
-      ##         Declare query arguments for this resource as a leaf.  Query arguments
-      ##         can be optional, and can have default values only if they're not
-      ##         optional.
-      ##         """
-      ##         assert not (optional and default)
-      ## ## FIXME todo
-
-
-    Only parameters can be optional.  Variables are required.
-
-    Find a way to map the position parameters to the URL, in order.
-
-Extra and Privileges
---------------------
-
-- Add a optional parameter 'extra' which can be used to indicate, for
-  informational purposes only, what extra data is involved/considered during
-  the traversal for a particular leaf resource.  This can be used to display
-  the privileges that are involved in accessing a single resource.
-
-
-Template Replacement
---------------------
-
-* We could provide a simple template replacement library in this package that
-  replaces a simple syntax embedded in HTML::
-
-      <a href="@@Profile(username=username, ...)">Search</a>
-
-  This should be configured to use an appropriate mapper beforehand.  This
-  should be trivial to implement.  Templates are a really stupid idea though--at
-  least for a programmer--so this should be given low priority.
 
 
 Redirection Oddity
@@ -202,18 +67,3 @@ Redirection Oddity
 * Investigate this: when you just return a Location: header without a status,
   Apache goes into an infinite loop.  What is this implementation of internal
   redirect?  Look for internal redirection on Wikipedia.
-
-
-Formats for static routes
--------------------------
-
-* Implement format support for static routes, we will need to detect the format
-  from the given URL pattern, extending that syntax somehow.
-
-
-Better Static Checking
-----------------------
-
-* Extend static checker script to look for parameters and to warn when it is
-  likely that parameters have been forgotten or are missing or extraneous
-

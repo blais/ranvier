@@ -5,68 +5,136 @@
 :Date: 2006-04-11
 :Abstract:
 
-   (Unfinished) Documentation on the Ranvier URL mapping system.
+   High-level documentation on the Ranvier URL mapping system [#]_.
 
 
 .. section-numbering::
 .. contents::
 ..
     1   Introduction
-    2   Problem Statement and Domains
+    2   Problem Statement and Definition
     3   Mapping Forward
       3.1  Chain of Responsibility
-      3.2  Naming of Resources
-    4   Mapping Backward
-      4.1  Optimization of BackMapping
-      4.2  Reporters
-      4.3  Selection of Resource Ids
-      4.4  Static Maps
-      4.5  Unique Identifiers
-    5   Listing Available Resources and URLs
-    6   Embedding Security
-    7   Internal Redirects
-    8   Support for Debugging
-    9   A Routes-Like Interface
-    10  (Other)
-      10.1  Writing Tests
+      3.2  Chaining Resources
+    4   Naming of Resources
+      4.1  Custom Resource Ids
+      4.2  Customizing the Naming Scheme
+    5   Mapping Backward
+      5.1  Construction of the URL Map
+      5.2  Obtaining URLs to Render
+      5.3  Checking when Rendering
+      5.4  Static Maps
+      5.5  Aliases
+    6   Listing Available Resources and URLs
+      6.1  Static URL Verification
+    7   Reporters
+      7.1  Request Tracer
+      7.2  Coverage Analysis
+      7.3  Call Graph Between Pages
+    8   Embedding Security in the Resource Tree
+    9   Internal Redirects
+    10  Writing Tests
+    11  Integration Guide
+      11.1  Importing the Code
+      11.2  Creating the Mapper
+      11.3  Handling a Request
+      11.4  Resource Proxy
+      11.5  Creating Resources
+      11.6  Rendering URLs
+        11.6.1  Mapping Function Injection
+      11.7  Creating a Resource Tree
+      11.8  Feedback
+    12  Future Work and Ideas
+      12.1   Callback Resource
+      12.2   Node Visitor
+      12.3   Emacs Helper Mode
+      12.4   Multiple Components in a Row
+      12.5   Custom Validation on Back-Mapping URLs
+      12.6   Map Multiple URLs
+      12.7   Interfaces
+      12.8   Random Tests
+      12.9   Query Parameters
+      12.10  Extra Data and Privileges
+      12.11  A Routes-Like Interface
+      12.12  Template Replacement
+      12.13  Better Static Checking
+      12.14  Support GET and POST on the Same Resource Objects
+    13  Conclusion
 
 
 Introduction
 ============
 
-Mapping URLs is an important component of building web applications.
-…
-(FIXME add more)
+Within a web application server, the process of mapping an incoming request from
+a web client into particular code to handle the request, is an important
+component of building web applications.  The implementation details of this
+forward-mapping process has a high impact on the structure of the application
+itself.  Similarly, the process of rendering URLs back to the output pages is
+also very important.  Conceptually, these correspond to callbacks to other codes
+in our program.
+
+Unfortunately, the legacy of existing web application frameworks imposes a
+constrainted view of how people carry out these processes, and this is mostly
+due to the historical development of the web and its corresponding tools.
+
+With Ranvier, we present a novel framework for the processes of mapping requests
+to resources, and the rendering of callbacks to other resources.  These
+processes can be implemented in an entirely orthogonal manner to any specific
+web application frameworks, and this is what propose with Ranvier: we solve only
+the mapping problem, in both directions.
+
+The result is a very simple system which can integrate easily in any existing
+web application backend (provided it is built in the Python language) and allows
+new, unprecedented capabilities for web applications, such as the generation of
+a call graph between all pages, the ability to list and automatically document
+all of an applications pages, and coverage analysis for use with tests.
 
 
+Problem Statement and Definition
+================================
 
+Let's first identify and explicitly name some of the core features of a typical
+web application framework:
 
-Problem Statement and Domains
-=============================
+1. It needs to provide a way to write code that handles a request and serves
+   pages or performs a specific task when a URL is requested.  Let's call the
+   documents that the application serves **resources** and the code that serves
+   them **resource handlers** or **controllers**;
 
-Let's consider some of the important parts of a typical web application
-framework:
-
-1. Code that serves pages or performs a specific task when a URL is
-   requested.  Let's call the documents served **resources** and the code that
-   serves than **resource handlers**;
-
-2. There is usually a way to **combine** the resource handlers to take advantage
+2. There is usually **a way to combine** the resource handlers to take advantage
    of common functionality.  For example, code that fetches a user's preferences
-   may be needed in many places, and we would like to write the code once.  This
-   could be as simple as allowing the definition of functions, or the
-   elaboration of a complex hierarchical object-based system.  This could be
-   done via aggregation/composition or inheritance, or using other paradigms;
+   may be needed in many places, and we would like to write the code once,
+   regardless of the application that the handler lives in.  This could be as
+   simple as allowing the definition of functions, or as complex the elaboration
+   of a complex hierarchical object-based system.  This could be done via
+   aggregation, composition or inheritance, or using other paradigms;
 
-3. **Pattern matching the URL** to select a particular resource handler to map it
-   to;
+3. Given an incoming URL request string, we need a way to **matching the
+   pattern** of the request string in order to select a particular resource
+   handler to map it to;
 
-4. **Capturing and validating** the variable components and the query arguments
-   from the URL request string and provide them to the resource handler.  This
-   is a task similar to **parsing**;
+4. **Capturing and validating** the variable components embedded in an URL
+   request string and the query arguments, and provide them to the resource
+   handler.   When we talk about components, we mean the parts of the URL path,
+   for example::
 
-5. **Rendering other URLs back to the user**.  These are actually **delayed
-   function calls**, which depend on the user's future actions.
+      /pubpage/users/rachel/preferences
+
+   consists in the following components:
+
+   - “ ``pubpage`` ”, “ ``users`` ”, “ ``preferences`` ”: static fixed
+     components
+   - “ ``rachel`` ”: a variable component, a username;
+
+5. **Rendering other URLs back to the user**, in order to allow him to call back
+   into the application and fetch new resources (pages).  These can be viewed as
+   **delayed function calls**, which depend on the user's future actions.
+
+A complete web application framework provides many more components, such as
+features to define and access a data model, a way to render and parse results
+from web forms, perhaps some kind of templating system, and a variety of
+backends to serve the requests from.  In this project, we limit our scope to the
+features enumerated above.
 
 
 .. figure:: domains.png
@@ -75,18 +143,29 @@ framework:
    and the domain of code objects (resource handlers).
 
 
-You can view this problem as mapping back and forth between two domains: the
-domain of URLs and the domain of source code.  As programmers, we should have
-little concern for the particular URLs that our resources are accessed from, if
-not for the correspondence between URL variable components and function
-parameters, or for purely aesthetic reasons.  
+We can view parts of a request handling cycle as a mapping back and forth
+between two domains: the domain of URLs and the domain of source code.  As
+programmers, we should have little concern for the specific URLs that our
+resources are accessed from, if not for the correspondence between the variable
+components embedded within these URLs and code parameters, or for purely
+aesthetic reasons.
 
-All we need is some kind of system for uniquely identifying resources, and
-rendering the appropriate URL given its parameters.  Most computer languages
-provide some form or other of checking of parameter correctness when making
-function calls.  Is it not silly then, that most web application
-frameworks—especially those based on templates—still involve the programmer in
-writing URLs when rendering pages?
+Note that the rendering of a URL back to the client conceptually corresponds to
+calling another function within our program.  The main difference between web
+applications and desktop applications is that the latter needs to handle
+multiple users at the same time, and to do this, it needs to save and restore
+the state of that particular user's application data in a database, looked up by
+cookies sent each time from the user's browser.
+
+In order to uniquely match and render URLs to resources, all we need is a set of
+unique identifiers and the URL components that are provided and required by
+requests to these resources.  If we take the analogy of rendering URLs as
+function calls, most computer languages provide some form or other of checking
+parameter correctness when making function calls within that program.  Is it not
+entirely silly then, that most web application frameworks—especially those based
+on templates—still involve the programmer in writing his own URLs manually when
+rendering pages?  This makes it easy to forget some URLs and render pages with
+invalid links.  Why can't the computer check URls for us at render time?
 
 The goals of this library are:
 
@@ -94,8 +173,8 @@ The goals of this library are:
   cross-referenced resources are bound to;
 
 * To provide a system that better manages the list of resources that are
-  available from a web application, that can list them, serve them for test
-  programs, etc.
+  available from a web application, that can list them, serve them as a
+  directory for test programs to use, and more.
 
 * To implement a simple but efficient forward mapping parsing mechanism based on
   aggregation of resources (the `chain-of-responsibility design pattern`__).
@@ -138,226 +217,908 @@ state/variables as input.
 
 __ http://en.wikipedia.org/wiki/Representational_State_Transfer
 
-
-
-
 One consequence of using our system is that we do not render *relative* URLs,
-i.e. all the URLs are from the root.  This consists in an advantage:  FIXME add
-more
-
-
-
+i.e. all the URLs are rendered from the root of the mapper.  This in an
+advantage in that we never rely on the resource layout for calling resources
+across each other.
 
 
 Chain of Responsibility
 -----------------------
 
-(FIXME explain resource system and pattern matching algorithm)
+In order to implement the forward matching algorithm to process an incoming
+request, we want to allow a way to hierarchically combine the behaviour of
+multiple resources.
 
-One of the advantages in using a Chain of Responsibility pattern to implement
-the controller search is that complete flexibility is available to the
+We first required that the application developer build a tree of resources, and
+provide this tree to our central mapper object.  When a request comes in, we
+initialize a context object that contains the path and a ``delegate()`` method
+is called on the root resource.  The process of consuming components of the URL
+is then left to the resources themselves, with resources delegating behaviour to
+other resources.
+
+Commonly used resources such as a “folder”, a resource that contains other
+resources mapped by name, are provided with the base Ranvier library.  Note that
+resources do not have to consume components of a URL: some resources can be used
+only to request privileges, for example.
+
+One of the advantages in using this Chain of Responsibility pattern to implement
+the resource handler search is that complete flexibility is available to the
 programmer.  We have no need to define a complicated and necessarily limited
 wildcard matching system.  The matching of URL components is entirely up to you,
 i.e. you can look up information in a database, augment the context object that
-is passed along the search, etc.  This is much more powerful (and simpler) than
-a wildcard system.
+is passed along the search, etc.  We believe that this is much more powerful and
+simpler than a wildcard system, or that a recursive object-space lookup within
+the program.
 
+Chaining Resources
+------------------
+
+In the implementation of your resources, if you require some custom behaviour
+that is not already provided by the basic Ranvier resources—this should occur
+rarely—you should make sure that when you delegate the handling to another
+resource you should always make sure to invoke the ``Resource.delegate()``
+method.  For example::
+
+   class MyResource(Resource):
+       def handle( self, ctxt ):
+           ...
+           ...
+           self.delegate(child_resource, ctxt)
 
 
 Naming of Resources
--------------------
+===================
+
+How do we uniquely identify resources?
 
 The overwhelmingly general case for leaf resources/controllers is that they are
 instantiated only once.  We thus take the opportunity to forego having the user
-enter resource names for each of these.  Instead, we reuse the names of the
-classes of the leaf controllers to enter them in the URL map.
+explicitly specify resource names for each of these.  Instead, we reuse the
+names of the classes of the leaf resources and transform them slightly to be
+placed in the URL map.
 
+By default, the transformation on the class name is simply to prepend the string
+“ ``@@`` ” in front of the resource-id, like this::
+
+    class UserPreferences(LeafResource):
+        def handle( self, ctxt ):
+            ...
+
+will result in the ``@@UserPreferences`` resource-id.
+
+The reason we choose “ ``@@`` ” is because this pattern does not occur often in
+Python source code.  This allows us to easily grep for resource ids (see `Static
+URL Verification`_ section below).
+
+Custom Resource Ids
+-------------------
 For those few cases where controllers are reused and instantiated in many
-places, we provide an optional keyword argument to let the user uniquely name
-the instances for later referral.
+places, we provide an optional ``resid`` keyword argument to let the user
+uniquely name the instances for later referral and rendering.
 
+Customizing the Naming Scheme
+-----------------------------
+If you do not like the “ ``@@`` ” scheme for whatever reason, you can globally
+customize the naming scheme via a global function of the Ranvier package.
 
 
 Mapping Backward
 ================
 
-One problem with web applications is that due to the nature of the web
-application frameworks, they tend to be rather static and difficult to change.
-URLs are cross-referenced from page templates and sometimes build
-programmatically, and it can be tricky to move resources around.
+One problem with web applications is that due to the nature of the existing
+frameworks, they tend to be rather static and difficult to change.  URLs are
+cross-referenced from page templates and sometimes build programmatically, and
+it can be tricky to move resources around without making mistakes.  It is also
+difficult to automate using text manipulation tools on the source code and
+templates, due to the embedded parameters.
 
 A solution for this is to let the URL construction be taken care of by the
-resource system itself, mapping from the leaf of the URL back to the root, thus
-re-constructing the original resource.
+resource system itself, mapping using the unique resource id.  An advantage is
+that when rendering resources we can validate and require the correct number of
+parameters and thus never render invalid links.
 
-We can identify individual resources by using unique strings (e.g. ``//balance``
-the user account balance page) and then asking a central URL mapping service to
-create the URLs for us to insert in web pages.  This process must require all
-the parameters of the function to call, in order to insert them in their
-appropriate place.
+A web application build this way have its URL structure entirely rearranged
+without breaking anything.  The only reason for not making necessary changes is
+the presence of existing external links into the application.
 
-A web application build this way can be completely rearranged without breaking.
-
-
-However, this flexibility makes using templates impossible.
-
-
-Optimization of BackMapping
+Construction of the URL Map
 ---------------------------
 
-- Ask each resource whether it is
+We create the global map of resources by visiting each resource node of the
+resource tree, asking it to enumerate the possible branches of resources that it
+can delegate to, and which components, if any, it matches on the incoming URL
+path.  The output of this visiting process results in a mapping from unique
+resource id to URL templates and the accompanying required components to build
+such a URL.
 
-  * Static
-  * A fixed name (e.g. user)
-  * Programmatic (cannot optimize)
+A resource can zero or more branching possibilities:
 
-FIXME todo write docs
+- It can be a target and can be served if the matching corresponds exactly to
+  this resource;
 
+- It delegates “anonymously” to another resource, meaning that it does not
+  consume part of the incoming URL path;
 
+- It delegates “staticly” to another resource, meaning that it does so if it
+  encounters a fixed string at this point of the URL path
 
+- It delegates to another resource, after having consumed one or more URL path
+  components and made them available on the handling context object.
 
-Reporters
----------
-
-
-FIXME add callgraph thing, with a figure
-
-.. figure:: callgraph.png
-
-   The inter-resource call graph for the demo application of this package.
-
-
-add coverage analysis details
-
-
-
-Selection of Resource Ids
--------------------------
-
-You should choose some kind of common string pattern for you resource ids, so
-that if you decide to rename some of them at some point, for example when
-reorganizing a site, simple text-based UNIX tools can do a wonderful job at
-automating some of these replacments if they can be picked out easily.
-
-The default naming transform 
-
-  … describe ``@@<ResourceName>`` scheme
+This allows the enumeration process to obtain all the possible leaf resources
+that URLs can map to.  One important constraint is that the handler code must
+match the branch declarations.
 
 
+Obtaining URLs to Render
+------------------------
+
+Rendering a URL is simple: specify the unique resource-id and the required
+parameters::
+
+   mapurl('@@UserPreferences', 'rachel')
+
+Will result in something like::
+
+   /pubpages/users/rachel/preferences
+
+To access the mapper object, we can make the ``mapurl()`` function available to
+all resource handlers in your preferred manner.
+
+This can be integrated in a templating system.  I like to use HTML node trees
+rather than templates, so I can use this directly in my source code, e.g.::
+
+   document.append(
+       DIV(A("Prefs", href=mapurl('@@UserPreferences', ctxt.username)))
 
 
+Within a templating system it might look like this::
+
+   Go to <a href="@@Home">home page</a>.
+
+where ``@@Home`` will automatically get replaced by something like
+``/pubpages/welcome``.  This could be extended to support variable parameters.
+Note that Ranvier does not provide integration in existing template
+systems—there are simply too many and this integration should be easily to
+implement.
+
+Checking when Rendering
+-----------------------
+
+When you render a URL using the method shown above, you should note that an
+exception will be raised in an invalid number of parameters is specified for it.
+This is a feature.  This means that if your page renders, all the links in it
+are necessarily valid.
 
 
 Static Maps
 -----------
 
 Since we already have a global registry of URL maps that we use to generate our
-URLs, we also provide the ability to map names to static and possibly external
-URLs.  This is similar to Routes’ “static named routes” feature.
+URLs, we also provide the associate unique resource ids to static and possibly
+external URLs.  This is similar to Routes_’ “static named routes” feature.  You
+do it like this::
 
+   mapper.add_static('@@GoogleSearch', 'http://google.com')
 
+Aliases
+-------
 
+The mapper supports the creation of aliases to existing resources.  You do it
+like this::
 
+    mapper.add_alias('@@Search, '@@GoogleSearch)
 
-Unique Identifiers
-------------------
-
-FIXME do this, talk about the automatic conversion from the class names and the
-possibility to identify instances.
-
-  * We need to automatically compute these names from the names of the
-    classes, and a class attribute can be used on the classes to override that
-    as well as it should be able to be specified as a keyword argument on the
-    base class.
-
-
-
+This is useful during development if you're moving stuff around or are just
+testing stuff.
 
 
 Listing Available Resources and URLs
 ====================================
 
-One nice feature of our system is that we like to be able to get an entire list
-of the URLs served by the system.  This is extremely useful, because:
+One interesting feature of our system is that is allows us to provide a
+comprehensive listing of all the URLs that are served by a web application that
+uses it.   It looks like this (this is for our included demo program)::
 
-#. We visually appreciate the entire list of documents which are offered to the
-   public.  We need this, because during development it is possible that
-   temporary resources are installed for debugging and later on forgotten.
+    @@Root                   : /ranvier/demo/
+    @@ImSpecial              : /ranvier/demo/altit
+    @@Atocha                 : /atocha/index.html
+    @@CoverageReport         : /ranvier/demo/cov/report
+    @@ResetCoverage          : /ranvier/demo/cov/reset
+    @@AnswerBabbler          : /ranvier/demo/deleg
+    @@DemoFolderWithMenu     : /ranvier/demo/fold/
+    @@SimpleGreed            : /ranvier/demo/fold/greed
+    @@SimpleHamming          : /ranvier/demo/fold/ham
+    @@SimpleThought          : /ranvier/demo/fold/think
+    @@AliasExample           : /ranvier/demo/fold/think
+    @@IntegerComponent       : /ranvier/demo/formatted/(uid%08d)
+    @@Home                   : /ranvier/demo/home
+    @@InternalRedirectTest   : /ranvier/demo/internalredir
+    @@LeafPlusOneComponent   : /ranvier/demo/lcomp/(comp)
+    @@DemoPrettyEnumResource : /ranvier/demo/prettyres
+    @@RedirectTest           : /ranvier/demo/redirtest
+    @@EnumResource           : /ranvier/demo/resources
+    @@SourceCode             : /ranvier/demo/source
+    @@Stylesheet             : /ranvier/demo/style.css
+    @@UserData               : /ranvier/demo/users/(username)/data/(userdata)
+    @@PrintName              : /ranvier/demo/users/(username)/name
+    @@PrintUsername          : /ranvier/demo/users/(username)/username
+    @@ExternalExample        : http://paulgraham.com/
+
+This is extremely useful, because:
+
+#. We can visually appreciate the entire list of documents which are offered to
+   the public.  We need this, because during development it is possible that
+   temporary resources are installed for debugging and are later forgotten on
+   the production server.
 
 #. Our test programs can automatically fetch this list (from a special resource
-   only served in testing mode) and can rebuild a mapper from it, so that they
-   are entirely independent of the application URL layout.
+   only served in testing mode) and a mapper can be rebuilt from it, so that
+   they are entirely independent of the application URL layout.
 
-(#. Can inspect the various security credentials that each URL requires.)
+#. Eventually, extra data provide by each resource in a resource path will be
+   asccumulated and rendered in this list.  We will use this to allow
+   inspecting, for example, the security credentials that each URL requires.
+
+#. It can serve as documentation: we provide a resource that generates a pretty
+   rendering of the listing of resources, that includes the docstrings of the
+   resource handlers via the introspection features of the Python language.
+   This allows a new developer on a project to quickly overview all of the pages
+   that a particular application provides, including its documentation.
+
+   In addition, this pretty page renders the links so you can try them directly
+   from the listing.  You can supply parameters to it, for default values to be
+   used in the links to resources which contain variable components.
+
+#. You could implement a resource that automatically generate your site map from
+   the URL mapper, possibly including just some of the resources on your site.
+   You could also generate the Google sitemap.xml file automatically from the
+   mapper.
+
+Note that we provide a standard resource to dump the contents of the mapper in
+``text/plain`` format.  The URL mapper has a utility function to reload itself
+from this description.  You might be able to leverage this in some way I have
+not expected (see the `Writing Tests`_ section).
 
 
+Static URL Verification
+-----------------------
 
-* FIXME mention pretty resource renderer and defaults
+Since the resource ids that we use are easily to extract from the source code,
+we can automatically validate them against an active mapper object.  The script
+``ranvier-static-check`` does the following:
+
+1. Fetch the mapper contents from a resource installed on the running web
+   application
+2. Rebuilds a mapper using this textual description
+3. Extracts all the resource-ids in the given source files
+4. Spits out errors if some of the resource-ids are invalid.
+
+The output looks something like this::
+
+    $ python ../bin/ranvier-static-check                      \
+              http://furius.dyndns.biz/ranvier/demo/resources \
+              ../demo/demoapp.py
+
+    ../demo/demoapp.py:235: (ERROR) Invalid resource id '@@RedirectTestt'.
+    ../demo/demoapp.py:243: (ERROR) Invalid resource id '@@Source'.
 
 
+Note that you could integrate static checking in your daily automated tests, or
+as a repository commit hook, to automatically report when invalid resources are
+present in the source code.  The ``ranvier-static-check`` program exits with an
+error state if there are errors, so you can place it in a Makefile.
 
-Embedding Security
-==================
-
-The URLs can be grouped so that they share security access privileges.  For
-example, any URL beginning with ``/backstore`` could require administrative
-privileges.
-
-One way to do this
-
+Also, you can run ``ranvier-static-check`` from Emacs, its output is compatible
+with the default error parsing, so you can use ``next-error`` and
+``previous-error`` to quickly fix your invalid resource-ids.
 
 
+Reporters
+=========
+
+The mapper provides the ability to register “reporter” objects in the
+forward-mapping delegation process.  This allows collecting various informations
+each time a request is handled.
+
+Some of the examples of features that are implemented using reporters are
+provided in the following sections.
+
+Request Tracer
+--------------
+
+For debugging purposes, it is nice to log the path of resources that a request
+goes through.  The tracer reporter provides that string, for you to write in
+your specific application framework log.
+
+It looks like this in the log::
+
+  [Thu May 04 14:32:37 2006]  @@Root -> @@Home
+  [Thu May 04 14:32:38 2006]  @@Root -> @@DemoPrettyEnumResource
+  [Thu May 04 14:32:39 2006]  @@Root -> @@EnumResource
+  [Thu May 04 14:32:40 2006]  @@Root -> @@UsernameRoot -> @@Folder -> @@PrintUsername
+  [Thu May 04 14:32:41 2006]  @@Root -> @@UsernameRoot -> @@Folder -> @@PrintName
+  [Thu May 04 14:32:42 2006]  @@Root -> @@UsernameRoot -> @@Folder -> @@UserData
+  [Thu May 04 14:32:43 2006]  @@Root -> @@Augmenter -> @@AnswerBabbler
+  [Thu May 04 14:32:45 2006]  @@Root -> @@DemoFolderWithMenu
+  [Thu May 04 14:32:47 2006]  @@Root -> @@DemoFolderWithMenu -> @@SimpleHamming
+  [Thu May 04 14:32:49 2006]  @@Root -> @@DemoFolderWithMenu -> @@SimpleThought
+
+
+Coverage Analysis
+-----------------
+
+Those of us who have automated tests for our web applications would like to be
+able to find out how much of the application's resources/pages have actually
+been queried through the tests, i.e. how much of the application do our tests
+cover.
+
+The coverage reporter does this.  It provides two statistics, for each resource:
+
+#. The number of times the resource has been requested
+#. The number of times a link to the resource has been rendered.
+
+Ranvier includes a resource handler that renders the statistics, and one that
+resets the counters.  We will provide a variety of data stores for the
+statistics, including DBM databases, SQL databases, and it would be trivial to
+add more.
+
+.. figure:: screenshot-coverage.png
+
+   A screenshot of the coverage report.
+
+
+Call Graph Between Pages
+------------------------
+
+It may be useful to obtain a graph of the relations between each of the
+resources served on our site.  The call graph reporter produces a text file with
+pairs of handled resource id and rendered target resource id.  This file can
+then be converted into a graphviz dot file that gets converted into a PDF file.
+
+.. figure:: screenshot-callgraph.png
+
+   The inter-resource call graph for the demo application of this package.
+
+
+Embedding Security in the Resource Tree
+=======================================
+
+The URLs can be grouped hierarchically so that they share security access
+privileges.  A resource installed at the root can be used to check the required
+credentials.  For example, any URL beginning with ``/backstore`` could require
+administrative privileges, the resource setup code would look something like
+this::
+
+   root = Folder(
+       backstore=RequireAdminPrivileges(
+           view_inventory,
+           view_customers
+       )
+   )
+
+Note that we do not force this on your program structure, it is entirely up to
+you to implement the privileges mechanism in your handlers.
 
 
 Internal Redirects
 ==================
 
-FIXME write it
+Ranvier includes a mechanism to perform internal redirection.
 
+Normally, redirection goes through the client browser, and the browser
+automatically requests the redirected resource.  This allows it to display the
+correct resource URL in the location bar of the user's browser.  However, this
+round trip implies that we perform two separate requests.  Each request
+potentially requires that we fetch session information from a database, and has
+setup and network costs.  One way to optimize redirections is to perform the
+redirection within the same request handler process/thread that performs the
+redirection.  This is called “internal redirection”.
 
+The advantage is that we avoid some requests, thereby providing a faster
+response time to the user.  The disadvantage is that the URL in the user's
+browser may not reflect accurately the actual page contents.  This can be an
+issue for pages that can be bookmarked.  Handlers that validate input parameters
+and that redirect to the original submit page (with marked errors) will show the
+handler's URL in the location bar.
 
-Support for Debugging
-=====================
+To use Ranvier's internal redirection, simply raise the ``InternalRedirect``
+exception from your resource handler::
 
-FIXME write it
-
-
-A Routes-Like Interface
-=======================
-
-FIXME answer what is “Routes”, add link
-
-* FIXME provide a “connect” interface that is similar to Routes, but that
-  automatically creates all the required resources underneath with default
-  Folder objects and such.
-
-
-(Other)
-=======
-
-Idea: in our resources traversal, we could put the query args together with the
-parameters in the URL itself… they are really conceptually the same…  checks
-would be added. FIXME TBD
-
-
-
-
-* Document URL pattern format
-
+   class MyHandler(Resource):
+       def handle( self, ctxt ):
+           ...
+           raise InternalRedirect(mapurl('@@LogoutSuccessPage'))
 
 
 Writing Tests
--------------
+=============
 
-* Matching against a known URL
+Automated test programs are becoming more and more common.  The mechanize,
+twill, and Selenium packages are providing an easy way to automate the testing
+of web applications.  Test programs that simulate the browser experience are a
+great complement to functional testing.
+
+However, these tests are written in terms of the application's URLs.  If you
+change the URL mapping, you need to fix the tests accordingly.
+
+Since the URL mapper is able to rebuild itself from a text description provided
+by the application, not just fetch this list of resources before running the
+tests, and write your tests fetching the actual URLs against the rebuilt URL
+mapper instead?  I have used this and it works great.
+
+Note that using the Ranvier URL mapping system, you can significantly increase
+the portability of resource handlers by separating the rendering code from the
+other functionality of the handler.  This allows you to reuse, for example, your
+user management routines across applications.  Using the technique described in
+this section, you can also increase the reusability of your test programs, since
+they do not directly rely on the specific URLs for your application.
+
+Here is an excerpt from some test code I wrote that sets up my test modules,
+this is run on those modules before the contained tests are run::
+
+    def setup_for_tests( module ):
+        ....
+        module.mapper = UrlMapper.urlload(module.mapper_url)
+        module.mapurl = mapper.mapurl
+
+(Each module is required to have a ``mapper_url`` global that describes where to
+fetch the resource list from.)
 
 
+Integration Guide
+=================
 
-
+This section provides examples of the important bits of code required to use and
+integrate Ranvier into your web application framework.  These codes should serve
+as examples.  You can also refer to the `demo.cgi </ranvier/demo/demo.cgi>`_ and
+`demoapp.py </ranvier/demo/demoapp.py>`_ source files included in the
+distribution, that implement the demo application against a simplistic CGI
+backend.
 
-* In the docs, mention that the list of URLs can be used by a new developer to
-  quickly get acquainted with the layout of a new project.  This could also be
-  used to generate a site map.
+Importing the Code
+------------------
+
+We made sure to minimize the number of symbols that Ranvier provides, so you can
+just import it like this::
+
+   from ranvier import *
+
+Although Ranvier is a Python package, all the useful symbols are provided
+directly from the root of the package, e.g. ``ranvier.*``.
+
+Creating the Mapper
+-------------------
+
+When you start your process or thread, you need to create the resource tree that
+will be used to handle requests.  Typically you would put this in a dedicated
+function—and this function can be long, for large applications—and call it to
+obtain the root of the resource tree.  Then you use this root node to initalize
+the UrlMapper object, and you keep a global reference to that (the UrlMapper is
+the heart of the Ranvier system)::
+
+    def create_application():
+        mapper = UrlMapper()
+
+        root = Folder(
+            ...  # create application resources here
+        )
+
+        # Initialize the mapper with the resource tree.
+        mapper.initialize(root)
+
+        # Add static resources and aliases.
+        mapper.add_static( ... )
+        mapper.add_alias( ... )
+
+        return mapper
+
+You could also setup the reporters in that function if desired::
+
+        cov_reporter = DbmCoverageReporter('/tmp/ranvier.coverage.dbm')
+        mapper.add_reporter(cov_reporter)
+
+        ...
+
+        mapper.remove_reporter(cov_reporter)
+
+If you need to base your web application at a location not at the root of the
+domain, you can do so by specifying the optional ``rootloc`` argument to the
+mapper when you create it, e.g.::
+
+        mapper = UrlMapper(rootloc='/ranvier/demo')
+
+All rendered resources will automatically prepend the root location that you
+specified and the root location will be automatically removed from the URL path
+when you have a request.
 
 
-* Mention that this could be used to generate the Google sitemap automatically.
+Handling a Request
+------------------
+
+Every time a request comes in, you will need to prepare the arguments to be
+processed by your resource handlers.  You need to create a Python ``dict`` that
+maps the argument names to their values, and extract the URL path from the
+request.  Then you call the mapper to do its job and your resource handlers will
+get called automatically, for example, within a CGI environment::
+
+    # Extract URL path.
+    uri = os.environ['SCRIPT_URI']
+    scheme, netloc, path, parameters, query, fragid = urlparse.urlparse(uri)
+
+    # Get the CGI args.
+    args = ranvier.respproxy.cgi_getargs()
+
+    # Handle the resource.
+    mapper.handle_request(path, args)
+
+
+Resource Proxy
+--------------
+
+If you intend to use some of the resources provide by Ranvier, you need to
+provide it with a adapter object to provide the glue between them and the
+particular framework that you're using.  In Ranvier, we call this object a
+“resource proxy” and the default resources that we provide are written against
+its interface.  You can do this at application setup time and pass it on to the
+mapper's ``handler_request()`` method::
+
+    # Create a proxy response object for the default resources provided with
+    # Ranvier to use.
+    response_proxy = respproxy.CGIResponse(sys.stdout)
+
+    # Handle the resource.  This will automatically take care of handling
+    # internal redirects.
+    mapper.handle_request(path, args, response_proxy)
+
+
+Creating Resources
+------------------
+
+The resource handler implementation is very simple: derive a class from the
+``Resource`` class and override the ``handle()`` method.  Make sure to provide
+an appropriate docstring if you intend to serve the pretty resource renderer::
+
+    class AnswerBabbler(Resource):
+        """
+        We just print the answer to life, the universe, and everything.
+        """
+        def handle( self, ctxt ):
+            .... # print answer
+
+The ``ctxt`` object is was we call “the context”.   It is an object which is
+passed around the resources in the chain of responsibility during handling.  You
+can freely put stuff in it, and the resources that extract components of the URL
+path as variables automatically store the contents of the components on it, so
+that the resources they delegate to have access to the value.
+
+In addition, if your resource can delegate to other resources in the chain, you
+should implement the enumeration protocol::
+
+        def enum_targets( self, enumrator ):
+            # For example…
+            enumrator.declare_target()
+            enumrator.branch_var('username', self.next_resource)
+
+If you intend to implement more complex resources yourself—and you should know
+that this is not difficult at all—you should have a look at the classes provided
+with Ranvier, because they correctly implement the enumeration protocol, which
+while it is not too tricky, can be difficult to debug if implemented
+incorrectly.
+
+Here is a description of the most useful base resources provided with Ranvier.
+You should mostly just derive from these and only have to override the
+``handle()`` method:
+
+* ``LeafResource``: a resource that only serves contents directly (it does not
+  delegate to other resources);
+
+* ``DelegaterResource``: a resource that only delegates to another fixed
+  resource;
+
+* ``VarResource``: a resource that inconditionally consumes one component of the
+  URL path and that serves contents directly.
+
+* ``VarDelegaterResource``: a resource that inconditionally comsumes one
+  componet of the URL path adn that delegates to another resource.
+
+* ``RedirectResource``: a resource that redirects to another fixed resource
+  (identified by resource-id).  This is useful to support old URLs that have
+  moved.
+
+* ``Folder``: a resource that consumes one component of the URL path and that
+  serves fixed, different resources depending on the component.  This is used to
+  implement directory trees.
+
+* ``FolderWithMenu``: like ``Folder``, but if served as a target, automatically
+  render a basic list of the folder contents.
+
+* ``EnumResource``: output the contents of the URL mapper in a textual, readable
+  way, but that can also be read by a URL mapper to reconstruct itself from it.
+
+* ``PrettyEnumResource``: outputs a page that describes all the resources in the
+  URL mapper, along with descriptions and links to them.  You can specify
+  parameters to this resource and it will use the parameters to fill in default
+  values for those mappings that require components.
+
+
+Rendering URLs
+--------------
+
+If you want to render URLs within your HTML output code (what I usually call
+“rendering”), you can use the ``mapurl()`` function provided on the context
+object::
+
+        def handle( self, ctxt ):
+            ....
+            feedback_url = ctxt.mapurl('@@FeedbackResource')
+            print '<a href="%s">Send us feedback</a>' % feedback_url
+
+Or if the URL requires parameters::
+
+            ....
+            user_url = ctxt.mapurl('@@UserHome', ctxt.username)
+            print '<a href="%s">My Page</a>' % user_url
+
+Note that the rendering will blow up (i.e. raise an exception) if an incorrect
+number of parameters is provided.
+
+As a convenience, you can pass an object or dictionary to the ``mapurl()``
+method and it will try to fetch the required parameters from it::
+
+            user_url = ctxt.mapurl('@@UserHome', ctxt)
+
+Since the context object is by default augmented with the variables extracted
+from the current resource's URL path, if you are referring to another resource
+based in a similar way, oftentimes all that is needed is for your to pass in the
+context object.
+
+
+Mapping Function Injection
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Since we use this ``mapurl()`` method all over the place, we provide a kludge to
+“inject it” in the builtins functions dictionary, so that it is available
+everywhere all the time.  You can use this method on the mapper to do this once
+after the process/thread has been setup and the mapper initialized::
+
+    mapper.inject_builtins()
+
+Or with a shorter name::
+
+    mapper.inject_builtins('U')
+    ....
+    print '<a href="%s">My Page</a>' % U('@@UserHome', ctxt.username)
+
+
+Creating a Resource Tree
+------------------------
+
+When you have implemented your resource handlers, which are, really, the code
+for your web application, you instance them at application creation time as
+shown above.  Here is an example of creating a hierarchy of resources::
+
+
+   root = Folder(
+       users=RequireAuthentication(
+           UserRoot('username',
+               Home(),
+               MyItems(),
+               MyItems(),
+               Preferences()
+           )
+       ),
+       login=Login(),
+       login_hndl=LoginHndl(),
+       logout=Logout()
+   )
+
+If you want to create multiple instances of the same resource class, you will
+need to provide distinct resource-ids for each, so that they can be linked to
+thereafter.  You do this with the optional ``resid`` parameter, which should be
+supported by all of the resource classes, for example::
+
+   documents_folder = Folder(
+       FAQ(),
+       PrivacyPolicy(),
+       UserAgreement(),
+       Feedback(),
+       resid='@@DocumentsRoot'
+   )
+
+   ....
+
+       def handle( self, ctxt ):
+           ....
+           url = mapurl('@@DocumentsRoot')
+
+
+Feedback
+--------
+
+If you do integrate Ranvier in a web application framework and have
+difficulties, send me a list of what additional information you would find
+useful to add, and I will update this document.
+
+
+Future Work and Ideas
+=====================
+
+If you are interested in contributing some work to Ranvier, there are a number
+of straightforward ideas that still need to be implemented.  I list them here.
+
+
+Callback Resource
+-----------------
+
+- Maybe we could provide a simple callback caller resource, and implement
+  ResetCoverage using that?
+
+
+Node Visitor
+------------
+
+- Provide a public way to visit the resource nodes of the entire tree.  We could
+  use this to let the resources specify little bits of CSS code and have the
+  visitor reconstruct the style file from those.  This provides a new
+  opportunity for localizing all this stuff in the resource handler, although we
+  may prefer to let the resources be entirely separate.  I don't know.  But at
+  least we should provide a generic visitor interface.
+
+
+Emacs Helper Mode
+-----------------
+
+- Provide some kind of hook in emacs to fetch the list of resources from my
+  running web app, and then interactively insert by proposing amongst one of the
+  valid forms.  At least I want to be able to view the complete list in an emacs
+  buffer without having to cut-n-paste and open a file manually.
+
+
+Multiple Components in a Row
+----------------------------
+
+* branch_var should accept a tuple of variable names, and the same should go for
+  declare_serve(), so that we can express consuming more than a single path
+  component:
+
+     /doc/<year>/<month>/<date>
+     /doc/<year>/<month>/<date>/view
+
+  (Currently we do not support the consumption of multiple components, but this
+  would not be difficult to implement at all.  We just don't need it now, so
+  we're waiting.)
+
+
+Custom Validation on Back-Mapping URLs
+--------------------------------------
+
+* It would provide even more robustness and verification if it was possible for
+  the resources that consume components to provide some kind of validation for
+  those components, so that when we back-map URLs for rendering more
+  verification is performed that just “we have the parameter”.
+
+
+Map Multiple URLs
+-----------------
+
+* Add a simple interface to be able to map “n” URLs (``mapurln(..)``) with the
+  same arguments.
+
+
+Interfaces
+----------
+
+* Check out if WSGI dictates some kind of standard interface for implementing a
+  response proxy.
+
+
+Random Tests
+------------
+
+* We could use the introspection provided by url_variables() to generate
+  fetchers with random data for urls that require arguments.
+
+
+Query Parameters
+----------------
+
+* We also need to support query parameters for static mappings.
+
+* Think about integrating the parameters with the query arguments at some point,
+  so that we can generate URLs like this (maybe this could be done automatically
+  by passing in extra arguments instead of raising an error):
+
+     /a/bli/blou?myextra=42
+
+* The enumerator visitor could be augmented with a method to accept declaration
+  of possible query arguments, some being mandatory (this sounds like a cool
+  idea).
+
+  Add the following method::
+
+    declare_param( ..., optional=True ) -> adds a query arg
+
+  Unlike the component variables, these query parameters can be optional.
+
+* Glue code with Atocha: also, a special function could be provided to do these
+  declarations given an Atocha form, thus providing us with the complete
+  interface to a specific resource.  The pretty renderer could take advantage of
+  that by rendering a nice table with those, and the fields' titles could even
+  be declared as well, so that we can render a good interface of a resource.
+
+
+Extra Data and Privileges
+-------------------------
+
+- Add a optional parameter 'extra' which can be used to indicate, for
+  informational purposes only, what extra data is involved/considered during
+  the traversal for a particular leaf resource.  This can be used to display
+  the privileges that are involved in accessing a single resource.
+
+
+A Routes-Like Interface
+-----------------------
+
+- We have not implemented it yet, but it would be possible to automatically
+  create a resource tree given a list of (resource URL, resource object) pairs.
+  This is a less powerful method than the explicit resource tree, but could make
+  it easier for some developers to build it and I assume some people like to
+  just list the URLs that they want their application to map to, without having
+  to think of a tree of nodes.
+
+  This interface would be similar to Routes_' “connect” interface.
+
+
+Template Replacement
+--------------------
+
+* We could provide a simple template replacement library in this package that
+  replaces a simple syntax embedded in HTML::
+
+      <a href="@@Profile(username=username, ...)">Search</a>
+
+  This should be configured to use an appropriate mapper beforehand.  This
+  should be trivial to implement.  Templates are a really stupid idea though--at
+  least for a programmer--so this should be given low priority.
+
+
+Better Static Checking
+----------------------
+
+* Extend static checker script to look for parameters and to warn when it is
+  likely that parameters have been forgotten or are missing or extraneous
+
+
+Support GET and POST on the Same Resource Objects
+-------------------------------------------------
+
+* It would be nice to support calling a ``handle_GET()`` and ``handle_POST()``
+  methods like in Django. This may make internal redirection more transparent
+  for forms that validate input parameters and have errors.
+
+
+Conclusion
+==========
+
+If you are interested in contributing to this project or to integrate it in your
+favourite web application framework, please `contact the author
+<mailto:blais@furius.ca>`_ or the mailing-list.  I will be happy to help
+integration, even modify some aspects of this package to faciliate integration.
+
+
+.. Footnotes -------------------------------------------------------------------
+
+.. [#] This documentation has been written in a bit of a rush, as I am currently
+       completely swamped with work.  I will review it at some point.  If you
+       find some section impossible to understand, please let me know.  The code
+       is tight though, and I'm using it in production and will be actively
+       fixing new bugs if they occur (I haven't found any for a while now
+       [2006-05-04]).
+
+
+.. Links -----------------------------------------------------------------------
+
+.. _Routes: http://FIXME-TODO-ADD-ROUTES-URL-HERE
+

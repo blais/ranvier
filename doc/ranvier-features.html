@@ -30,110 +30,235 @@
 </table>
 <div class="abstract topic">
 <p class="topic-title first">Abstract</p>
-<p>(Unfinished) Documentation on the Ranvier URL mapping system.</p>
+<p>High-level documentation on the Ranvier URL mapping system <a class="footnote-reference" href="#id4" id="id1" name="id1">[1]</a>.</p>
 </div>
 <div class="contents topic">
 <p class="topic-title first"><a id="contents" name="contents">Contents</a></p>
 <ul class="auto-toc simple">
-<li><a class="reference" href="#introduction" id="id3" name="id3">1&nbsp;&nbsp;&nbsp;Introduction</a></li>
-<li><a class="reference" href="#problem-statement-and-domains" id="id4" name="id4">2&nbsp;&nbsp;&nbsp;Problem Statement and Domains</a></li>
-<li><a class="reference" href="#mapping-forward" id="id5" name="id5">3&nbsp;&nbsp;&nbsp;Mapping Forward</a><ul class="auto-toc">
-<li><a class="reference" href="#chain-of-responsibility" id="id6" name="id6">3.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></li>
-<li><a class="reference" href="#naming-of-resources" id="id7" name="id7">3.2&nbsp;&nbsp;&nbsp;Naming of Resources</a></li>
+<li><a class="reference" href="#introduction" id="id5" name="id5">1&nbsp;&nbsp;&nbsp;Introduction</a></li>
+<li><a class="reference" href="#problem-statement-and-definition" id="id6" name="id6">2&nbsp;&nbsp;&nbsp;Problem Statement and Definition</a></li>
+<li><a class="reference" href="#mapping-forward" id="id7" name="id7">3&nbsp;&nbsp;&nbsp;Mapping Forward</a><ul class="auto-toc">
+<li><a class="reference" href="#chain-of-responsibility" id="id8" name="id8">3.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></li>
+<li><a class="reference" href="#chaining-resources" id="id9" name="id9">3.2&nbsp;&nbsp;&nbsp;Chaining Resources</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#mapping-backward" id="id8" name="id8">4&nbsp;&nbsp;&nbsp;Mapping Backward</a><ul class="auto-toc">
-<li><a class="reference" href="#optimization-of-backmapping" id="id9" name="id9">4.1&nbsp;&nbsp;&nbsp;Optimization of BackMapping</a></li>
-<li><a class="reference" href="#selection-of-resource-ids" id="id10" name="id10">4.2&nbsp;&nbsp;&nbsp;Selection of Resource Ids</a></li>
-<li><a class="reference" href="#static-maps" id="id11" name="id11">4.3&nbsp;&nbsp;&nbsp;Static Maps</a></li>
-<li><a class="reference" href="#unique-identifiers" id="id12" name="id12">4.4&nbsp;&nbsp;&nbsp;Unique Identifiers</a></li>
+<li><a class="reference" href="#naming-of-resources" id="id10" name="id10">4&nbsp;&nbsp;&nbsp;Naming of Resources</a><ul class="auto-toc">
+<li><a class="reference" href="#custom-resource-ids" id="id11" name="id11">4.1&nbsp;&nbsp;&nbsp;Custom Resource Ids</a></li>
+<li><a class="reference" href="#customizing-the-naming-scheme" id="id12" name="id12">4.2&nbsp;&nbsp;&nbsp;Customizing the Naming Scheme</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#listing-available-resources-and-urls" id="id13" name="id13">5&nbsp;&nbsp;&nbsp;Listing Available Resources and URLs</a></li>
-<li><a class="reference" href="#embedding-security" id="id14" name="id14">6&nbsp;&nbsp;&nbsp;Embedding Security</a></li>
-<li><a class="reference" href="#internal-redirects" id="id15" name="id15">7&nbsp;&nbsp;&nbsp;Internal Redirects</a></li>
-<li><a class="reference" href="#support-for-debugging" id="id16" name="id16">8&nbsp;&nbsp;&nbsp;Support for Debugging</a></li>
-<li><a class="reference" href="#a-routes-like-interface" id="id17" name="id17">9&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></li>
-<li><a class="reference" href="#other" id="id18" name="id18">10&nbsp;&nbsp;&nbsp;(Other)</a><ul class="auto-toc">
-<li><a class="reference" href="#writing-tests" id="id19" name="id19">10.1&nbsp;&nbsp;&nbsp;Writing Tests</a></li>
+<li><a class="reference" href="#mapping-backward" id="id13" name="id13">5&nbsp;&nbsp;&nbsp;Mapping Backward</a><ul class="auto-toc">
+<li><a class="reference" href="#construction-of-the-url-map" id="id14" name="id14">5.1&nbsp;&nbsp;&nbsp;Construction of the URL Map</a></li>
+<li><a class="reference" href="#obtaining-urls-to-render" id="id15" name="id15">5.2&nbsp;&nbsp;&nbsp;Obtaining URLs to Render</a></li>
+<li><a class="reference" href="#checking-when-rendering" id="id16" name="id16">5.3&nbsp;&nbsp;&nbsp;Checking when Rendering</a></li>
+<li><a class="reference" href="#static-maps" id="id17" name="id17">5.4&nbsp;&nbsp;&nbsp;Static Maps</a></li>
+<li><a class="reference" href="#aliases" id="id18" name="id18">5.5&nbsp;&nbsp;&nbsp;Aliases</a></li>
 </ul>
 </li>
+<li><a class="reference" href="#listing-available-resources-and-urls" id="id19" name="id19">6&nbsp;&nbsp;&nbsp;Listing Available Resources and URLs</a><ul class="auto-toc">
+<li><a class="reference" href="#static-url-verification" id="id20" name="id20">6.1&nbsp;&nbsp;&nbsp;Static URL Verification</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#reporters" id="id21" name="id21">7&nbsp;&nbsp;&nbsp;Reporters</a><ul class="auto-toc">
+<li><a class="reference" href="#request-tracer" id="id22" name="id22">7.1&nbsp;&nbsp;&nbsp;Request Tracer</a></li>
+<li><a class="reference" href="#coverage-analysis" id="id23" name="id23">7.2&nbsp;&nbsp;&nbsp;Coverage Analysis</a></li>
+<li><a class="reference" href="#call-graph-between-pages" id="id24" name="id24">7.3&nbsp;&nbsp;&nbsp;Call Graph Between Pages</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#embedding-security-in-the-resource-tree" id="id25" name="id25">8&nbsp;&nbsp;&nbsp;Embedding Security in the Resource Tree</a></li>
+<li><a class="reference" href="#internal-redirects" id="id26" name="id26">9&nbsp;&nbsp;&nbsp;Internal Redirects</a></li>
+<li><a class="reference" href="#writing-tests" id="id27" name="id27">10&nbsp;&nbsp;&nbsp;Writing Tests</a></li>
+<li><a class="reference" href="#integration-guide" id="id28" name="id28">11&nbsp;&nbsp;&nbsp;Integration Guide</a><ul class="auto-toc">
+<li><a class="reference" href="#importing-the-code" id="id29" name="id29">11.1&nbsp;&nbsp;&nbsp;Importing the Code</a></li>
+<li><a class="reference" href="#creating-the-mapper" id="id30" name="id30">11.2&nbsp;&nbsp;&nbsp;Creating the Mapper</a></li>
+<li><a class="reference" href="#handling-a-request" id="id31" name="id31">11.3&nbsp;&nbsp;&nbsp;Handling a Request</a></li>
+<li><a class="reference" href="#resource-proxy" id="id32" name="id32">11.4&nbsp;&nbsp;&nbsp;Resource Proxy</a></li>
+<li><a class="reference" href="#creating-resources" id="id33" name="id33">11.5&nbsp;&nbsp;&nbsp;Creating Resources</a></li>
+<li><a class="reference" href="#rendering-urls" id="id34" name="id34">11.6&nbsp;&nbsp;&nbsp;Rendering URLs</a><ul class="auto-toc">
+<li><a class="reference" href="#mapping-function-injection" id="id35" name="id35">11.6.1&nbsp;&nbsp;&nbsp;Mapping Function Injection</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#creating-a-resource-tree" id="id36" name="id36">11.7&nbsp;&nbsp;&nbsp;Creating a Resource Tree</a></li>
+<li><a class="reference" href="#feedback" id="id37" name="id37">11.8&nbsp;&nbsp;&nbsp;Feedback</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#future-work-and-ideas" id="id38" name="id38">12&nbsp;&nbsp;&nbsp;Future Work and Ideas</a><ul class="auto-toc">
+<li><a class="reference" href="#callback-resource" id="id39" name="id39">12.1&nbsp;&nbsp;&nbsp;Callback Resource</a></li>
+<li><a class="reference" href="#node-visitor" id="id40" name="id40">12.2&nbsp;&nbsp;&nbsp;Node Visitor</a></li>
+<li><a class="reference" href="#emacs-helper-mode" id="id41" name="id41">12.3&nbsp;&nbsp;&nbsp;Emacs Helper Mode</a></li>
+<li><a class="reference" href="#multiple-components-in-a-row" id="id42" name="id42">12.4&nbsp;&nbsp;&nbsp;Multiple Components in a Row</a></li>
+<li><a class="reference" href="#custom-validation-on-back-mapping-urls" id="id43" name="id43">12.5&nbsp;&nbsp;&nbsp;Custom Validation on Back-Mapping URLs</a></li>
+<li><a class="reference" href="#map-multiple-urls" id="id44" name="id44">12.6&nbsp;&nbsp;&nbsp;Map Multiple URLs</a></li>
+<li><a class="reference" href="#interfaces" id="id45" name="id45">12.7&nbsp;&nbsp;&nbsp;Interfaces</a></li>
+<li><a class="reference" href="#random-tests" id="id46" name="id46">12.8&nbsp;&nbsp;&nbsp;Random Tests</a></li>
+<li><a class="reference" href="#query-parameters" id="id47" name="id47">12.9&nbsp;&nbsp;&nbsp;Query Parameters</a></li>
+<li><a class="reference" href="#extra-data-and-privileges" id="id48" name="id48">12.10&nbsp;&nbsp;&nbsp;Extra Data and Privileges</a></li>
+<li><a class="reference" href="#a-routes-like-interface" id="id49" name="id49">12.11&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></li>
+<li><a class="reference" href="#template-replacement" id="id50" name="id50">12.12&nbsp;&nbsp;&nbsp;Template Replacement</a></li>
+<li><a class="reference" href="#better-static-checking" id="id51" name="id51">12.13&nbsp;&nbsp;&nbsp;Better Static Checking</a></li>
+<li><a class="reference" href="#support-get-and-post-on-the-same-resource-objects" id="id52" name="id52">12.14&nbsp;&nbsp;&nbsp;Support GET and POST on the Same Resource Objects</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#conclusion" id="id53" name="id53">13&nbsp;&nbsp;&nbsp;Conclusion</a></li>
 </ul>
 </div>
 <!-- 1   Introduction
-2   Problem Statement and Domains
+2   Problem Statement and Definition
 3   Mapping Forward
   3.1  Chain of Responsibility
-  3.2  Naming of Resources
-4   Mapping Backward
-  4.1  Optimization of BackMapping
-  4.2  Selection of Resource Ids
-  4.3  Static Maps
-  4.4  Unique Identifiers
-5   Listing Available Resources and URLs
-6   Embedding Security
-7   Internal Redirects
-8   Support for Debugging
-9   A Routes-Like Interface
-10  (Other)
-  10.1  Writing Tests -->
+  3.2  Chaining Resources
+4   Naming of Resources
+  4.1  Custom Resource Ids
+  4.2  Customizing the Naming Scheme
+5   Mapping Backward
+  5.1  Construction of the URL Map
+  5.2  Obtaining URLs to Render
+  5.3  Checking when Rendering
+  5.4  Static Maps
+  5.5  Aliases
+6   Listing Available Resources and URLs
+  6.1  Static URL Verification
+7   Reporters
+  7.1  Request Tracer
+  7.2  Coverage Analysis
+  7.3  Call Graph Between Pages
+8   Embedding Security in the Resource Tree
+9   Internal Redirects
+10  Writing Tests
+11  Integration Guide
+  11.1  Importing the Code
+  11.2  Creating the Mapper
+  11.3  Handling a Request
+  11.4  Resource Proxy
+  11.5  Creating Resources
+  11.6  Rendering URLs
+    11.6.1  Mapping Function Injection
+  11.7  Creating a Resource Tree
+  11.8  Feedback
+12  Future Work and Ideas
+  12.1   Callback Resource
+  12.2   Node Visitor
+  12.3   Emacs Helper Mode
+  12.4   Multiple Components in a Row
+  12.5   Custom Validation on Back-Mapping URLs
+  12.6   Map Multiple URLs
+  12.7   Interfaces
+  12.8   Random Tests
+  12.9   Query Parameters
+  12.10  Extra Data and Privileges
+  12.11  A Routes-Like Interface
+  12.12  Template Replacement
+  12.13  Better Static Checking
+  12.14  Support GET and POST on the Same Resource Objects
+13  Conclusion -->
 <div class="section">
-<h1><a class="toc-backref" href="#id3" id="introduction" name="introduction">1&nbsp;&nbsp;&nbsp;Introduction</a></h1>
-<p>Mapping URLs is an important component of building web applications.
-&#8230;
-(FIXME add more)</p>
+<h1><a class="toc-backref" href="#id5" id="introduction" name="introduction">1&nbsp;&nbsp;&nbsp;Introduction</a></h1>
+<p>Within a web application server, the process of mapping an incoming request from
+a web client into particular code to handle the request, is an important
+component of building web applications.  The implementation details of this
+forward-mapping process has a high impact on the structure of the application
+itself.  Similarly, the process of rendering URLs back to the output pages is
+also very important.  Conceptually, these correspond to callbacks to other codes
+in our program.</p>
+<p>Unfortunately, the legacy of existing web application frameworks imposes a
+constrainted view of how people carry out these processes, and this is mostly
+due to the historical development of the web and its corresponding tools.</p>
+<p>With Ranvier, we present a novel framework for the processes of mapping requests
+to resources, and the rendering of callbacks to other resources.  These
+processes can be implemented in an entirely orthogonal manner to any specific
+web application frameworks, and this is what propose with Ranvier: we solve only
+the mapping problem, in both directions.</p>
+<p>The result is a very simple system which can integrate easily in any existing
+web application backend (provided it is built in the Python language) and allows
+new, unprecedented capabilities for web applications, such as the generation of
+a call graph between all pages, the ability to list and automatically document
+all of an applications pages, and coverage analysis for use with tests.</p>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id4" id="problem-statement-and-domains" name="problem-statement-and-domains">2&nbsp;&nbsp;&nbsp;Problem Statement and Domains</a></h1>
-<p>Let's consider some of the important parts of a typical web application
-framework:</p>
-<ol class="arabic simple">
-<li>Code that serves pages or performs a specific task when a URL is
-requested.  Let's call the documents served <strong>resources</strong> and the code that
-serves than <strong>resource handlers</strong>;</li>
-<li>There is usually a way to <strong>combine</strong> the resource handlers to take advantage
+<h1><a class="toc-backref" href="#id6" id="problem-statement-and-definition" name="problem-statement-and-definition">2&nbsp;&nbsp;&nbsp;Problem Statement and Definition</a></h1>
+<p>Let's first identify and explicitly name some of the core features of a typical
+web application framework:</p>
+<ol class="arabic">
+<li><p class="first">It needs to provide a way to write code that handles a request and serves
+pages or performs a specific task when a URL is requested.  Let's call the
+documents that the application serves <strong>resources</strong> and the code that serves
+them <strong>resource handlers</strong> or <strong>controllers</strong>;</p>
+</li>
+<li><p class="first">There is usually <strong>a way to combine</strong> the resource handlers to take advantage
 of common functionality.  For example, code that fetches a user's preferences
-may be needed in many places, and we would like to write the code once.  This
-could be as simple as allowing the definition of functions, or the
-elaboration of a complex hierarchical object-based system.  This could be
-done via aggregation/composition or inheritance, or using other paradigms;</li>
-<li><strong>Pattern matching the URL</strong> to select a particular resource handler to map it
-to;</li>
-<li><strong>Capturing and validating</strong> the variable components and the query arguments
-from the URL request string and provide them to the resource handler.  This
-is a task similar to <strong>parsing</strong>;</li>
-<li><strong>Rendering other URLs back to the user</strong>.  These are actually <strong>delayed
-function calls</strong>, which depend on the user's future actions.</li>
+may be needed in many places, and we would like to write the code once,
+regardless of the application that the handler lives in.  This could be as
+simple as allowing the definition of functions, or as complex the elaboration
+of a complex hierarchical object-based system.  This could be done via
+aggregation, composition or inheritance, or using other paradigms;</p>
+</li>
+<li><p class="first">Given an incoming URL request string, we need a way to <strong>matching the
+pattern</strong> of the request string in order to select a particular resource
+handler to map it to;</p>
+</li>
+<li><p class="first"><strong>Capturing and validating</strong> the variable components embedded in an URL
+request string and the query arguments, and provide them to the resource
+handler.   When we talk about components, we mean the parts of the URL path,
+for example:</p>
+<pre class="literal-block">
+/pubpage/users/rachel/preferences
+</pre>
+<p>consists in the following components:</p>
+<ul class="simple">
+<li>&#8220; <tt class="docutils literal"><span class="pre">pubpage</span></tt> &#8221;, &#8220; <tt class="docutils literal"><span class="pre">users</span></tt> &#8221;, &#8220; <tt class="docutils literal"><span class="pre">preferences</span></tt> &#8221;: static fixed
+components</li>
+<li>&#8220; <tt class="docutils literal"><span class="pre">rachel</span></tt> &#8221;: a variable component, a username;</li>
+</ul>
+</li>
+<li><p class="first"><strong>Rendering other URLs back to the user</strong>, in order to allow him to call back
+into the application and fetch new resources (pages).  These can be viewed as
+<strong>delayed function calls</strong>, which depend on the user's future actions.</p>
+</li>
 </ol>
+<p>A complete web application framework provides many more components, such as
+features to define and access a data model, a way to render and parse results
+from web forms, perhaps some kind of templating system, and a variety of
+backends to serve the requests from.  In this project, we limit our scope to the
+features enumerated above.</p>
 <div class="figure">
 <img alt="domains.png" src="domains.png" />
 <p class="caption">The principal goal of this library is to convert between the domain of URLs
 and the domain of code objects (resource handlers).</p>
 </div>
-<p>You can view this problem as mapping back and forth between two domains: the
-domain of URLs and the domain of source code.  As programmers, we should have
-little concern for the particular URLs that our resources are accessed from, if
-not for the correspondence between URL variable components and function
-parameters, or for purely aesthetic reasons.</p>
-<p>All we need is some kind of system for uniquely identifying resources, and
-rendering the appropriate URL given its parameters.  Most computer languages
-provide some form or other of checking of parameter correctness when making
-function calls.  Is it not silly then, that most web application
-frameworks&#8212;especially those based on templates&#8212;still involve the programmer in
-writing URLs when rendering pages?</p>
+<p>We can view parts of a request handling cycle as a mapping back and forth
+between two domains: the domain of URLs and the domain of source code.  As
+programmers, we should have little concern for the specific URLs that our
+resources are accessed from, if not for the correspondence between the variable
+components embedded within these URLs and code parameters, or for purely
+aesthetic reasons.</p>
+<p>Note that the rendering of a URL back to the client conceptually corresponds to
+calling another function within our program.  The main difference between web
+applications and desktop applications is that the latter needs to handle
+multiple users at the same time, and to do this, it needs to save and restore
+the state of that particular user's application data in a database, looked up by
+cookies sent each time from the user's browser.</p>
+<p>In order to uniquely match and render URLs to resources, all we need is a set of
+unique identifiers and the URL components that are provided and required by
+requests to these resources.  If we take the analogy of rendering URLs as
+function calls, most computer languages provide some form or other of checking
+parameter correctness when making function calls within that program.  Is it not
+entirely silly then, that most web application frameworks&#8212;especially those based
+on templates&#8212;still involve the programmer in writing his own URLs manually when
+rendering pages?  This makes it easy to forget some URLs and render pages with
+invalid links.  Why can't the computer check URls for us at render time?</p>
 <p>The goals of this library are:</p>
 <ul class="simple">
 <li>To isolate the programmer's interface from the specifics URLs that the
 cross-referenced resources are bound to;</li>
 <li>To provide a system that better manages the list of resources that are
-available from a web application, that can list them, serve them for test
-programs, etc.</li>
+available from a web application, that can list them, serve them as a
+directory for test programs to use, and more.</li>
 <li>To implement a simple but efficient forward mapping parsing mechanism based on
 aggregation of resources (the <a class="reference" href="http://en.wikipedia.org/wiki/Chain-of-responsibility_pattern">chain-of-responsibility design pattern</a>).</li>
 </ul>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id5" id="mapping-forward" name="mapping-forward">3&nbsp;&nbsp;&nbsp;Mapping Forward</a></h1>
+<h1><a class="toc-backref" href="#id7" id="mapping-forward" name="mapping-forward">3&nbsp;&nbsp;&nbsp;Mapping Forward</a></h1>
 <p>We can view URLs are function calls into a running computer program, i.e:</p>
 <pre class="literal-block">
 http://mysite.com/accounts/get_balance?user=blais&amp;accno=643843
@@ -162,148 +287,827 @@ is said to comply to the principles of REST if it is not significantly affected
 by global variables / side-effects, i.e. if it does not rely on global
 state/variables as input.</p>
 <p>One consequence of using our system is that we do not render <em>relative</em> URLs,
-i.e. all the URLs are from the root.  This consists in an advantage:  FIXME add
-more</p>
+i.e. all the URLs are rendered from the root of the mapper.  This in an
+advantage in that we never rely on the resource layout for calling resources
+across each other.</p>
 <div class="section">
-<h2><a class="toc-backref" href="#id6" id="chain-of-responsibility" name="chain-of-responsibility">3.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></h2>
-<p>(FIXME explain resource system and pattern matching algorithm)</p>
-<p>One of the advantages in using a Chain of Responsibility pattern to implement
-the controller search is that complete flexibility is available to the
+<h2><a class="toc-backref" href="#id8" id="chain-of-responsibility" name="chain-of-responsibility">3.1&nbsp;&nbsp;&nbsp;Chain of Responsibility</a></h2>
+<p>In order to implement the forward matching algorithm to process an incoming
+request, we want to allow a way to hierarchically combine the behaviour of
+multiple resources.</p>
+<p>We first required that the application developer build a tree of resources, and
+provide this tree to our central mapper object.  When a request comes in, we
+initialize a context object that contains the path and a <tt class="docutils literal"><span class="pre">delegate()</span></tt> method
+is called on the root resource.  The process of consuming components of the URL
+is then left to the resources themselves, with resources delegating behaviour to
+other resources.</p>
+<p>Commonly used resources such as a &#8220;folder&#8221;, a resource that contains other
+resources mapped by name, are provided with the base Ranvier library.  Note that
+resources do not have to consume components of a URL: some resources can be used
+only to request privileges, for example.</p>
+<p>One of the advantages in using this Chain of Responsibility pattern to implement
+the resource handler search is that complete flexibility is available to the
 programmer.  We have no need to define a complicated and necessarily limited
 wildcard matching system.  The matching of URL components is entirely up to you,
 i.e. you can look up information in a database, augment the context object that
-is passed along the search, etc.  This is much more powerful (and simpler) than
-a wildcard system.</p>
+is passed along the search, etc.  We believe that this is much more powerful and
+simpler than a wildcard system, or that a recursive object-space lookup within
+the program.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id7" id="naming-of-resources" name="naming-of-resources">3.2&nbsp;&nbsp;&nbsp;Naming of Resources</a></h2>
+<h2><a class="toc-backref" href="#id9" id="chaining-resources" name="chaining-resources">3.2&nbsp;&nbsp;&nbsp;Chaining Resources</a></h2>
+<p>In the implementation of your resources, if you require some custom behaviour
+that is not already provided by the basic Ranvier resources&#8212;this should occur
+rarely&#8212;you should make sure that when you delegate the handling to another
+resource you should always make sure to invoke the <tt class="docutils literal"><span class="pre">Resource.delegate()</span></tt>
+method.  For example:</p>
+<pre class="literal-block">
+class MyResource(Resource):
+    def handle( self, ctxt ):
+        ...
+        ...
+        self.delegate(child_resource, ctxt)
+</pre>
+</div>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id10" id="naming-of-resources" name="naming-of-resources">4&nbsp;&nbsp;&nbsp;Naming of Resources</a></h1>
+<p>How do we uniquely identify resources?</p>
 <p>The overwhelmingly general case for leaf resources/controllers is that they are
 instantiated only once.  We thus take the opportunity to forego having the user
-enter resource names for each of these.  Instead, we reuse the names of the
-classes of the leaf controllers to enter them in the URL map.</p>
+explicitly specify resource names for each of these.  Instead, we reuse the
+names of the classes of the leaf resources and transform them slightly to be
+placed in the URL map.</p>
+<p>By default, the transformation on the class name is simply to prepend the string
+&#8220; <tt class="docutils literal"><span class="pre">&#64;&#64;</span></tt> &#8221; in front of the resource-id, like this:</p>
+<pre class="literal-block">
+class UserPreferences(LeafResource):
+    def handle( self, ctxt ):
+        ...
+</pre>
+<p>will result in the <tt class="docutils literal"><span class="pre">&#64;&#64;UserPreferences</span></tt> resource-id.</p>
+<p>The reason we choose &#8220; <tt class="docutils literal"><span class="pre">&#64;&#64;</span></tt> &#8221; is because this pattern does not occur often in
+Python source code.  This allows us to easily grep for resource ids (see <a class="reference" href="#static-url-verification">Static
+URL Verification</a> section below).</p>
+<div class="section">
+<h2><a class="toc-backref" href="#id11" id="custom-resource-ids" name="custom-resource-ids">4.1&nbsp;&nbsp;&nbsp;Custom Resource Ids</a></h2>
 <p>For those few cases where controllers are reused and instantiated in many
-places, we provide an optional keyword argument to let the user uniquely name
-the instances for later referral.</p>
+places, we provide an optional <tt class="docutils literal"><span class="pre">resid</span></tt> keyword argument to let the user
+uniquely name the instances for later referral and rendering.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id12" id="customizing-the-naming-scheme" name="customizing-the-naming-scheme">4.2&nbsp;&nbsp;&nbsp;Customizing the Naming Scheme</a></h2>
+<p>If you do not like the &#8220; <tt class="docutils literal"><span class="pre">&#64;&#64;</span></tt> &#8221; scheme for whatever reason, you can globally
+customize the naming scheme via a global function of the Ranvier package.</p>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id8" id="mapping-backward" name="mapping-backward">4&nbsp;&nbsp;&nbsp;Mapping Backward</a></h1>
-<p>One problem with web applications is that due to the nature of the web
-application frameworks, they tend to be rather static and difficult to change.
-URLs are cross-referenced from page templates and sometimes build
-programmatically, and it can be tricky to move resources around.</p>
+<h1><a class="toc-backref" href="#id13" id="mapping-backward" name="mapping-backward">5&nbsp;&nbsp;&nbsp;Mapping Backward</a></h1>
+<p>One problem with web applications is that due to the nature of the existing
+frameworks, they tend to be rather static and difficult to change.  URLs are
+cross-referenced from page templates and sometimes build programmatically, and
+it can be tricky to move resources around without making mistakes.  It is also
+difficult to automate using text manipulation tools on the source code and
+templates, due to the embedded parameters.</p>
 <p>A solution for this is to let the URL construction be taken care of by the
-resource system itself, mapping from the leaf of the URL back to the root, thus
-re-constructing the original resource.</p>
-<p>We can identify individual resources by using unique strings (e.g. <tt class="docutils literal"><span class="pre">//balance</span></tt>
-the user account balance page) and then asking a central URL mapping service to
-create the URLs for us to insert in web pages.  This process must require all
-the parameters of the function to call, in order to insert them in their
-appropriate place.</p>
-<p>A web application build this way can be completely rearranged without breaking.</p>
-<p>However, this flexibility makes using templates impossible.</p>
+resource system itself, mapping using the unique resource id.  An advantage is
+that when rendering resources we can validate and require the correct number of
+parameters and thus never render invalid links.</p>
+<p>A web application build this way have its URL structure entirely rearranged
+without breaking anything.  The only reason for not making necessary changes is
+the presence of existing external links into the application.</p>
 <div class="section">
-<h2><a class="toc-backref" href="#id9" id="optimization-of-backmapping" name="optimization-of-backmapping">4.1&nbsp;&nbsp;&nbsp;Optimization of BackMapping</a></h2>
+<h2><a class="toc-backref" href="#id14" id="construction-of-the-url-map" name="construction-of-the-url-map">5.1&nbsp;&nbsp;&nbsp;Construction of the URL Map</a></h2>
+<p>We create the global map of resources by visiting each resource node of the
+resource tree, asking it to enumerate the possible branches of resources that it
+can delegate to, and which components, if any, it matches on the incoming URL
+path.  The output of this visiting process results in a mapping from unique
+resource id to URL templates and the accompanying required components to build
+such a URL.</p>
+<p>A resource can zero or more branching possibilities:</p>
 <ul class="simple">
-<li>Ask each resource whether it is<ul>
-<li>Static</li>
-<li>A fixed name (e.g. user)</li>
-<li>Programmatic (cannot optimize)</li>
+<li>It can be a target and can be served if the matching corresponds exactly to
+this resource;</li>
+<li>It delegates &#8220;anonymously&#8221; to another resource, meaning that it does not
+consume part of the incoming URL path;</li>
+<li>It delegates &#8220;staticly&#8221; to another resource, meaning that it does so if it
+encounters a fixed string at this point of the URL path</li>
+<li>It delegates to another resource, after having consumed one or more URL path
+components and made them available on the handling context object.</li>
 </ul>
+<p>This allows the enumeration process to obtain all the possible leaf resources
+that URLs can map to.  One important constraint is that the handler code must
+match the branch declarations.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id15" id="obtaining-urls-to-render" name="obtaining-urls-to-render">5.2&nbsp;&nbsp;&nbsp;Obtaining URLs to Render</a></h2>
+<p>Rendering a URL is simple: specify the unique resource-id and the required
+parameters:</p>
+<pre class="literal-block">
+mapurl('&#64;&#64;UserPreferences', 'rachel')
+</pre>
+<p>Will result in something like:</p>
+<pre class="literal-block">
+/pubpages/users/rachel/preferences
+</pre>
+<p>To access the mapper object, we can make the <tt class="docutils literal"><span class="pre">mapurl()</span></tt> function available to
+all resource handlers in your preferred manner.</p>
+<p>This can be integrated in a templating system.  I like to use HTML node trees
+rather than templates, so I can use this directly in my source code, e.g.:</p>
+<pre class="literal-block">
+document.append(
+    DIV(A(&quot;Prefs&quot;, href=mapurl('&#64;&#64;UserPreferences', ctxt.username)))
+</pre>
+<p>Within a templating system it might look like this:</p>
+<pre class="literal-block">
+Go to &lt;a href=&quot;&#64;&#64;Home&quot;&gt;home page&lt;/a&gt;.
+</pre>
+<p>where <tt class="docutils literal"><span class="pre">&#64;&#64;Home</span></tt> will automatically get replaced by something like
+<tt class="docutils literal"><span class="pre">/pubpages/welcome</span></tt>.  This could be extended to support variable parameters.
+Note that Ranvier does not provide integration in existing template
+systems&#8212;there are simply too many and this integration should be easily to
+implement.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id16" id="checking-when-rendering" name="checking-when-rendering">5.3&nbsp;&nbsp;&nbsp;Checking when Rendering</a></h2>
+<p>When you render a URL using the method shown above, you should note that an
+exception will be raised in an invalid number of parameters is specified for it.
+This is a feature.  This means that if your page renders, all the links in it
+are necessarily valid.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id17" id="static-maps" name="static-maps">5.4&nbsp;&nbsp;&nbsp;Static Maps</a></h2>
+<p>Since we already have a global registry of URL maps that we use to generate our
+URLs, we also provide the associate unique resource ids to static and possibly
+external URLs.  This is similar to Routes_&#8217; &#8220;static named routes&#8221; feature.  You
+do it like this:</p>
+<pre class="literal-block">
+mapper.add_static('&#64;&#64;GoogleSearch', 'http://google.com')
+</pre>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id18" id="aliases" name="aliases">5.5&nbsp;&nbsp;&nbsp;Aliases</a></h2>
+<p>The mapper supports the creation of aliases to existing resources.  You do it
+like this:</p>
+<pre class="literal-block">
+mapper.add_alias('&#64;&#64;Search, '&#64;&#64;GoogleSearch)
+</pre>
+<p>This is useful during development if you're moving stuff around or are just
+testing stuff.</p>
+</div>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id19" id="listing-available-resources-and-urls" name="listing-available-resources-and-urls">6&nbsp;&nbsp;&nbsp;Listing Available Resources and URLs</a></h1>
+<p>One interesting feature of our system is that is allows us to provide a
+comprehensive listing of all the URLs that are served by a web application that
+uses it.   It looks like this (this is for our included demo program):</p>
+<pre class="literal-block">
+&#64;&#64;Root                   : /ranvier/demo/
+&#64;&#64;ImSpecial              : /ranvier/demo/altit
+&#64;&#64;Atocha                 : /atocha/index.html
+&#64;&#64;CoverageReport         : /ranvier/demo/cov/report
+&#64;&#64;ResetCoverage          : /ranvier/demo/cov/reset
+&#64;&#64;AnswerBabbler          : /ranvier/demo/deleg
+&#64;&#64;DemoFolderWithMenu     : /ranvier/demo/fold/
+&#64;&#64;SimpleGreed            : /ranvier/demo/fold/greed
+&#64;&#64;SimpleHamming          : /ranvier/demo/fold/ham
+&#64;&#64;SimpleThought          : /ranvier/demo/fold/think
+&#64;&#64;AliasExample           : /ranvier/demo/fold/think
+&#64;&#64;IntegerComponent       : /ranvier/demo/formatted/(uid%08d)
+&#64;&#64;Home                   : /ranvier/demo/home
+&#64;&#64;InternalRedirectTest   : /ranvier/demo/internalredir
+&#64;&#64;LeafPlusOneComponent   : /ranvier/demo/lcomp/(comp)
+&#64;&#64;DemoPrettyEnumResource : /ranvier/demo/prettyres
+&#64;&#64;RedirectTest           : /ranvier/demo/redirtest
+&#64;&#64;EnumResource           : /ranvier/demo/resources
+&#64;&#64;SourceCode             : /ranvier/demo/source
+&#64;&#64;Stylesheet             : /ranvier/demo/style.css
+&#64;&#64;UserData               : /ranvier/demo/users/(username)/data/(userdata)
+&#64;&#64;PrintName              : /ranvier/demo/users/(username)/name
+&#64;&#64;PrintUsername          : /ranvier/demo/users/(username)/username
+&#64;&#64;ExternalExample        : http://paulgraham.com/
+</pre>
+<p>This is extremely useful, because:</p>
+<ol class="arabic">
+<li><p class="first">We can visually appreciate the entire list of documents which are offered to
+the public.  We need this, because during development it is possible that
+temporary resources are installed for debugging and are later forgotten on
+the production server.</p>
 </li>
-</ul>
-<p>FIXME todo write docs</p>
-<p>FIXME add callgraph thing, with a figure</p>
+<li><p class="first">Our test programs can automatically fetch this list (from a special resource
+only served in testing mode) and a mapper can be rebuilt from it, so that
+they are entirely independent of the application URL layout.</p>
+</li>
+<li><p class="first">Eventually, extra data provide by each resource in a resource path will be
+asccumulated and rendered in this list.  We will use this to allow
+inspecting, for example, the security credentials that each URL requires.</p>
+</li>
+<li><p class="first">It can serve as documentation: we provide a resource that generates a pretty
+rendering of the listing of resources, that includes the docstrings of the
+resource handlers via the introspection features of the Python language.
+This allows a new developer on a project to quickly overview all of the pages
+that a particular application provides, including its documentation.</p>
+<p>In addition, this pretty page renders the links so you can try them directly
+from the listing.  You can supply parameters to it, for default values to be
+used in the links to resources which contain variable components.</p>
+</li>
+<li><p class="first">You could implement a resource that automatically generate your site map from
+the URL mapper, possibly including just some of the resources on your site.
+You could also generate the Google sitemap.xml file automatically from the
+mapper.</p>
+</li>
+</ol>
+<p>Note that we provide a standard resource to dump the contents of the mapper in
+<tt class="docutils literal"><span class="pre">text/plain</span></tt> format.  The URL mapper has a utility function to reload itself
+from this description.  You might be able to leverage this in some way I have
+not expected (see the <a class="reference" href="#writing-tests">Writing Tests</a> section).</p>
+<div class="section">
+<h2><a class="toc-backref" href="#id20" id="static-url-verification" name="static-url-verification">6.1&nbsp;&nbsp;&nbsp;Static URL Verification</a></h2>
+<p>Since the resource ids that we use are easily to extract from the source code,
+we can automatically validate them against an active mapper object.  The script
+<tt class="docutils literal"><span class="pre">ranvier-static-check</span></tt> does the following:</p>
+<ol class="arabic simple">
+<li>Fetch the mapper contents from a resource installed on the running web
+application</li>
+<li>Rebuilds a mapper using this textual description</li>
+<li>Extracts all the resource-ids in the given source files</li>
+<li>Spits out errors if some of the resource-ids are invalid.</li>
+</ol>
+<p>The output looks something like this:</p>
+<pre class="literal-block">
+$ python ../bin/ranvier-static-check                      \
+          http://furius.dyndns.biz/ranvier/demo/resources \
+          ../demo/demoapp.py
+
+../demo/demoapp.py:235: (ERROR) Invalid resource id '&#64;&#64;RedirectTestt'.
+../demo/demoapp.py:243: (ERROR) Invalid resource id '&#64;&#64;Source'.
+</pre>
+<p>Note that you could integrate static checking in your daily automated tests, or
+as a repository commit hook, to automatically report when invalid resources are
+present in the source code.  The <tt class="docutils literal"><span class="pre">ranvier-static-check</span></tt> program exits with an
+error state if there are errors, so you can place it in a Makefile.</p>
+<p>Also, you can run <tt class="docutils literal"><span class="pre">ranvier-static-check</span></tt> from Emacs, its output is compatible
+with the default error parsing, so you can use <tt class="docutils literal"><span class="pre">next-error</span></tt> and
+<tt class="docutils literal"><span class="pre">previous-error</span></tt> to quickly fix your invalid resource-ids.</p>
+</div>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id21" id="reporters" name="reporters">7&nbsp;&nbsp;&nbsp;Reporters</a></h1>
+<p>The mapper provides the ability to register &#8220;reporter&#8221; objects in the
+forward-mapping delegation process.  This allows collecting various informations
+each time a request is handled.</p>
+<p>Some of the examples of features that are implemented using reporters are
+provided in the following sections.</p>
+<div class="section">
+<h2><a class="toc-backref" href="#id22" id="request-tracer" name="request-tracer">7.1&nbsp;&nbsp;&nbsp;Request Tracer</a></h2>
+<p>For debugging purposes, it is nice to log the path of resources that a request
+goes through.  The tracer reporter provides that string, for you to write in
+your specific application framework log.</p>
+<p>It looks like this in the log:</p>
+<pre class="literal-block">
+[Thu May 04 14:32:37 2006]  &#64;&#64;Root -&gt; &#64;&#64;Home
+[Thu May 04 14:32:38 2006]  &#64;&#64;Root -&gt; &#64;&#64;DemoPrettyEnumResource
+[Thu May 04 14:32:39 2006]  &#64;&#64;Root -&gt; &#64;&#64;EnumResource
+[Thu May 04 14:32:40 2006]  &#64;&#64;Root -&gt; &#64;&#64;UsernameRoot -&gt; &#64;&#64;Folder -&gt; &#64;&#64;PrintUsername
+[Thu May 04 14:32:41 2006]  &#64;&#64;Root -&gt; &#64;&#64;UsernameRoot -&gt; &#64;&#64;Folder -&gt; &#64;&#64;PrintName
+[Thu May 04 14:32:42 2006]  &#64;&#64;Root -&gt; &#64;&#64;UsernameRoot -&gt; &#64;&#64;Folder -&gt; &#64;&#64;UserData
+[Thu May 04 14:32:43 2006]  &#64;&#64;Root -&gt; &#64;&#64;Augmenter -&gt; &#64;&#64;AnswerBabbler
+[Thu May 04 14:32:45 2006]  &#64;&#64;Root -&gt; &#64;&#64;DemoFolderWithMenu
+[Thu May 04 14:32:47 2006]  &#64;&#64;Root -&gt; &#64;&#64;DemoFolderWithMenu -&gt; &#64;&#64;SimpleHamming
+[Thu May 04 14:32:49 2006]  &#64;&#64;Root -&gt; &#64;&#64;DemoFolderWithMenu -&gt; &#64;&#64;SimpleThought
+</pre>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id23" id="coverage-analysis" name="coverage-analysis">7.2&nbsp;&nbsp;&nbsp;Coverage Analysis</a></h2>
+<p>Those of us who have automated tests for our web applications would like to be
+able to find out how much of the application's resources/pages have actually
+been queried through the tests, i.e. how much of the application do our tests
+cover.</p>
+<p>The coverage reporter does this.  It provides two statistics, for each resource:</p>
+<ol class="arabic simple">
+<li>The number of times the resource has been requested</li>
+<li>The number of times a link to the resource has been rendered.</li>
+</ol>
+<p>Ranvier includes a resource handler that renders the statistics, and one that
+resets the counters.  We will provide a variety of data stores for the
+statistics, including DBM databases, SQL databases, and it would be trivial to
+add more.</p>
 <div class="figure">
-<img alt="callgraph.png" src="callgraph.png" />
+<img alt="screenshot-coverage.png" src="screenshot-coverage.png" />
+<p class="caption">A screenshot of the coverage report.</p>
+</div>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id24" id="call-graph-between-pages" name="call-graph-between-pages">7.3&nbsp;&nbsp;&nbsp;Call Graph Between Pages</a></h2>
+<p>It may be useful to obtain a graph of the relations between each of the
+resources served on our site.  The call graph reporter produces a text file with
+pairs of handled resource id and rendered target resource id.  This file can
+then be converted into a graphviz dot file that gets converted into a PDF file.</p>
+<div class="figure">
+<img alt="screenshot-callgraph.png" src="screenshot-callgraph.png" />
 <p class="caption">The inter-resource call graph for the demo application of this package.</p>
 </div>
 </div>
-<div class="section">
-<h2><a class="toc-backref" href="#id10" id="selection-of-resource-ids" name="selection-of-resource-ids">4.2&nbsp;&nbsp;&nbsp;Selection of Resource Ids</a></h2>
-<p>You should choose some kind of common string pattern for you resource ids, so
-that if you decide to rename some of them at some point, for example when
-reorganizing a site, simple text-based UNIX tools can do a wonderful job at
-automating some of these replacments if they can be picked out easily.</p>
-<p>The default naming transform</p>
-<blockquote>
-&#8230; describe <tt class="docutils literal"><span class="pre">&#64;&#64;&lt;ResourceName&gt;</span></tt> scheme</blockquote>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id11" id="static-maps" name="static-maps">4.3&nbsp;&nbsp;&nbsp;Static Maps</a></h2>
-<p>Since we already have a global registry of URL maps that we use to generate our
-URLs, we also provide the ability to map names to static and possibly external
-URLs.  This is similar to Routes&#8217; &#8220;static named routes&#8221; feature.</p>
+<h1><a class="toc-backref" href="#id25" id="embedding-security-in-the-resource-tree" name="embedding-security-in-the-resource-tree">8&nbsp;&nbsp;&nbsp;Embedding Security in the Resource Tree</a></h1>
+<p>The URLs can be grouped hierarchically so that they share security access
+privileges.  A resource installed at the root can be used to check the required
+credentials.  For example, any URL beginning with <tt class="docutils literal"><span class="pre">/backstore</span></tt> could require
+administrative privileges, the resource setup code would look something like
+this:</p>
+<pre class="literal-block">
+root = Folder(
+    backstore=RequireAdminPrivileges(
+        view_inventory,
+        view_customers
+    )
+)
+</pre>
+<p>Note that we do not force this on your program structure, it is entirely up to
+you to implement the privileges mechanism in your handlers.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id12" id="unique-identifiers" name="unique-identifiers">4.4&nbsp;&nbsp;&nbsp;Unique Identifiers</a></h2>
-<p>FIXME do this, talk about the automatic conversion from the class names and the
-possibility to identify instances.</p>
-<blockquote>
+<h1><a class="toc-backref" href="#id26" id="internal-redirects" name="internal-redirects">9&nbsp;&nbsp;&nbsp;Internal Redirects</a></h1>
+<p>Ranvier includes a mechanism to perform internal redirection.</p>
+<p>Normally, redirection goes through the client browser, and the browser
+automatically requests the redirected resource.  This allows it to display the
+correct resource URL in the location bar of the user's browser.  However, this
+round trip implies that we perform two separate requests.  Each request
+potentially requires that we fetch session information from a database, and has
+setup and network costs.  One way to optimize redirections is to perform the
+redirection within the same request handler process/thread that performs the
+redirection.  This is called &#8220;internal redirection&#8221;.</p>
+<p>The advantage is that we avoid some requests, thereby providing a faster
+response time to the user.  The disadvantage is that the URL in the user's
+browser may not reflect accurately the actual page contents.  This can be an
+issue for pages that can be bookmarked.  Handlers that validate input parameters
+and that redirect to the original submit page (with marked errors) will show the
+handler's URL in the location bar.</p>
+<p>To use Ranvier's internal redirection, simply raise the <tt class="docutils literal"><span class="pre">InternalRedirect</span></tt>
+exception from your resource handler:</p>
+<pre class="literal-block">
+class MyHandler(Resource):
+    def handle( self, ctxt ):
+        ...
+        raise InternalRedirect(mapurl('&#64;&#64;LogoutSuccessPage'))
+</pre>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id27" id="writing-tests" name="writing-tests">10&nbsp;&nbsp;&nbsp;Writing Tests</a></h1>
+<p>Automated test programs are becoming more and more common.  The mechanize,
+twill, and Selenium packages are providing an easy way to automate the testing
+of web applications.  Test programs that simulate the browser experience are a
+great complement to functional testing.</p>
+<p>However, these tests are written in terms of the application's URLs.  If you
+change the URL mapping, you need to fix the tests accordingly.</p>
+<p>Since the URL mapper is able to rebuild itself from a text description provided
+by the application, not just fetch this list of resources before running the
+tests, and write your tests fetching the actual URLs against the rebuilt URL
+mapper instead?  I have used this and it works great.</p>
+<p>Note that using the Ranvier URL mapping system, you can significantly increase
+the portability of resource handlers by separating the rendering code from the
+other functionality of the handler.  This allows you to reuse, for example, your
+user management routines across applications.  Using the technique described in
+this section, you can also increase the reusability of your test programs, since
+they do not directly rely on the specific URLs for your application.</p>
+<p>Here is an excerpt from some test code I wrote that sets up my test modules,
+this is run on those modules before the contained tests are run:</p>
+<pre class="literal-block">
+def setup_for_tests( module ):
+    ....
+    module.mapper = UrlMapper.urlload(module.mapper_url)
+    module.mapurl = mapper.mapurl
+</pre>
+<p>(Each module is required to have a <tt class="docutils literal"><span class="pre">mapper_url</span></tt> global that describes where to
+fetch the resource list from.)</p>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id28" id="integration-guide" name="integration-guide">11&nbsp;&nbsp;&nbsp;Integration Guide</a></h1>
+<p>This section provides examples of the important bits of code required to use and
+integrate Ranvier into your web application framework.  These codes should serve
+as examples.  You can also refer to the <a class="reference" href="/ranvier/demo/demo.cgi">demo.cgi</a> and
+<a class="reference" href="/ranvier/demo/demoapp.py">demoapp.py</a> source files included in the
+distribution, that implement the demo application against a simplistic CGI
+backend.</p>
+<div class="section">
+<h2><a class="toc-backref" href="#id29" id="importing-the-code" name="importing-the-code">11.1&nbsp;&nbsp;&nbsp;Importing the Code</a></h2>
+<p>We made sure to minimize the number of symbols that Ranvier provides, so you can
+just import it like this:</p>
+<pre class="literal-block">
+from ranvier import *
+</pre>
+<p>Although Ranvier is a Python package, all the useful symbols are provided
+directly from the root of the package, e.g. <tt class="docutils literal"><span class="pre">ranvier.*</span></tt>.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id30" id="creating-the-mapper" name="creating-the-mapper">11.2&nbsp;&nbsp;&nbsp;Creating the Mapper</a></h2>
+<p>When you start your process or thread, you need to create the resource tree that
+will be used to handle requests.  Typically you would put this in a dedicated
+function&#8212;and this function can be long, for large applications&#8212;and call it to
+obtain the root of the resource tree.  Then you use this root node to initalize
+the UrlMapper object, and you keep a global reference to that (the UrlMapper is
+the heart of the Ranvier system):</p>
+<pre class="literal-block">
+def create_application():
+    mapper = UrlMapper()
+
+    root = Folder(
+        ...  # create application resources here
+    )
+
+    # Initialize the mapper with the resource tree.
+    mapper.initialize(root)
+
+    # Add static resources and aliases.
+    mapper.add_static( ... )
+    mapper.add_alias( ... )
+
+    return mapper
+</pre>
+<p>You could also setup the reporters in that function if desired:</p>
+<pre class="literal-block">
+cov_reporter = DbmCoverageReporter('/tmp/ranvier.coverage.dbm')
+mapper.add_reporter(cov_reporter)
+
+...
+
+mapper.remove_reporter(cov_reporter)
+</pre>
+<p>If you need to base your web application at a location not at the root of the
+domain, you can do so by specifying the optional <tt class="docutils literal"><span class="pre">rootloc</span></tt> argument to the
+mapper when you create it, e.g.:</p>
+<pre class="literal-block">
+mapper = UrlMapper(rootloc='/ranvier/demo')
+</pre>
+<p>All rendered resources will automatically prepend the root location that you
+specified and the root location will be automatically removed from the URL path
+when you have a request.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id31" id="handling-a-request" name="handling-a-request">11.3&nbsp;&nbsp;&nbsp;Handling a Request</a></h2>
+<p>Every time a request comes in, you will need to prepare the arguments to be
+processed by your resource handlers.  You need to create a Python <tt class="docutils literal"><span class="pre">dict</span></tt> that
+maps the argument names to their values, and extract the URL path from the
+request.  Then you call the mapper to do its job and your resource handlers will
+get called automatically, for example, within a CGI environment:</p>
+<pre class="literal-block">
+# Extract URL path.
+uri = os.environ['SCRIPT_URI']
+scheme, netloc, path, parameters, query, fragid = urlparse.urlparse(uri)
+
+# Get the CGI args.
+args = ranvier.respproxy.cgi_getargs()
+
+# Handle the resource.
+mapper.handle_request(path, args)
+</pre>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id32" id="resource-proxy" name="resource-proxy">11.4&nbsp;&nbsp;&nbsp;Resource Proxy</a></h2>
+<p>If you intend to use some of the resources provide by Ranvier, you need to
+provide it with a adapter object to provide the glue between them and the
+particular framework that you're using.  In Ranvier, we call this object a
+&#8220;resource proxy&#8221; and the default resources that we provide are written against
+its interface.  You can do this at application setup time and pass it on to the
+mapper's <tt class="docutils literal"><span class="pre">handler_request()</span></tt> method:</p>
+<pre class="literal-block">
+# Create a proxy response object for the default resources provided with
+# Ranvier to use.
+response_proxy = respproxy.CGIResponse(sys.stdout)
+
+# Handle the resource.  This will automatically take care of handling
+# internal redirects.
+mapper.handle_request(path, args, response_proxy)
+</pre>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id33" id="creating-resources" name="creating-resources">11.5&nbsp;&nbsp;&nbsp;Creating Resources</a></h2>
+<p>The resource handler implementation is very simple: derive a class from the
+<tt class="docutils literal"><span class="pre">Resource</span></tt> class and override the <tt class="docutils literal"><span class="pre">handle()</span></tt> method.  Make sure to provide
+an appropriate docstring if you intend to serve the pretty resource renderer:</p>
+<pre class="literal-block">
+class AnswerBabbler(Resource):
+    &quot;&quot;&quot;
+    We just print the answer to life, the universe, and everything.
+    &quot;&quot;&quot;
+    def handle( self, ctxt ):
+        .... # print answer
+</pre>
+<p>The <tt class="docutils literal"><span class="pre">ctxt</span></tt> object is was we call &#8220;the context&#8221;.   It is an object which is
+passed around the resources in the chain of responsibility during handling.  You
+can freely put stuff in it, and the resources that extract components of the URL
+path as variables automatically store the contents of the components on it, so
+that the resources they delegate to have access to the value.</p>
+<p>In addition, if your resource can delegate to other resources in the chain, you
+should implement the enumeration protocol:</p>
+<pre class="literal-block">
+def enum_targets( self, enumrator ):
+    # For example&#8230;
+    enumrator.declare_target()
+    enumrator.branch_var('username', self.next_resource)
+</pre>
+<p>If you intend to implement more complex resources yourself&#8212;and you should know
+that this is not difficult at all&#8212;you should have a look at the classes provided
+with Ranvier, because they correctly implement the enumeration protocol, which
+while it is not too tricky, can be difficult to debug if implemented
+incorrectly.</p>
+<p>Here is a description of the most useful base resources provided with Ranvier.
+You should mostly just derive from these and only have to override the
+<tt class="docutils literal"><span class="pre">handle()</span></tt> method:</p>
 <ul class="simple">
-<li>We need to automatically compute these names from the names of the
-classes, and a class attribute can be used on the classes to override that
-as well as it should be able to be specified as a keyword argument on the
-base class.</li>
+<li><tt class="docutils literal"><span class="pre">LeafResource</span></tt>: a resource that only serves contents directly (it does not
+delegate to other resources);</li>
+<li><tt class="docutils literal"><span class="pre">DelegaterResource</span></tt>: a resource that only delegates to another fixed
+resource;</li>
+<li><tt class="docutils literal"><span class="pre">VarResource</span></tt>: a resource that inconditionally consumes one component of the
+URL path and that serves contents directly.</li>
+<li><tt class="docutils literal"><span class="pre">VarDelegaterResource</span></tt>: a resource that inconditionally comsumes one
+componet of the URL path adn that delegates to another resource.</li>
+<li><tt class="docutils literal"><span class="pre">RedirectResource</span></tt>: a resource that redirects to another fixed resource
+(identified by resource-id).  This is useful to support old URLs that have
+moved.</li>
+<li><tt class="docutils literal"><span class="pre">Folder</span></tt>: a resource that consumes one component of the URL path and that
+serves fixed, different resources depending on the component.  This is used to
+implement directory trees.</li>
+<li><tt class="docutils literal"><span class="pre">FolderWithMenu</span></tt>: like <tt class="docutils literal"><span class="pre">Folder</span></tt>, but if served as a target, automatically
+render a basic list of the folder contents.</li>
+<li><tt class="docutils literal"><span class="pre">EnumResource</span></tt>: output the contents of the URL mapper in a textual, readable
+way, but that can also be read by a URL mapper to reconstruct itself from it.</li>
+<li><tt class="docutils literal"><span class="pre">PrettyEnumResource</span></tt>: outputs a page that describes all the resources in the
+URL mapper, along with descriptions and links to them.  You can specify
+parameters to this resource and it will use the parameters to fill in default
+values for those mappings that require components.</li>
 </ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id34" id="rendering-urls" name="rendering-urls">11.6&nbsp;&nbsp;&nbsp;Rendering URLs</a></h2>
+<p>If you want to render URLs within your HTML output code (what I usually call
+&#8220;rendering&#8221;), you can use the <tt class="docutils literal"><span class="pre">mapurl()</span></tt> function provided on the context
+object:</p>
+<pre class="literal-block">
+def handle( self, ctxt ):
+    ....
+    feedback_url = ctxt.mapurl('&#64;&#64;FeedbackResource')
+    print '&lt;a href=&quot;%s&quot;&gt;Send us feedback&lt;/a&gt;' % feedback_url
+</pre>
+<p>Or if the URL requires parameters:</p>
+<pre class="literal-block">
+....
+user_url = ctxt.mapurl('&#64;&#64;UserHome', ctxt.username)
+print '&lt;a href=&quot;%s&quot;&gt;My Page&lt;/a&gt;' % user_url
+</pre>
+<p>Note that the rendering will blow up (i.e. raise an exception) if an incorrect
+number of parameters is provided.</p>
+<p>As a convenience, you can pass an object or dictionary to the <tt class="docutils literal"><span class="pre">mapurl()</span></tt>
+method and it will try to fetch the required parameters from it:</p>
+<pre class="literal-block">
+user_url = ctxt.mapurl('&#64;&#64;UserHome', ctxt)
+</pre>
+<p>Since the context object is by default augmented with the variables extracted
+from the current resource's URL path, if you are referring to another resource
+based in a similar way, oftentimes all that is needed is for your to pass in the
+context object.</p>
+<div class="section">
+<h3><a class="toc-backref" href="#id35" id="mapping-function-injection" name="mapping-function-injection">11.6.1&nbsp;&nbsp;&nbsp;Mapping Function Injection</a></h3>
+<p>Since we use this <tt class="docutils literal"><span class="pre">mapurl()</span></tt> method all over the place, we provide a kludge to
+&#8220;inject it&#8221; in the builtins functions dictionary, so that it is available
+everywhere all the time.  You can use this method on the mapper to do this once
+after the process/thread has been setup and the mapper initialized:</p>
+<pre class="literal-block">
+mapper.inject_builtins()
+</pre>
+<p>Or with a shorter name:</p>
+<pre class="literal-block">
+mapper.inject_builtins('U')
+....
+print '&lt;a href=&quot;%s&quot;&gt;My Page&lt;/a&gt;' % U('&#64;&#64;UserHome', ctxt.username)
+</pre>
+</div>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id36" id="creating-a-resource-tree" name="creating-a-resource-tree">11.7&nbsp;&nbsp;&nbsp;Creating a Resource Tree</a></h2>
+<p>When you have implemented your resource handlers, which are, really, the code
+for your web application, you instance them at application creation time as
+shown above.  Here is an example of creating a hierarchy of resources:</p>
+<pre class="literal-block">
+root = Folder(
+    users=RequireAuthentication(
+        UserRoot('username',
+            Home(),
+            MyItems(),
+            MyItems(),
+            Preferences()
+        )
+    ),
+    login=Login(),
+    login_hndl=LoginHndl(),
+    logout=Logout()
+)
+</pre>
+<p>If you want to create multiple instances of the same resource class, you will
+need to provide distinct resource-ids for each, so that they can be linked to
+thereafter.  You do this with the optional <tt class="docutils literal"><span class="pre">resid</span></tt> parameter, which should be
+supported by all of the resource classes, for example:</p>
+<pre class="literal-block">
+documents_folder = Folder(
+    FAQ(),
+    PrivacyPolicy(),
+    UserAgreement(),
+    Feedback(),
+    resid='&#64;&#64;DocumentsRoot'
+)
+
+....
+
+    def handle( self, ctxt ):
+        ....
+        url = mapurl('&#64;&#64;DocumentsRoot')
+</pre>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id37" id="feedback" name="feedback">11.8&nbsp;&nbsp;&nbsp;Feedback</a></h2>
+<p>If you do integrate Ranvier in a web application framework and have
+difficulties, send me a list of what additional information you would find
+useful to add, and I will update this document.</p>
+</div>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id38" id="future-work-and-ideas" name="future-work-and-ideas">12&nbsp;&nbsp;&nbsp;Future Work and Ideas</a></h1>
+<p>If you are interested in contributing some work to Ranvier, there are a number
+of straightforward ideas that still need to be implemented.  I list them here.</p>
+<div class="section">
+<h2><a class="toc-backref" href="#id39" id="callback-resource" name="callback-resource">12.1&nbsp;&nbsp;&nbsp;Callback Resource</a></h2>
+<ul class="simple">
+<li>Maybe we could provide a simple callback caller resource, and implement
+ResetCoverage using that?</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id40" id="node-visitor" name="node-visitor">12.2&nbsp;&nbsp;&nbsp;Node Visitor</a></h2>
+<ul class="simple">
+<li>Provide a public way to visit the resource nodes of the entire tree.  We could
+use this to let the resources specify little bits of CSS code and have the
+visitor reconstruct the style file from those.  This provides a new
+opportunity for localizing all this stuff in the resource handler, although we
+may prefer to let the resources be entirely separate.  I don't know.  But at
+least we should provide a generic visitor interface.</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id41" id="emacs-helper-mode" name="emacs-helper-mode">12.3&nbsp;&nbsp;&nbsp;Emacs Helper Mode</a></h2>
+<ul class="simple">
+<li>Provide some kind of hook in emacs to fetch the list of resources from my
+running web app, and then interactively insert by proposing amongst one of the
+valid forms.  At least I want to be able to view the complete list in an emacs
+buffer without having to cut-n-paste and open a file manually.</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id42" id="multiple-components-in-a-row" name="multiple-components-in-a-row">12.4&nbsp;&nbsp;&nbsp;Multiple Components in a Row</a></h2>
+<ul>
+<li><p class="first">branch_var should accept a tuple of variable names, and the same should go for
+declare_serve(), so that we can express consuming more than a single path
+component:</p>
+<blockquote>
+<p>/doc/&lt;year&gt;/&lt;month&gt;/&lt;date&gt;
+/doc/&lt;year&gt;/&lt;month&gt;/&lt;date&gt;/view</p>
 </blockquote>
-</div>
-</div>
-<div class="section">
-<h1><a class="toc-backref" href="#id13" id="listing-available-resources-and-urls" name="listing-available-resources-and-urls">5&nbsp;&nbsp;&nbsp;Listing Available Resources and URLs</a></h1>
-<p>One nice feature of our system is that we like to be able to get an entire list
-of the URLs served by the system.  This is extremely useful, because:</p>
-<ol class="arabic simple">
-<li>We visually appreciate the entire list of documents which are offered to the
-public.  We need this, because during development it is possible that
-temporary resources are installed for debugging and later on forgotten.</li>
-<li>Our test programs can automatically fetch this list (from a special resource
-only served in testing mode) and can rebuild a mapper from it, so that they
-are entirely independent of the application URL layout.</li>
-</ol>
-<p>(#. Can inspect the various security credentials that each URL requires.)</p>
-<ul class="simple">
-<li>FIXME mention pretty resource renderer and defaults</li>
+<p>(Currently we do not support the consumption of multiple components, but this
+would not be difficult to implement at all.  We just don't need it now, so
+we're waiting.)</p>
+</li>
 </ul>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id14" id="embedding-security" name="embedding-security">6&nbsp;&nbsp;&nbsp;Embedding Security</a></h1>
-<p>The URLs can be grouped so that they share security access privileges.  For
-example, any URL beginning with <tt class="docutils literal"><span class="pre">/backstore</span></tt> could require administrative
-privileges.</p>
-<p>One way to do this</p>
-</div>
-<div class="section">
-<h1><a class="toc-backref" href="#id15" id="internal-redirects" name="internal-redirects">7&nbsp;&nbsp;&nbsp;Internal Redirects</a></h1>
-<p>FIXME write it</p>
-</div>
-<div class="section">
-<h1><a class="toc-backref" href="#id16" id="support-for-debugging" name="support-for-debugging">8&nbsp;&nbsp;&nbsp;Support for Debugging</a></h1>
-<p>FIXME write it</p>
-</div>
-<div class="section">
-<h1><a class="toc-backref" href="#id17" id="a-routes-like-interface" name="a-routes-like-interface">9&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></h1>
-<p>FIXME answer what is &#8220;Routes&#8221;, add link</p>
+<h2><a class="toc-backref" href="#id43" id="custom-validation-on-back-mapping-urls" name="custom-validation-on-back-mapping-urls">12.5&nbsp;&nbsp;&nbsp;Custom Validation on Back-Mapping URLs</a></h2>
 <ul class="simple">
-<li>FIXME provide a &#8220;connect&#8221; interface that is similar to Routes, but that
-automatically creates all the required resources underneath with default
-Folder objects and such.</li>
+<li>It would provide even more robustness and verification if it was possible for
+the resources that consume components to provide some kind of validation for
+those components, so that when we back-map URLs for rendering more
+verification is performed that just &#8220;we have the parameter&#8221;.</li>
 </ul>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id18" id="other" name="other">10&nbsp;&nbsp;&nbsp;(Other)</a></h1>
-<p>Idea: in our resources traversal, we could put the query args together with the
-parameters in the URL itself&#8230; they are really conceptually the same&#8230;  checks
-would be added. FIXME TBD</p>
+<h2><a class="toc-backref" href="#id44" id="map-multiple-urls" name="map-multiple-urls">12.6&nbsp;&nbsp;&nbsp;Map Multiple URLs</a></h2>
 <ul class="simple">
-<li>Document URL pattern format</li>
-</ul>
-<div class="section">
-<h2><a class="toc-backref" href="#id19" id="writing-tests" name="writing-tests">10.1&nbsp;&nbsp;&nbsp;Writing Tests</a></h2>
-<ul class="simple">
-<li>Matching against a known URL</li>
+<li>Add a simple interface to be able to map &#8220;n&#8221; URLs (<tt class="docutils literal"><span class="pre">mapurln(..)</span></tt>) with the
+same arguments.</li>
 </ul>
 </div>
+<div class="section">
+<h2><a class="toc-backref" href="#id45" id="interfaces" name="interfaces">12.7&nbsp;&nbsp;&nbsp;Interfaces</a></h2>
+<ul class="simple">
+<li>Check out if WSGI dictates some kind of standard interface for implementing a
+response proxy.</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id46" id="random-tests" name="random-tests">12.8&nbsp;&nbsp;&nbsp;Random Tests</a></h2>
+<ul class="simple">
+<li>We could use the introspection provided by url_variables() to generate
+fetchers with random data for urls that require arguments.</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id47" id="query-parameters" name="query-parameters">12.9&nbsp;&nbsp;&nbsp;Query Parameters</a></h2>
+<ul>
+<li><p class="first">We also need to support query parameters for static mappings.</p>
+</li>
+<li><p class="first">Think about integrating the parameters with the query arguments at some point,
+so that we can generate URLs like this (maybe this could be done automatically
+by passing in extra arguments instead of raising an error):</p>
+<blockquote>
+<p>/a/bli/blou?myextra=42</p>
+</blockquote>
+</li>
+<li><p class="first">The enumerator visitor could be augmented with a method to accept declaration
+of possible query arguments, some being mandatory (this sounds like a cool
+idea).</p>
+<p>Add the following method:</p>
+<pre class="literal-block">
+declare_param( ..., optional=True ) -&gt; adds a query arg
+</pre>
+<p>Unlike the component variables, these query parameters can be optional.</p>
+</li>
+<li><p class="first">Glue code with Atocha: also, a special function could be provided to do these
+declarations given an Atocha form, thus providing us with the complete
+interface to a specific resource.  The pretty renderer could take advantage of
+that by rendering a nice table with those, and the fields' titles could even
+be declared as well, so that we can render a good interface of a resource.</p>
+</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id48" id="extra-data-and-privileges" name="extra-data-and-privileges">12.10&nbsp;&nbsp;&nbsp;Extra Data and Privileges</a></h2>
+<ul class="simple">
+<li>Add a optional parameter 'extra' which can be used to indicate, for
+informational purposes only, what extra data is involved/considered during
+the traversal for a particular leaf resource.  This can be used to display
+the privileges that are involved in accessing a single resource.</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id49" id="a-routes-like-interface" name="a-routes-like-interface">12.11&nbsp;&nbsp;&nbsp;A Routes-Like Interface</a></h2>
+<ul>
+<li><p class="first">We have not implemented it yet, but it would be possible to automatically
+create a resource tree given a list of (resource URL, resource object) pairs.
+This is a less powerful method than the explicit resource tree, but could make
+it easier for some developers to build it and I assume some people like to
+just list the URLs that they want their application to map to, without having
+to think of a tree of nodes.</p>
+<p>This interface would be similar to <a class="reference" href="http://FIXME-TODO-ADD-ROUTES-URL-HERE">Routes</a>' &#8220;connect&#8221; interface.</p>
+</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id50" id="template-replacement" name="template-replacement">12.12&nbsp;&nbsp;&nbsp;Template Replacement</a></h2>
+<ul>
+<li><p class="first">We could provide a simple template replacement library in this package that
+replaces a simple syntax embedded in HTML:</p>
+<pre class="literal-block">
+&lt;a href=&quot;&#64;&#64;Profile(username=username, ...)&quot;&gt;Search&lt;/a&gt;
+</pre>
+<p>This should be configured to use an appropriate mapper beforehand.  This
+should be trivial to implement.  Templates are a really stupid idea though--at
+least for a programmer--so this should be given low priority.</p>
+</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id51" id="better-static-checking" name="better-static-checking">12.13&nbsp;&nbsp;&nbsp;Better Static Checking</a></h2>
+<ul class="simple">
+<li>Extend static checker script to look for parameters and to warn when it is
+likely that parameters have been forgotten or are missing or extraneous</li>
+</ul>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id52" id="support-get-and-post-on-the-same-resource-objects" name="support-get-and-post-on-the-same-resource-objects">12.14&nbsp;&nbsp;&nbsp;Support GET and POST on the Same Resource Objects</a></h2>
+<ul class="simple">
+<li>It would be nice to support calling a <tt class="docutils literal"><span class="pre">handle_GET()</span></tt> and <tt class="docutils literal"><span class="pre">handle_POST()</span></tt>
+methods like in Django. This may make internal redirection more transparent
+for forms that validate input parameters and have errors.</li>
+</ul>
+</div>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id53" id="conclusion" name="conclusion">13&nbsp;&nbsp;&nbsp;Conclusion</a></h1>
+<p>If you are interested in contributing to this project or to integrate it in your
+favourite web application framework, please <a class="reference" href="mailto:blais&#64;furius.ca">contact the author</a> or the mailing-list.  I will be happy to help
+integration, even modify some aspects of this package to faciliate integration.</p>
+<!-- Footnotes - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1" name="id4">[1]</a></td><td>This documentation has been written in a bit of a rush, as I am currently
+completely swamped with work.  I will review it at some point.  If you
+find some section impossible to understand, please let me know.  The code
+is tight though, and I'm using it in production and will be actively
+fixing new bugs if they occur (I haven't found any for a while now
+[2006-05-04]).</td></tr>
+</tbody>
+</table>
+<!-- Links - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 </div>
 </div>
 </body>

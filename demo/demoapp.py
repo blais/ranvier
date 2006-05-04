@@ -62,6 +62,7 @@ def create_application( mapper, cov_reporter=None ):
     mapper.add_static('@@Stylesheet', 'style.css')
     mapper.add_static('@@ExternalExample', 'http://paulgraham.com')
     mapper.add_static('@@Atocha', '/atocha/index.html')
+    mapper.add_alias('@@AliasExample', '@@SimpleThought')
 
     return mapper, root
 
@@ -236,6 +237,7 @@ class Home(LeafResource):
              'leafcomp': mapurl('@@LeafPlusOneComponent', comp='president'),
              'folddemo': mapurl('@@DemoFolderWithMenu'),
              'static': mapurl('@@ExternalExample'),
+             'alias': mapurl('@@AliasExample'),
              'formatted': mapurl('@@IntegerComponent', 1042),
              'unrooted': mapurl('@@Atocha'),
              'source': mapurl('@@SourceCode'),
@@ -305,6 +307,10 @@ new windows will be open automatically.  Click on the links below to start:</p>
   somewhere interesting on the web (external links)</a>, and to <a
   href="%(unrooted)s" target="testwin">somewhere else on the same
   site</a>. </li>
+
+  <li> <b>Alias Mappings</b>: You can create <a href="%(alias)s"
+  target="testwin">aliases to other resources</a> within the name mapping system
+  (this will not be visible in the output HTML). </li>
 
   <li> <b>Formatted Components</b>: You can specify formats for the rendering of
   components of URLS.  For example, <a href="%(formatted)s"
