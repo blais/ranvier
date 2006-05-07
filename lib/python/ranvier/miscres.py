@@ -63,7 +63,7 @@ class DelegaterResource(Resource):
         if rcode is not None:
             return True
 
-        # Automatically forward to the delegate resource if there are not
+        # Automatically forward to the delegate resource if there are no
         # errors.
         return self.delegate(self._next, ctxt)
 
