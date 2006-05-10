@@ -74,8 +74,10 @@ class Resource(object):
         # Compute this resource's resource-id
         resid = nextres.getresid()
 
-        # Set the resource id on the context, for the resource's own perusal.
+        # Set the resource id and resource on the context, for the resource's
+        # own perusal.
         ctxt.resid = resid
+        ctxt.resource = nextres
 
         # Register this node to the callgraph reporter, if active.
         for rep in ctxt.reporters:
