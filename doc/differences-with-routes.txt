@@ -127,8 +127,8 @@ In particular:
 http://furius.ca/ranvier/demo/resources
 http://furius.ca/ranvier/demo/prettyres
 
-An unfinished design document here:
-http://furius.ca/ranvier/doc/ranvier-features.html
+Ranvier's documentation:
+http://furius.ca/ranvier/doc/ranvier-doc.html
 
 
 For now this is just a one-man project but if some people would like

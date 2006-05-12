@@ -1,1 +1,1 @@
-RedirectPermanent ranvier-features.html ranvier-doca.html
+RedirectMatch ranvier-features.html /ranvier/doc/ranvier-doc.html
