@@ -15,7 +15,8 @@
     2   Problem Statement and Definition
     3   Mapping Forward
       3.1  Chain of Responsibility
-      3.2  Chaining Resources
+      3.2  Delegating Between Resources
+      3.3  Accessing the Current Resource Id
     4   Naming of Resources
       4.1  Custom Resource Ids
       4.2  Customizing the Naming Scheme
@@ -251,8 +252,8 @@ is passed along the search, etc.  We believe that this is much more powerful and
 simpler than a wildcard system, or that a recursive object-space lookup within
 the program.
 
-Chaining Resources
-------------------
+Delegating Between Resources
+----------------------------
 
 In the implementation of your resources, if you require some custom behaviour
 that is not already provided by the basic Ranvier resources—this should occur
@@ -302,7 +303,20 @@ Customizing the Naming Scheme
 If you do not like the “ ``@@`` ” scheme for whatever reason, you can globally
 customize the naming scheme via a global function of the Ranvier package.
 
+Accessing the Current Resource Id
+---------------------------------
 
+The delegation code automatically places the resource and resource id under the
+``resource`` and ``resid`` attribute of the context object, so you can access it
+if needed.  I use this to render the filename and resource name in the title of
+my documents in test mode.  This makes it easy to find which source code
+corresponds to a particular page.
+
+.. figure:: screenshot-renderid.png
+
+   A rendering of the module name and resource-id in the HTML page title.
+
+   
 Mapping Backward
 ================
 

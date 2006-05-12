@@ -8,6 +8,7 @@ Resources setup for the Ranvier demo.
 
 # stdlib imports
 import re
+from os.path import basename
 
 # ranvier imports
 from ranvier import *
@@ -91,6 +92,7 @@ class PageLayout:
         header = '''
 <html>
   <head>
+    <title>%(title)s</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" href="%(style)s" type="text/css" />
   </head>
@@ -111,7 +113,8 @@ class PageLayout:
     </div>
 
     <div id="main" class="document">
-''' % {'root': self.mapper.mapurl('@@Home'),
+''' % {'title': '%s // %s' % (ctxt.resource.__module__, ctxt.resid),
+       'root': self.mapper.mapurl('@@Home'),
        'style': self.mapper.mapurl('@@Stylesheet')}
 
         ctxt.response.setContentType('text/html')
@@ -119,10 +122,22 @@ class PageLayout:
 
     def render_footer( self, ctxt ):
         ctxt.response.write('''
+      <div id="footer">
+        <hr/>
+        <p id="foot-note">
+
+          <!-- for the demo, tell the viewers where this was rendered from -->
+          (Rendered by resource <tt>%(resid)s</tt> from module
+          <tt>%(module)s</tt> implemented by class <tt>%(cls)s</tt>).
+
+        </p>
+      </div>
     </div>
   </body>
 </html>
-''')
+''' % {'resid': ctxt.resid,
+       'module': ctxt.resource.__module__,
+       'cls': ctxt.resource.__class__.__name__})
 
 
 #-------------------------------------------------------------------------------

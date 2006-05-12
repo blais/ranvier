@@ -71,3 +71,7 @@ table#coverage-report thead {
   border-bottom: medium solid black;
 }
 
+#foot-note {
+  font-size: small;
+  text-align: center;
+}
