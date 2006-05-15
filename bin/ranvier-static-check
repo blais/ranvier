@@ -34,17 +34,26 @@ def check_file( filename, mapper, patre ):
     """
     Grep the given filename for resource-id patterns given by 'regexp' and
     cross-check that they are valid against the 'mapper' URL mapper.
+
+    Returns a list of unique ids found in the file.
     """
+    allids = set()
+    
     try:
         text = open(filename, 'r').read()
     except IOError, e:
         raise SystemExit("Error: Reading file '%s'." % e)
         
+## FIXME: we need to do something better here, there might be more than one
+## resource on the same line.
     for lnum, line in enumerate(text.splitlines()):
         mo = patre.search(line)
         if not mo:
             continue
         resid = mo.group(1)
+
+        # Add the id to the set of unique ids.
+        allids.add(resid)
 
         # Skip resource-ids which contain replacement patterns.
         if '%' in resid:
@@ -60,6 +69,8 @@ def check_file( filename, mapper, patre ):
         # some of this by hand (e.g. the number of params, keyword arguments),
         # to provide more extensive warnings.
 
+    return allids
+
 #-------------------------------------------------------------------------------
 #
 def main():
@@ -70,6 +81,10 @@ def main():
                       default='(@@[A-Za-z0-9\\.\\-\\%]+)\\b',
                       help="Specify a regexp that matches the typical "
                       "resource-id patterns")
+
+    parser.add_option('-w', '--warn-not-found', action='store_true',
+                      help="Warn for resource-ids present in the resource "
+                      "list that are not found in the source files.")
 
     opts, args = parser.parse_args()
 
@@ -88,9 +103,16 @@ def main():
     mapper = UrlMapper.urlload(url)
 
     # Process input files.
+    allids = set()
     for fn in filenames:
-        check_file(fn, mapper, patre)
+        allids.update(check_file(fn, mapper, patre))
 
+    if opts.warn_not_found:
+        for resid in frozenset(mapper.keys()) - allids:
+            sys.stderr.write(
+                "Warning: Resource id not found in source files '%s'.\n" %
+                resid)
 
 if __name__ == '__main__':
     main()
+

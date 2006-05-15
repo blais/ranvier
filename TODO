@@ -29,6 +29,11 @@ Current (For Release)
 
 (code)
 
+* ranvier-static-check: 
+
+  - Provide a way to statically find resources which have no links to it.
+  - Fix a bug: multiple resources on the same source line will not be found!
+
 * Provide logging of request path in the resource tree via the reporters, e.g.
 
     @@Root -> @@FolderWithMenu -> @@<Resource>

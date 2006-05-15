@@ -505,9 +505,15 @@ we can automatically validate them against an active mapper object.  The script
 
 1. Fetch the mapper contents from a resource installed on the running web
    application
+
 2. Rebuilds a mapper using this textual description
+
 3. Extracts all the resource-ids in the given source files
+
 4. Spits out errors if some of the resource-ids are invalid.
+
+5. Also, spits out warnings if some resource-ids are not found at all in the source
+   files.  These could represent pages that are never linked to.
 
 The output looks something like this::
 
