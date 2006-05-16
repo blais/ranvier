@@ -5,6 +5,13 @@
 Current
 =======
 
+* Provided a way to statically find resources which have no links to it in the
+  source code.
+
+* Provided logging of request path in the resource tree via the reporters, e.g.
+
+    @@Root -> @@FolderWithMenu -> @@<Resource>
+
 * Moved namexform somewhere else than the mapper, it should probably be global,
   add setting the resid() to ctxt, so that we don't have to pass in the mapper
   when we want to get a node's resource.  We accept the global variable for this

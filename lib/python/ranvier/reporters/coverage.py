@@ -323,6 +323,9 @@ class SqlCoverageReporter(SimpleReporter):
         SimpleReporter.__init__(self)
 
         self.dbmodule = dbmodule
+## FIXME you cannot do this, you have to somehow get a new connection from the
+## application, because the connection can change (this happens when the app is
+## reloaded)
         self.conn = connection
 
         # Create the table if it does not exist.

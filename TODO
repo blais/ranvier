@@ -31,12 +31,7 @@ Current (For Release)
 
 * ranvier-static-check: 
 
-  - Provide a way to statically find resources which have no links to it.
   - Fix a bug: multiple resources on the same source line will not be found!
-
-* Provide logging of request path in the resource tree via the reporters, e.g.
-
-    @@Root -> @@FolderWithMenu -> @@<Resource>
 
 * We need to provide a way to ignore rendered resources as well, not just
   handled, e.g. @@AdwordsTracking, is never rendered and it's ok.
@@ -51,7 +46,6 @@ Current (For Release)
   2. Or perhaps provide a way to obtain all the resources under a specific node
      of the tree, in order to provide that list to the coverage reporter to
      ignore.
-
 
 * We have an issue: a folder with default, that has a target resource-id, will
   never get marked as handled by the coverage analysis because it always
