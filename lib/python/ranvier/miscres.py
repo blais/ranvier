@@ -65,8 +65,21 @@ class DelegaterResource(Resource):
 
         # Automatically forward to the delegate resource if there are no
         # errors.
-        return self.delegate(self._next, ctxt)
+        try:
+            r = self.delegate(self._next, ctxt)
+        finally:
+            self.post_handle(ctxt)
+            
+        return r
 
+    def post_handle( self, ctxt ):
+        """
+        Callback that can be overriden to perform stuff after the request has
+        been delegated.  This is called even if when unwinding from an
+        exception.
+        """
+        # Noop.
+        
 
 #-------------------------------------------------------------------------------
 #

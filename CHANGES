@@ -5,6 +5,8 @@
 Current
 =======
 
+* Added post_handle() method to Delegator.
+
 * Provided a way to statically find resources which have no links to it in the
   source code.
 
