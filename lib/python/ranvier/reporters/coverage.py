@@ -319,37 +319,47 @@ class SqlCoverageReporter(SimpleReporter):
 
     ''' % table_name
 
-    def __init__( self, dbmodule, connection ):
+    def __init__( self, dbmodule, acquire_conn, release_conn ):
+        """
+        'dbmodule' is expected to be a DBAPI-2.0 implementation.  'acquire_conn'
+        and 'release_conn' are callables to acquire and release a connection.
+        """
+        
         SimpleReporter.__init__(self)
 
         self.dbmodule = dbmodule
-## FIXME you cannot do this, you have to somehow get a new connection from the
-## application, because the connection can change (this happens when the app is
-## reloaded)
-        self.conn = connection
+        self.acquire_conn = acquire_conn
+        self.release_conn = release_conn
 
         # Create the table if it does not exist.
-        curs = self.conn.cursor()
-        curs.execute("""
-          SELECT table_name FROM information_schema.tables
-            WHERE table_name = %s
-        """, (self.table_name,))
-        if curs.rowcount == 0:
-            curs.execute(self.schema)
-            self.conn.commit()
+        conn = self.acquire_conn()
+        try:
+            curs = conn.cursor()
+            curs.execute("""
+              SELECT table_name FROM information_schema.tables
+              WHERE table_name = %s
+            """, (self.table_name,))
+            if curs.rowcount == 0:
+                curs.execute(self.schema)
+                conn.commit()
+        finally:
+            self.release_conn(conn)
 
     def reset( self ):
-        curs = self.conn.cursor()
-        curs.execute('DROP TABLE %s' % self.table_name)
-        curs.execute(self.schema)
-        self.conn.commit()
+        conn = self.acquire_conn()
+        try:
+            curs = conn.cursor()
 
-    def increment_col( self, resid, col ):
+            curs.execute('DROP TABLE %s' % self.table_name)
+            curs.execute(self.schema)
+
+        finally:
+            self.release_conn(conn)
+
+    def increment_col( self, resid, col, curs ):
         """
         Increment a column for a specific resource-id.
         """
-        curs = self.conn.cursor()
-
         curs.execute('''
           UPDATE %s SET %s = %s + 1 WHERE resid = %%s
         ''' % (self.table_name, col, col), (resid,))
@@ -364,29 +374,41 @@ class SqlCoverageReporter(SimpleReporter):
             ''' % (self.table_name, col, col), (resid,))
 
     def end( self ):
-        if self.last_handled:
-            self.increment_col(self.last_handled, 'hcount')
+        conn = self.acquire_conn()
+        try:
+            curs = conn.cursor()
 
-        for resid in self.rendered_list:
-            self.increment_col(resid, 'rcount')
+            if self.last_handled:
+                self.increment_col(self.last_handled, 'hcount', curs)
 
-        self.conn.commit()
+            for resid in self.rendered_list:
+                self.increment_col(resid, 'rcount', curs)
+
+            conn.commit()
+
+        finally:
+            self.release_conn(conn)
 
     def get_coverage( self ):
         """
         Read the results for the resource that will render the results.
         """
-        curs = self.conn.cursor()
-        curs.execute('''
-          SELECT resid, hcount, rcount FROM %s
-        ''' % self.table_name)
+        conn = self.acquire_conn()
+        try:
+            curs = conn.cursor()
 
-        allresults = {}
-        for resid, hcount, rcount in curs:
-            allresults[resid] = (hcount, rcount)
+            curs.execute('''
+              SELECT resid, hcount, rcount FROM %s
+            ''' % self.table_name)
+
+            allresults = {}
+            for resid, hcount, rcount in curs:
+                allresults[resid] = (hcount, rcount)
+
+        finally:
+            self.release_conn(conn)
+
         return allresults
-
-
 
 
 #-------------------------------------------------------------------------------
@@ -431,7 +453,13 @@ def create_coverage_reporter( connection_str ):
                                         user=user,
                                         password=passwd)
 
-            reporter = SqlCoverageReporter(dbmodule, conn)
+            def acquire():
+                return conn # Unique reference to connection.
+
+            def release( conn ):
+                pass
+
+            reporter = SqlCoverageReporter(dbmodule, acquire, release)
 
         except Exception, e:
             raise RanvierError(
