@@ -39,7 +39,7 @@ class LeafResource(Resource):
 class DelegaterResource(Resource):
     """
     Resource base class for resources which do something and then
-    inconditionally forward to another resource.  It used a template method to
+    unconditionally forward to another resource.  It uses a template method to
     implement this simple behaviour.
     """
     def __init__( self, next_resource, **kwds ):
@@ -85,7 +85,7 @@ class DelegaterResource(Resource):
 #
 class VarResource(LeafResource):
     """
-    Resource base class that inconditionally consumes one path component and
+    Resource base class that unconditionally consumes one path component and
     that serves as a leaf.
     """
     def __init__( self, compname, compdef=None, compfmt=None, **kwds ):
@@ -140,7 +140,7 @@ class VarResource(LeafResource):
 
 class VarDelegaterResource(DelegaterResource, VarResource):
     """
-    Resource base class that inconditionally consumes one path component and
+    Resource base class that unconditionally consumes one path component and
     that forwards to another resource.  This resource does not allow being a
     leaf (this would be possible, you could implement that if desired).
 
