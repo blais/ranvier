@@ -55,6 +55,12 @@ class ResponseProxy(object):
         """
         raise NotImplementedError
 
+    def log( self, message ):
+        """
+        Send something to the log file.
+        """
+        raise NotImplementedError
+        
 
 #-------------------------------------------------------------------------------
 #
@@ -123,7 +129,11 @@ class CGIResponse(ResponseProxy):
         self.write('Voila.\n')
         return True
 
-
+    def log( self, message ):
+        outf = sys.stderr
+        outf.write(message)
+        outf.flush()
+        
 #-------------------------------------------------------------------------------
 #
 def cgi_getargs():

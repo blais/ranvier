@@ -1,5 +1,5 @@
 ===============================================
-   urlmaps: Mapping URLs in Web Applications
+   ranvier: Mapping URLs in Web Applications
 ===============================================
 :Author: Martin Blais <blais@furius.ca>
 :Date: 2006-04-11

@@ -424,6 +424,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         assert isinstance(response_proxy,
                           (types.NoneType, respproxy.ResponseProxy))
 
+        redirect_data = None
         while True:
             # Start reporter.
             for rep in self.reporters:
@@ -440,6 +441,9 @@ class UrlMapper(rodict.ReadOnlyDict):
             # Create a context for the handling.
             ctxt = HandlerContext(uri, args, self.rootloc)
             ctxt.mapper = self
+
+            # Add the redirect data
+            ctxt.redirect_data = redirect_data
 
             # Setup the reporters.
             ctxt.reporters = self.reporters
@@ -463,6 +467,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                     Resource.delegate(self.root_resource, ctxt)
                     break # Success, break out.
                 except InternalRedirect, e:
+                    redirect_data = e
                     uri, args = e.uri, e.args
                     # Loop again for the internal redirect.
             finally:
