@@ -129,6 +129,12 @@ class Folder(FolderBase):
         self._default = children.pop('_default', None)
         FolderBase.__init__(self, **children)
 
+        # If there is an explicit resid but no default, you won't be able to map
+        # to it, so blow up.
+        if children.has_key('resid') and not self._default:
+            raise RanvierError("Warning: Folder resource '%s' with no default" %
+                               children['resid'])
+
         # Try to get the child as a resource the right way, if we can.
         if isinstance(self._default, str):
             try:
