@@ -205,7 +205,7 @@ class SpecialResource(LeafResource):
 
 #-------------------------------------------------------------------------------
 #
-class Augmenter(DelegaterResource):
+class Augmenter(DelegatorResource):
     """
     A resource that adds the answer to Life, the Universe and Everything to the
     context.
@@ -298,7 +298,7 @@ new windows will be open automatically.  Click on the links below to start:</p>
   target="testwin">name</a>.  We can of course <a href="%(multiple)s"
   target="testwin">consume multiple parts of the URL</a>.</li>
 
-  <li> <b>Delegater</b>: The chain of responsibility pattern does not imply that
+  <li> <b>Delegator</b>: The chain of responsibility pattern does not imply that
   each resource consume a part of the component.  We have a base class that
   makes that process a little bit easier.  Check this one: it provides <a
   href="%(answer)s" target="testwin">the answer to everything</a>! </li>
@@ -358,7 +358,7 @@ new windows will be open automatically.  Click on the links below to start:</p>
 
 #-------------------------------------------------------------------------------
 #
-class UsernameRoot(VarDelegaterResource):
+class UsernameRoot(VarDelegatorResource):
     """
     This is an example of consuming part of the locator.  Part of the this
     resource is a username.  It just accepts any username that is all lowercase
@@ -366,7 +366,7 @@ class UsernameRoot(VarDelegaterResource):
     database, in a real application.
     """
     def __init__(self, next, **kwds):
-        VarDelegaterResource.__init__(self, 'username', next, **kwds)
+        VarDelegatorResource.__init__(self, 'username', next, **kwds)
 
     def handle(self, ctxt):
         if not re.match('[a-z]+$', ctxt.username):

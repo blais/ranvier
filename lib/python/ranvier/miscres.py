@@ -11,8 +11,8 @@ from ranvier.resource import Resource
 from ranvier import _verbosity, RanvierError
 
 
-__all__ = ('LeafResource', 'DelegaterResource',
-           'VarResource', 'VarDelegaterResource',
+__all__ = ('LeafResource', 'DelegatorResource',
+           'VarResource', 'VarDelegatorResource',
            'RedirectResource', 'LogRequests', 'RemoveBase')
 
 
@@ -36,7 +36,7 @@ class LeafResource(Resource):
 
 #-------------------------------------------------------------------------------
 #
-class DelegaterResource(Resource):
+class DelegatorResource(Resource):
     """
     Resource base class for resources which do something and then
     unconditionally forward to another resource.  It uses a template method to
@@ -138,7 +138,7 @@ class VarResource(LeafResource):
         pass # Noop.
 
 
-class VarDelegaterResource(DelegaterResource, VarResource):
+class VarDelegatorResource(DelegatorResource, VarResource):
     """
     Resource base class that unconditionally consumes one path component and
     that forwards to another resource.  This resource does not allow being a
@@ -154,14 +154,14 @@ class VarDelegaterResource(DelegaterResource, VarResource):
                     this name in the context.
         """
         VarResource.__init__(self, compname, **kwds)
-        DelegaterResource.__init__(self, next_resource, **kwds)
+        DelegatorResource.__init__(self, next_resource, **kwds)
 
     def enum_targets(self, enumrator):
         enumrator.branch_var(self.compname, self.getnext())
 
     def handle_base(self, ctxt):
         self.consume_component(ctxt)
-        return DelegaterResource.handle_base(self, ctxt)
+        return DelegatorResource.handle_base(self, ctxt)
 
     def handle(self, txt):
         pass # Noop.
@@ -185,7 +185,7 @@ class RedirectResource(LeafResource):
 
 #-------------------------------------------------------------------------------
 #
-class LogRequests(DelegaterResource):
+class LogRequests(DelegatorResource):
     """
     Log a header to the error file and delegate.
     """
@@ -198,7 +198,7 @@ class LogRequests(DelegaterResource):
 
 #-------------------------------------------------------------------------------
 #
-class RemoveBase(DelegaterResource):
+class RemoveBase(DelegatorResource):
     """
     Resource that removes a fixed number of base components.
 
@@ -206,7 +206,7 @@ class RemoveBase(DelegaterResource):
     URLMapper's 'rootloc' option.
     """
     def __init__(self, count, nextres, **kwds):
-        DelegaterResource.__init__(self, nextres, **kwds)
+        DelegatorResource.__init__(self, nextres, **kwds)
         self.count = count
 
     def handle(self, ctxt):
