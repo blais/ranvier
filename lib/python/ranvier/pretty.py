@@ -24,7 +24,7 @@ class PrettyEnumResource(LeafResource):
     Output a rather nice page that describes all the pages that are being served
     from the given mapper.
     """
-    def __init__( self, mapper, sorturls=False, **kwds ):
+    def __init__(self, mapper, sorturls=False, **kwds):
         """
         If 'sorturls' is True, we sort by URLs and change the rendering
         somewhat.
@@ -33,7 +33,7 @@ class PrettyEnumResource(LeafResource):
         self.mapper = mapper
         self.sorturls = sorturls
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.response.setContentType('text/html')
         ranvier.template.render_header(ctxt.response,
                                        'URL Mapper Resources')
@@ -47,7 +47,7 @@ class PrettyEnumResource(LeafResource):
 
 #-------------------------------------------------------------------------------
 #
-def pretty_render_mapper_body( mapper, defaults, sorturls ):
+def pretty_render_mapper_body(mapper, defaults, sorturls):
     """
     Pretty-render just the body for the page that describes the contents of the
     mapper.

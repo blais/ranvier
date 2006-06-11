@@ -24,21 +24,21 @@ class TracerReporter(ResourceReporter):
     path and that at the end of the request outputs what to some tracing
     function.
     """
-    def __init__( self, outfunc ):
+    def __init__(self, outfunc):
 
         assert outfunc
         self.outfunc = outfunc
         """'A function to log the resource-id path."""
         
-    def begin( self ):
+    def begin(self):
         self.accu = []
 
-    def register_handled( self, resid ):
+    def register_handled(self, resid):
         self.accu.append(resid)
 
-    def register_rendered( self, resid ):
+    def register_rendered(self, resid):
         pass
 
-    def end( self ):
+    def end(self):
         self.outfunc(' -> '.join(self.accu))
 

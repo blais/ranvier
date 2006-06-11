@@ -27,7 +27,7 @@ __all__ = ('coverage_render_html_table', 'coverage_render_cmdline',
 
 #-------------------------------------------------------------------------------
 #
-def coverage_output_generator( mapper, coverage, nohandle ):
+def coverage_output_generator(mapper, coverage, nohandle):
     """
     Generator that drives the output of the coverage results.
     """
@@ -72,7 +72,7 @@ def coverage_output_generator( mapper, coverage, nohandle ):
 
 #-------------------------------------------------------------------------------
 #
-def coverage_render_html_table( mapper, coverage, nohandle=None ):
+def coverage_render_html_table(mapper, coverage, nohandle=None):
     """
     Render an HTML table of the coverage results.
 
@@ -144,7 +144,7 @@ table#coverage-report thead {
 
 #-------------------------------------------------------------------------------
 #
-def coverage_render_cmdline( mapper, coverage, nohandle=None ):
+def coverage_render_cmdline(mapper, coverage, nohandle=None):
     """
     Render the coverage results as they should appear on the output of a
     command-line.  See coverage_render_html_table() for details about the input
@@ -186,7 +186,7 @@ class ReportCoverage(LeafResource):
     """
     Outputs a nice HTML table of the saved resource coverage.
     """
-    def __init__( self, mapper, reader_fun, nohandle=None, **kwds ):
+    def __init__(self, mapper, reader_fun, nohandle=None, **kwds):
         """
         'reader_fun' is a function that can be invoked to obtain a dict of
         resource-id's to pairs of (handled-count, rendered-count).
@@ -203,7 +203,7 @@ class ReportCoverage(LeafResource):
 
         self.nohandle = nohandle and list(nohandle) or []
 
-    def get_html_table( self ):
+    def get_html_table(self):
         """
         Return an HTML table with the coverage results.
         """
@@ -215,7 +215,7 @@ class ReportCoverage(LeafResource):
 
         return coverage_render_html_table(self.mapper, coverage, nohandle)
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.response.setContentType('text/html')
         ranvier.template.render_header(
             ctxt.response, 'Resource Coverage Results', coverage_css)
@@ -227,14 +227,14 @@ class ResetCoverage(LeafResource):
     """
     Reset the coverage analyser.
     """
-    def __init__( self, reset_fun, **kwds ):
+    def __init__(self, reset_fun, **kwds):
         """
         'reset_fun' is a function to reset the coverage analyser.
         """
         LeafResource.__init__(self, **kwds)
         self.reset_fun = reset_fun
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         # Start the coverage analyser
         self.reset_fun()
 
@@ -248,7 +248,7 @@ class DbmCoverageReporter(SimpleReporter):
     """
     Concrete implementation that stores the mappings in a dbm databases.
     """
-    def __init__( self, dbmfn, read_only=None ):
+    def __init__(self, dbmfn, read_only=None):
         SimpleReporter.__init__(self)
 
         self.fn = dbmfn
@@ -257,24 +257,24 @@ class DbmCoverageReporter(SimpleReporter):
         # Open the database file.
         self.dbm = anydbm.open(dbmfn, read_only and 'r' or 'c')
 
-    def __del__( self ):
+    def __del__(self):
         self.dbm.close()
 
-    def reset( self ):
+    def reset(self):
         self.dbm.close()
         self.dbm = anydbm.open(self.dbmfn, 'n')
 
-    def read_entry( self, resid ):
+    def read_entry(self, resid):
         try:
             hcount, rcount = map(int, self.dbm[resid].split())
         except KeyError:
             hcount, rcount = 0, 0
         return hcount, rcount
 
-    def write_entry( self, resid, hcount, rcount ):
+    def write_entry(self, resid, hcount, rcount):
         self.dbm[resid] = '%d %d' % (hcount, rcount)
 
-    def end( self ):
+    def end(self):
         if self.last_handled:
             hcount, rcount = self.read_entry(self.last_handled)
             hcount += 1
@@ -285,7 +285,7 @@ class DbmCoverageReporter(SimpleReporter):
             rcount += 1
             self.write_entry(resid, hcount, rcount)
 
-    def get_coverage( self ):
+    def get_coverage(self):
         """
         Read the results for the resource that will render the results.
         """
@@ -319,7 +319,7 @@ class SqlCoverageReporter(SimpleReporter):
 
     ''' % table_name
 
-    def __init__( self, dbmodule, acquire_conn, release_conn ):
+    def __init__(self, dbmodule, acquire_conn, release_conn):
         """
         'dbmodule' is expected to be a DBAPI-2.0 implementation.  'acquire_conn'
         and 'release_conn' are callables to acquire and release a connection.
@@ -345,7 +345,7 @@ class SqlCoverageReporter(SimpleReporter):
         finally:
             self.release_conn(conn)
 
-    def reset( self ):
+    def reset(self):
         conn = self.acquire_conn()
         try:
             curs = conn.cursor()
@@ -356,7 +356,7 @@ class SqlCoverageReporter(SimpleReporter):
         finally:
             self.release_conn(conn)
 
-    def increment_col( self, resid, col, curs ):
+    def increment_col(self, resid, col, curs):
         """
         Increment a column for a specific resource-id.
         """
@@ -373,7 +373,7 @@ class SqlCoverageReporter(SimpleReporter):
               UPDATE %s SET %s = %s + 1 WHERE resid = %%s
             ''' % (self.table_name, col, col), (resid,))
 
-    def end( self ):
+    def end(self):
         conn = self.acquire_conn()
         try:
             curs = conn.cursor()
@@ -389,7 +389,7 @@ class SqlCoverageReporter(SimpleReporter):
         finally:
             self.release_conn(conn)
 
-    def get_coverage( self ):
+    def get_coverage(self):
         """
         Read the results for the resource that will render the results.
         """
@@ -418,7 +418,7 @@ type_re = re.compile('([a-z]+)://(.+)$')
 conn_str_re = re.compile(
     '([a-z]+)(?::([^@]+))?@([a-zA-Z0-9]+)/([a-zA-Z0-9_\-]+)')
 
-def create_coverage_reporter( connection_str ):
+def create_coverage_reporter(connection_str):
     """
     Create one of the coverage reporters from a connection string.  This is used
     by the command-line module to specify a database connection via a single
@@ -456,7 +456,7 @@ def create_coverage_reporter( connection_str ):
             def acquire():
                 return conn # Unique reference to connection.
 
-            def release( conn ):
+            def release(conn):
                 pass
 
             reporter = SqlCoverageReporter(dbmodule, acquire, release)

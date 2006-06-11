@@ -23,19 +23,19 @@ class Resource(object):
     """Default resource-id used for URL mapping.  You usually do not need to set
     this, you can rely on the automatic class name transformation."""
 
-    def __init__( self, **kwds ):
+    def __init__(self, **kwds):
         resid = kwds.pop('resid', None) # Explicitly-set resource-id.
         if resid is not None:
             self.__resid = resid
 
-    def hasresid( self ):
+    def hasresid(self):
         """
         Return true if the resource was given an explicit resource-id, that is,
         not to be derived from the resource's class name.
         """
         return self.__resid is not None
 
-    def getresid( self ):
+    def getresid(self):
         """
         Given a resource instance, compute the resource-id to which it
         corresponds.
@@ -52,7 +52,7 @@ class Resource(object):
         assert resid
         return resid
 
-    def enum_targets( self, enumrator ):
+    def enum_targets(self, enumrator):
         """
         Enumerate all the possible resources that this resource may delegate to.
         This is used to produce the entire set of resources served by a resource
@@ -65,7 +65,7 @@ class Resource(object):
         # By default, no-op.
 
     @staticmethod
-    def delegate( nextres, ctxt ):
+    def delegate(nextres, ctxt):
         """
         Pass control onto a given resource.
         """
@@ -86,7 +86,7 @@ class Resource(object):
         # Handle the next resource (this is where the propagation occurs).
         nextres.handle_base(ctxt)
 
-    def handle_base( self, ctxt ):
+    def handle_base(self, ctxt):
         """
         Base handler.  Custom resource classes can override this to provide
         custom behaviour.  By default this just calls the handler template
@@ -95,7 +95,7 @@ class Resource(object):
         # Handle this resource.
         return self.handle(ctxt)
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         """
         Template handler method. This is the handler.  This is where you get to
         do your doo-doo handling arguments and spitting HTML and shtuff.  You

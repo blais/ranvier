@@ -24,7 +24,7 @@ class RanvierError(Exception):
 
 #-------------------------------------------------------------------------------
 #
-def _atat_namexform( clsname ):
+def _atat_namexform(clsname):
     """
     Use the class' name, prepended with two @ signs.  This kind of string rarely
     occurs in Python code and makes it easy to grep for all of them later on in
@@ -36,7 +36,7 @@ def _atat_namexform( clsname ):
 # The global function to transform resource instances/classes into names.
 _namexform = _atat_namexform
 
-def set_resource_id_name_function( fun ):
+def set_resource_id_name_function(fun):
     """
     Set the global function that is used to automatically compute the
     resource-id of a resource object if it has not been given an explicit one.

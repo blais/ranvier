@@ -25,7 +25,7 @@ class EnumVisitor(object):
     the chain of responsibility.
     """
 
-    def __init__( self ):
+    def __init__(self):
         self.branchs = []
         """A list of the possible branchs for a specific resource node.  This
         list takes on the form of a triple of (type, resource, arg), where arg
@@ -39,7 +39,7 @@ class EnumVisitor(object):
         """Variable for the leaf, if any."""
 
 
-    def _add_branch( self, kind, delegate, arg ):
+    def _add_branch(self, kind, delegate, arg):
         if not isinstance(delegate, Resource):
             raise RanvierError("Delegate %s must be derived from Resource." %
                                delegate)
@@ -48,7 +48,7 @@ class EnumVisitor(object):
     # Each of the three following functions declares an individual branch of the
     # resource tree.
 
-    def declare_target( self, varname=None, default=None, format=None ):
+    def declare_target(self, varname=None, default=None, format=None):
         """
         Declare that the given resource may serve the contents at this point in
         the path (this does not have to be a leaf, this could be used for a
@@ -69,20 +69,20 @@ class EnumVisitor(object):
                 raise RanvierError("Error: You cannot declare a default or "
                                    "format without a variable.")
 
-    def branch_anon( self, delegate ):
+    def branch_anon(self, delegate):
         """
         Declare an anonymous delegate branch.
         """
         self._add_branch(Enumerator.BR_ANONYMOUS, delegate, None)
 
-    def branch_static( self, component, delegate ):
+    def branch_static(self, component, delegate):
         """
         Declare the consumption of a fixed component of the locator to a
         delegate branch.
         """
         self._add_branch(Enumerator.BR_FIXED, delegate, component)
 
-    def branch_var( self, varname, delegate, default=None, format=None ):
+    def branch_var(self, varname, delegate, default=None, format=None):
         """
         Declare a variable component delegate.  This is used if your resource
         consumes a variable path of the locator.
@@ -90,13 +90,13 @@ class EnumVisitor(object):
         self._add_branch(Enumerator.BR_VARIABLE, delegate,
                          (varname, default, format))
 
-    def get_branches( self ):
+    def get_branches(self):
         """
         Accessor for branches.
         """
         return self.branchs
 
-    def isleaf( self ):
+    def isleaf(self):
         """
         Returns true if the visited node has declared itself a leaf.
         """
@@ -113,14 +113,14 @@ class Enumerator(object):
     BR_ANONYMOUS, BR_FIXED, BR_VARIABLE = xrange(3)
     """Delegate types."""
 
-    def __init__( self ):
+    def __init__(self):
         self.accpaths = []
         """The entire list of accumulated paths resulting from the traversal."""
 
-    def visit_root( self, resource ):
+    def visit_root(self, resource):
         return self.visit(resource, [], 0)
 
-    def visit( self, resource, path, level ):
+    def visit(self, resource, path, level):
         """
         Visit a resource node.  This method calls itself recursively.
         * 'resources' is the resource node to visit.
@@ -156,6 +156,6 @@ class Enumerator(object):
             kind, delegate, arg = branch
             self.visit(delegate, path + [branch], level+1)
 
-    def getpaths( self ):
+    def getpaths(self):
         return self.accpaths
 

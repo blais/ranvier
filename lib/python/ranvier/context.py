@@ -22,7 +22,7 @@ class HandlerContext(object):
     clients to put other stuff that should be passed around in the chain of
     handlers.
     """
-    def __init__( self, uri, args, rootloc=None ):
+    def __init__(self, uri, args, rootloc=None):
 
         self.locator = PathLocator.from_uri(uri, rootloc)
         """Locator object that is updated between handler to handler."""
@@ -30,7 +30,7 @@ class HandlerContext(object):
         self.args = args
         """Arguments, as they come from the framework."""
 
-    def redirect( self, uri, args=None ):
+    def redirect(self, uri, args=None):
         """
         Internal redirect using a Ranvier exception.
         """
@@ -43,7 +43,7 @@ class HandlerContext(object):
         #
         #   ctxt.redirect(ctxt.mapurl(resid, ...), args)
 
-    def log( self, msg ):
+    def log(self, msg):
         """
         Print a message to the server's error log.  The default implementation
         just prints on stderr.  Override this method in a derived class if you
@@ -60,7 +60,7 @@ class PathLocator(object):
     Locator object used to resolve the paths.
     """
     @staticmethod
-    def from_uri( uri, rootloc=None ):
+    def from_uri(uri, rootloc=None):
         trailing = False
         if uri.endswith('/'): # remove trailing / if present
             trailing = True
@@ -68,29 +68,29 @@ class PathLocator(object):
         p = PathLocator(path, trailing, rootloc)
         return p
 
-    def __init__( self, path, trailing=False, rootloc=None ):
+    def __init__(self, path, trailing=False, rootloc=None):
         self.rootloc = rootloc
         self.path = path
         self.index = 0
         self.trailing = trailing
 
-    def __str__( self ):
+    def __str__(self):
         return '<PathLocator %s %s>' % (self.path, self.index)
 
-    def current( self ):
+    def current(self):
         return self.path[self.index]
 
-    def getnext( self ):
+    def getnext(self):
         return self.path[self.index+1]
 
-    def next( self ):
+    def next(self):
         self.index += 1
         return self
 
-    def isleaf( self ):
+    def isleaf(self):
         return self.index == len(self.path)
 
-    def uri( self, idx=1000 ):
+    def uri(self, idx=1000):
         if self.path:
             rootloc = self.rootloc or '/'
             r = join(rootloc, '/'.join(self.path[:idx]))
@@ -99,7 +99,7 @@ class PathLocator(object):
         r += (self.trailing and '/' or '')
         return r
 
-    def current_uri( self ):
+    def current_uri(self):
         return self.uri(self.index)
 
 
@@ -111,7 +111,7 @@ class InternalRedirect(Exception):
     dealt and handled by the mapper so it's transparent to your application
     framework.
     """
-    def __init__( self, uri, args=None ):
+    def __init__(self, uri, args=None):
         Exception.__init__(self, "Internal redirection to '%s'." % uri)
         assert isinstance(uri, str)
         assert isinstance(args, (types.NoneType, dict))
@@ -127,7 +127,7 @@ import unittest
 
 class Tests(unittest.TestCase):
 
-    def test_simple( self ):
+    def test_simple(self):
         loc = PathLocator.from_uri('')
         self.assert_(loc.path == [])
         self.assert_(loc.trailing is False)

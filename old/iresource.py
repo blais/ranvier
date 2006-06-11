@@ -14,7 +14,7 @@ class IResource(interface.Interface):
     structure similar to that of a directory structure.
     """
 
-    def handle( ctxt, args ):
+    def handle(ctxt, args):
         """
         Given a context object and the unparsed query arguments, handle the
         given request (or delegate it to someone else).  This is a very simple
@@ -48,32 +48,32 @@ class IPathLocator(interface.Interface):
     This object is meant to be updated as the traversal gets resolved, and has a
     notion of 'current' location.
     """
-    def current( self ):
+    def current(self):
         """
         Return the current component where parsing is occurring.
         """
         
-    def getnext( self ):
+    def getnext(self):
         """
         Return the next component where parsing is due to occur.
         """
 
-    def next( self ):
+    def next(self):
         """
         Move the current component to the next component (advance by one).
         """
 
-    def isleaf( self ):
+    def isleaf(self):
         """
         Returns True if the current component is the leaf of the URL path.
         """
 
-    def uri( self, idx=1000 ):
+    def uri(self, idx=1000):
         """
         Return the joined URL path until the given idx.
         """
 
-    def current_uri( self ):
+    def current_uri(self):
         """
         Return the full joined URL path.
         """

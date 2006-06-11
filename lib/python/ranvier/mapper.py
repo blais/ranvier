@@ -34,8 +34,8 @@ class UrlMapper(rodict.ReadOnlyDict):
     and parameters.  It is also a very safe way to force the creation of URLs
     that are always valid.
     """
-    def __init__( self, root_resource=None, rootloc=None,
-                  render_trailing=True ):
+    def __init__(self, root_resource=None, rootloc=None,
+                 render_trailing=True):
         rodict.ReadOnlyDict.__init__(self)
 
         self.root_resource = root_resource
@@ -62,7 +62,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         if root_resource is not None:
             self.initialize(root_resource)
 
-    def initialize( self, root_resource ):
+    def initialize(self, root_resource):
         """
         Add the resource from the given root to the current mapper.  You need to
         call this at least once before using the mapper to fill it with some
@@ -111,7 +111,7 @@ class UrlMapper(rodict.ReadOnlyDict):
             mapping = Mapping(resid, unparsed, isterminal, last_resource)
             self._add_mapping(mapping)
 
-    def inject_builtins( self, mapname=None ):
+    def inject_builtins(self, mapname=None):
         """
         Inject some variables into the builtins namespace for global access.  It
         makes it possible to access the backward mapping function everywhere in
@@ -125,7 +125,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         mapname = mapname or 'mapurl'
         __builtin__.__dict__[mapname] = self.mapurl
 
-    def _add_mapping( self, mapping ):
+    def _add_mapping(self, mapping):
         """
         Add the given mapping, check for uniqueness.
         """
@@ -143,7 +143,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # Store the mapping.
         self.mappings[resid] = mapping
 
-    def add_static( self, resid, urlpattern, defaults=None ):
+    def add_static(self, resid, urlpattern, defaults=None):
         """
         Add a static URL mapping from 'resid' to the given URL pattern.  This
         may be an external mapping.  The root location will only be prepended to
@@ -161,7 +161,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         mapping = Mapping(resid, unparsed, isterminal)
         self._add_mapping(mapping)
 
-    def add_alias( self, new_resid, existing_resid ):
+    def add_alias(self, new_resid, existing_resid):
         """
         Add an alias to a mapping, that is, another resource-id which will point
         to the same mapping.  The target mapping must already be existing.
@@ -177,7 +177,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         new_mapping.resid = new_resid
         self._add_mapping(new_mapping)
 
-    def _get_mapping( self, res ):
+    def _get_mapping(self, res):
         """
         Get the mapping for a particular resource-id.
         """
@@ -191,7 +191,7 @@ class UrlMapper(rodict.ReadOnlyDict):
 
         return mapping
 
-    def mapurl( self, resid, *args, **kwds ):
+    def mapurl(self, resid, *args, **kwds):
         """
         Map a resource-id to its URL, filling in the parameters and making sure
         that they are valid.  The keyword arguments are expected to match the
@@ -278,7 +278,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # Perform the substitution.
         return mapping.render(params, self.rootloc)
 
-    def mapurl_noerror( self, resid, *args, **kwds ):
+    def mapurl_noerror(self, resid, *args, **kwds):
         """
         Same as mapurl(), except that we just return None if there is an error.
         """
@@ -287,7 +287,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         except RanvierError:
             return None
 
-    def mapurl_pattern( self, resid ):
+    def mapurl_pattern(self, resid):
         """
         Same as mapurl() above, except that instead of replacing the required
         parameters with supplied values, we replace them with their own name.
@@ -296,7 +296,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         mapping = self._get_mapping(resid)
         return mapping.render_pattern(self.rootloc)
 
-    def url_variables( self, resid ):
+    def url_variables(self, resid):
         """
         Returns a tuple of URL variables for a specific resource-id.
         This is some form of introspection on the URLs.
@@ -305,7 +305,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         mapping = self._get_mapping(resid)
         return tuple(mapping.positional)
 
-    def render( self, sort_by_url=True ):
+    def render(self, sort_by_url=True):
         """
         Render the contents of the mapper so that it can be reconstructed from
         the given text, to be able to create some URLs.  This returns a list of
@@ -341,7 +341,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # defdict.
 
     @staticmethod
-    def urlload( url ):
+    def urlload(url):
         """
         Load and create a URL mapper by fetching the specified url via the
         network.
@@ -356,7 +356,7 @@ class UrlMapper(rodict.ReadOnlyDict):
 
 
     @staticmethod
-    def load( lines ):
+    def load(lines):
         """
         Load and create URL mapper from the given set of rendered lines.
         See render() for more details.
@@ -391,7 +391,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         return mapper
 
 
-    def getabsoluteids( self ):
+    def getabsoluteids(self):
         """
         Return a list of the absolute-ids registered with the mapper, which
         cannot never be handled by handle_request() (they are just used for
@@ -400,7 +400,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         return [x.resid for x in self.itervalues() if x.absolute]
 
 
-    def handle_request( self, uri, args, response_proxy=None, **extra ):
+    def handle_request(self, uri, args, response_proxy=None, **extra):
         """
         Handle a request, via the resource tree.  This is the pattern matching /
         forward mapping part.
@@ -475,13 +475,13 @@ class UrlMapper(rodict.ReadOnlyDict):
                 for rep in self.reporters:
                     rep.end()
 
-    def add_reporter( self, reporter ):
+    def add_reporter(self, reporter):
         """
         Add the given reporter to the active list.
         """
         self.reporters.append(reporter)
 
-    def remove_reporter( self, reporter ):
+    def remove_reporter(self, reporter):
         """
         Remove the given reporter from the list.  The reporter must have been
         previously added.
@@ -491,7 +491,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         except IndexError:
             raise RanvierError("Trying to remove an unregistered reporter.")
 
-    def get_match_regexp( self, resid ):
+    def get_match_regexp(self, resid):
         """
         Return a regular expression to match the URL for the given resource-id.
         """
@@ -503,7 +503,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         mre = re.compile(restring)
         return mre
     
-    def match( self, resid, url ):
+    def match(self, resid, url):
         """
         Attempt to match the given URL to the pattern that resid produces.  On
         success return a dictionary of the matched values, where the keys are
@@ -544,7 +544,7 @@ class Mapping(object):
     """
     Internal class used for storing mappings.
     """
-    def __init__( self, resid, unparsed, isterminal, resobj=None ):
+    def __init__(self, resid, unparsed, isterminal, resobj=None):
         """
         'unparsed' is a tuple of ::
 
@@ -599,7 +599,7 @@ class Mapping(object):
         self.defdict = defdict
         self.formats = formats
 
-    def create_path_templates( self ):
+    def create_path_templates(self):
         """
         Render a string template that can be used with a mapping to perform the
         final rendering.  This returns two formatting strings: one contains
@@ -622,10 +622,10 @@ class Mapping(object):
                 rcomps_untyped.append(name)
         return '/'.join(rcomps), '/'.join(rcomps_untyped)
 
-    def render( self, params, rootloc=None ):
+    def render(self, params, rootloc=None):
         return self._render(self.urltmpl, params, rootloc)
 
-    def render_pattern( self, rootloc=None ):
+    def render_pattern(self, rootloc=None):
         """
         Render the URL pattern using the given params.
         """
@@ -640,7 +640,7 @@ class Mapping(object):
 
         return self._render(self.urltmpl_untyped, params, rootloc)
 
-    def render_regexp_matcher( self, rootloc=None ):
+    def render_regexp_matcher(self, rootloc=None):
         """
         Render a regular expression string for matching against a known URL.
         """
@@ -661,7 +661,7 @@ class Mapping(object):
             restring += '/?'
         return restring
 
-    def _render( self, template, params, rootloc=None, render_trailing=True ):
+    def _render(self, template, params, rootloc=None, render_trailing=True):
         """
         Render the final URL using the given params.  The dict should exactly
         match the variables in the template.
@@ -685,7 +685,7 @@ class Mapping(object):
 
 #-------------------------------------------------------------------------------
 #
-def getresid_any( res ):
+def getresid_any(res):
     """
     Get a resource-id.  This static method accepts 'res' being either of
 
@@ -711,7 +711,7 @@ def getresid_any( res ):
 #
 compre = re.compile('^\\(([a-z]+)(?:%([a-z0-9\\-]+))?\\)$')
 
-def urlpattern_to_components( urlpattern, defaults=None ):
+def urlpattern_to_components(urlpattern, defaults=None):
     """
     Convert a URL pattern string to a list of components.  Return a tuple of
 
@@ -795,11 +795,11 @@ class EnumResource(LeafResource):
     """
     Enumerate all the resources available from a resource tree.
     """
-    def __init__( self, mapper, **kwds ):
+    def __init__(self, mapper, **kwds):
         LeafResource.__init__(self, **kwds)
         self.mapper = mapper
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.response.setContentType('text/plain')
         for line in self.mapper.render():
             ctxt.response.write(line)

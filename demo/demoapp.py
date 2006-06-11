@@ -16,7 +16,7 @@ from ranvier import *
 
 #-------------------------------------------------------------------------------
 #
-def create_application( mapper, cov_reporter=None ):
+def create_application(mapper, cov_reporter=None):
     """
     Create a tree of application resources and return the corresponding root
     resource.  'rootlocation' is the root directory to which the resource tree
@@ -74,7 +74,7 @@ class SourceCode(LeafResource):
     """
     Output the source code to a browser window.
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.response.setContentType('text/plain')
         ctxt.response.write(open(__file__, 'r').read())
 
@@ -85,10 +85,10 @@ class PageLayout:
     """
     A class that provides common rendering routines for the demo's page layouts.
     """
-    def __init__( self, mapper ):
+    def __init__(self, mapper):
         self.mapper = mapper
 
-    def render_header( self, ctxt ):
+    def render_header(self, ctxt):
         header = '''
 <html>
   <head>
@@ -120,7 +120,7 @@ class PageLayout:
         ctxt.response.setContentType('text/html')
         ctxt.response.write(header)
 
-    def render_footer( self, ctxt ):
+    def render_footer(self, ctxt):
         ctxt.response.write('''
       <div id="footer">
         <hr/>
@@ -146,7 +146,7 @@ class DemoFolderWithMenu(FolderWithMenu):
     """
     Our prettified folder class.
     """
-    def handle_default( self, ctxt ):
+    def handle_default(self, ctxt):
         ctxt.page.render_header(ctxt)
         menu = self.genmenu(ctxt)
         ctxt.response.write(menu)
@@ -157,11 +157,11 @@ class SimpleResource(LeafResource):
     """
     A simplistic resource that just outputs a message.
     """
-    def __init__( self, msg, **kwds ) :
+    def __init__(self, msg, **kwds) :
         LeafResource.__init__(self, **kwds)
         self.msg = msg
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write(self.msg)
         ctxt.page.render_footer(ctxt)
@@ -173,7 +173,7 @@ class InternalRedirectTest(LeafResource):
     """
     A simple internal redirect, with parameters.
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.redirect(ctxt.mapurl('@@PrintUsername', username='martin'))
 
 #-------------------------------------------------------------------------------
@@ -182,7 +182,7 @@ class DemoPrettyEnumResource(PrettyEnumResource):
     """
     A renderer for pretty resources within our template.
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write(pretty_render_mapper_body(self.mapper,
                                                       dict(ctxt.args),
@@ -196,7 +196,7 @@ class SpecialResource(LeafResource):
     """
     A resource referred to using an alternate id.
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write("""
         <p>Well, I'm not that special, really.</p>""")
@@ -210,14 +210,14 @@ class Augmenter(DelegaterResource):
     A resource that adds the answer to Life, the Universe and Everything to the
     context.
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.answer = 42
 
 class AnswerBabbler(LeafResource):
     """
     We just print the answer.
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write("""
         <p>
@@ -231,7 +231,7 @@ class Home(LeafResource):
     """
     Root page of the demo.
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
 
         # This could be done globally
@@ -365,10 +365,10 @@ class UsernameRoot(VarDelegaterResource):
     letters, and indicates not found for any other.  It could do this with a
     database, in a real application.
     """
-    def __init__( self, next, **kwds ):
+    def __init__(self, next, **kwds):
         VarDelegaterResource.__init__(self, 'username', next, **kwds)
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         if not re.match('[a-z]+$', ctxt.username):
             return ctxt.response.errorNotFound()
 
@@ -380,7 +380,7 @@ class PrintUsername(LeafResource):
     This resource prints a username that has been consumed along the URL path
     that maps into this resource..
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write('''<p>The username is %(username)s.</p>''' %
                             {'username': ctxt.username})
@@ -391,7 +391,7 @@ class PrintName(LeafResource):
     This resource prints a username that has been consumed along the URL path
     that maps into this resource..
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write('''<p>The user\'s name is %(name)s.</p>''' %
                             {'name': ctxt.name})
@@ -403,10 +403,10 @@ class UserData(VarResource):
     Select some user data.  We do this only to show off getting multiple
     components in the same path.
     """
-    def __init__( self, **kwds ):
+    def __init__(self, **kwds):
         VarResource.__init__(self, 'userdata', **kwds)
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write(
             '''<p>The data for user "%(username)s" is "%(data)s".</p>''' %
@@ -421,10 +421,10 @@ class LeafPlusOneComponent(VarResource):
     Example resource that consumes the leaf of the locator path, i.e. it is not
     a leaf, but the component itself is the leaf.
     """
-    def __init__( self, **kwds ):
+    def __init__(self, **kwds):
         VarResource.__init__(self, 'comp')
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         # Render a page with the last component.
         ctxt.page.render_header(ctxt)
         ctxt.response.write('''<p>The leaf component is %s.</p>''' %
@@ -438,10 +438,10 @@ class IntegerComponent(VarResource):
     """
     This is an example of using a formatting string for the URL path.
     """
-    def __init__( self, **kwds ):
+    def __init__(self, **kwds):
         VarResource.__init__(self, 'uid', compfmt='%08d', **kwds)
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write('''<p>The leaf component is %s.</p>''' %
                             repr(ctxt.uid))
@@ -454,7 +454,7 @@ class CoverageResourceBase(LeafResource):
     Base calss for all coverage resources.
     See also ReportCoverage in the coverage.py module.
     """
-    def __init__( self, mapper, cov_reporter, **kwds ):
+    def __init__(self, mapper, cov_reporter, **kwds):
         LeafResource.__init__(self, **kwds)
 
         self.mapper = mapper
@@ -464,7 +464,7 @@ class ResetCoverage(CoverageResourceBase):
     """
     Reset the coverage analyser.
     """
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         # Render the page before we actually start the analyser, so that the
         # page render itself has no effect on it.
         ctxt.page.render_header(ctxt)
@@ -480,13 +480,13 @@ class CoverageReport(CoverageResourceBase, ReportCoverage):
     """
     Present the coverage analysis.
     """
-    def __init__( self, mapper, cov_reporter, nohandle=None, **kwds ):
+    def __init__(self, mapper, cov_reporter, nohandle=None, **kwds):
         CoverageResourceBase.__init__(
             self, mapper, cov_reporter, **kwds)
         ReportCoverage.__init__(
             self, mapper, cov_reporter.get_coverage, nohandle, **kwds)
 
-    def handle( self, ctxt ):
+    def handle(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write('<h1>Coverage Report</h1>')
         ctxt.response.write(self.get_html_table())
@@ -494,7 +494,7 @@ class CoverageReport(CoverageResourceBase, ReportCoverage):
 
 #-------------------------------------------------------------------------------
 #
-def trace( o ):
+def trace(o):
     """
     Inject a new builtin, this is a hack, for debugging only.
     """

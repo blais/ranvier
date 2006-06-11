@@ -26,7 +26,7 @@ class TestMappings(unittest.TestCase):
     """
     Tests backward mapping of URLs.
     """
-    def _test_backmaps( self, mapper ):
+    def _test_backmaps(self, mapper):
         "General backmapping tests.."
         mapurl = mapper.mapurl
 
@@ -47,14 +47,14 @@ class TestMappings(unittest.TestCase):
                           '@@LeafPlusOneComponent', 'george', comp='junior')
         self.assertEquals(mapurl('@@DemoFolderWithMenu'), '/fold/')
 
-    def test_backmaps( self ):
+    def test_backmaps(self):
         "Testing backmapping URLs."
         # Create a resource tree.
         mapper = UrlMapper()
         root = demoapp.create_application(mapper)
         return self._test_backmaps(mapper)
 
-    def test_render_reload( self ):
+    def test_render_reload(self):
         "Testing reloading the mapper from a rendered rendition."
 
         # Render the mapper to a set of lines
@@ -74,11 +74,11 @@ class TestMappings(unittest.TestCase):
         # Load from a file.
         fromfile_mapper = UrlMapper.urlload('example-resources.txt')
 
-    def test_static( self ):
+    def test_static(self):
         self._test_static(None)
         self._test_static('/root')
 
-    def _test_static( self, rootloc ):
+    def _test_static(self, rootloc):
         "Testing static resources."
 
         # Get some mapper.
@@ -160,7 +160,7 @@ class TestConversions(unittest.TestCase):
     """
     Tests string/pattern conversions.
     """
-    def test_urlpattern( self ):
+    def test_urlpattern(self):
         "Test conversions from/to URL patterns."
         fun = ranvier.mapper.urlpattern_to_components
 
@@ -234,7 +234,7 @@ class TestConversions(unittest.TestCase):
                      '/users/(username)/profile', {'userid': 17})
 
 
-    def test_template( self ):
+    def test_template(self):
         "Test conversion to string template."
 
         mapper = UrlMapper(rootloc='/demo')
@@ -292,7 +292,7 @@ class TestConversions(unittest.TestCase):
             assertEquals(mapurl(resid, *args), rendered)
             assertEquals(mapurl_pattern(resid), pattern)
 
-    def test_match( self ):
+    def test_match(self):
         "Test matching known URLs."
 
         mapper = UrlMapper(rootloc='/demo')
@@ -326,7 +326,7 @@ def assertRaises(excClass, callableObj, *args, **kwargs):
         else: excName = str(excClass)
         raise self.failureException, "%s not raised" % excName
 
-def assertEquals( first, second ):
+def assertEquals(first, second):
     if not first == second:
         raise RuntimeError('%r != %r' % (first, second))
 
