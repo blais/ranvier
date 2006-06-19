@@ -400,10 +400,12 @@ class UrlMapper(rodict.ReadOnlyDict):
         return [x.resid for x in self.itervalues() if x.absolute]
 
 
-    def handle_request(self, uri, args, response_proxy=None, **extra):
+    def handle_request(self, method, uri, args, response_proxy=None, **extra):
         """
         Handle a request, via the resource tree.  This is the pattern matching /
         forward mapping part.
+
+        'method': the request method, i.e. GET, POST, etc.
 
         'uri': the requested URL, including the rootloc, if present.
 
@@ -439,7 +441,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                 uri = uri[len(self.rootloc):]
 
             # Create a context for the handling.
-            ctxt = HandlerContext(uri, args, self.rootloc)
+            ctxt = HandlerContext(method, uri, args, self.rootloc)
             ctxt.mapper = self
 
             # Add the redirect data
@@ -804,4 +806,5 @@ class EnumResource(LeafResource):
         for line in self.mapper.render():
             ctxt.response.write(line)
             ctxt.response.write('\n')
+
 

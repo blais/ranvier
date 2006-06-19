@@ -22,11 +22,14 @@ class HandlerContext(object):
     clients to put other stuff that should be passed around in the chain of
     handlers.
     """
-    def __init__(self, uri, args, rootloc=None):
+    def __init__(self, method, uri, args, rootloc=None):
+
+        self.request_method = method
+        """Request method, i.e. GET, POST, HEAD, etc."""
 
         self.locator = PathLocator.from_uri(uri, rootloc)
         """Locator object that is updated between handler to handler."""
-
+        
         self.args = args
         """Arguments, as they come from the framework."""
 

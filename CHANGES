@@ -5,6 +5,15 @@
 Current
 =======
 
+* Added discrimination for rendering method, the handle method now gets
+  dispatched onto the appropriate method, i.e.g
+
+    def handle_GET(...)
+    def handle_POST(...)
+
+  This allows you to write render and handlers on the same object.  It makes
+  constructing the tree of resources a little bit simpler.
+
 * Added post_handle() method to Delegator.
 
 * Provided a way to statically find resources which have no links to it in the

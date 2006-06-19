@@ -104,5 +104,15 @@ class Resource(object):
         Important note: NEVER call this directly.  You should ALWAYS call the
         self.delegate() method to delegate control to another resource.
         """
-        raise NotImplementedError
+        
+        # Get the appropriate method.
+        meth_name = 'handle_%s' % ctxt.request_method
+        try:
+            meth = getattr(self, meth_name)
+        except AttributeError:
+            return ctxt.response.errorNotFound()
+
+        # Call the method handler.
+        return meth(ctxt)
+        
 

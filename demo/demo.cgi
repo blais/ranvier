@@ -46,6 +46,7 @@ callgraph_filename = '/tmp/ranvier.callgraph'
 enable_coverage = 1
 coverage_filename = '/tmp/ranvier.coverage.dbm'
 
+
 #-------------------------------------------------------------------------------
 #
 def main():
@@ -89,7 +90,8 @@ def main():
     response_proxy = respproxy.CGIResponse(sys.stdout)
 
     # Handle the resource.
-    mapper.handle_request(path, args, response_proxy,
+    method = os.environ['REQUEST_METHOD']
+    mapper.handle_request(method, path, args, response_proxy,
                           page=demoapp.PageLayout(mapper))
 
     if enable_callgraphs:

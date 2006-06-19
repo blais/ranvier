@@ -33,6 +33,10 @@ Current (For Release)
 
   - Fix a bug: multiple resources on the same source line will not be found!
 
+* It would be nice to be able to create aliases to paths with components that
+  include file extensions, e.g. /photos/(number).jpg; we cannot do this at the
+  moment within ranvier (but we can hack it with a rewrite rule).
+
 * We need to provide a way to ignore rendered resources as well, not just
   handled, e.g. @@AdwordsTracking, is never rendered and it's ok.
 
