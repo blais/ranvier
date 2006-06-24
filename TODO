@@ -37,6 +37,9 @@ Current (For Release)
   include file extensions, e.g. /photos/(number).jpg; we cannot do this at the
   moment within ranvier (but we can hack it with a rewrite rule).
 
+  Maybe just implement this by supporting an extension for the final component,
+  something a bit exceptional.
+
 * We need to provide a way to ignore rendered resources as well, not just
   handled, e.g. @@AdwordsTracking, is never rendered and it's ok.
 
