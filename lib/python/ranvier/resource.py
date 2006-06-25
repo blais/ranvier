@@ -115,4 +115,19 @@ class Resource(object):
         # Call the method handler.
         return meth(ctxt)
         
+    def handle_nofail(self, ctxt):
+        """
+        Implementation of handle() that never fails.  If an appropriate method
+        is not found, we simply do nothing.  This is used by the delegater
+        classes.
+        """
+        
+        # Get the appropriate method.
+        meth_name = 'handle_%s' % ctxt.request_method
+        try:
+            meth = getattr(self, meth_name)
+            return meth(ctxt)
+        except AttributeError:
+            return None
+
 

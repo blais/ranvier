@@ -134,8 +134,7 @@ class VarResource(LeafResource):
         self.consume_component(ctxt)
         return Resource.handle_base(self, ctxt)
 
-    def handle(self, txt):
-        pass # Noop.
+    handle = Resource.handle_nofail
 
 
 class VarDelegatorResource(DelegatorResource, VarResource):
@@ -163,8 +162,7 @@ class VarDelegatorResource(DelegatorResource, VarResource):
         self.consume_component(ctxt)
         return DelegatorResource.handle_base(self, ctxt)
 
-    def handle(self, txt):
-        pass # Noop.
+    handle = Resource.handle_nofail
 
 
 #-------------------------------------------------------------------------------
