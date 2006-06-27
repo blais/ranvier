@@ -48,6 +48,7 @@ def create_application(mapper, cov_reporter=None):
                               "numbers.", resid="@@SimpleHamming"),
            ),
         formatted=IntegerComponent(),
+        rest=RemainingComponents(),
         source=SourceCode(),
         resid='@@Root'
         )
@@ -254,6 +255,7 @@ class Home(LeafResource):
              'static': mapurl('@@ExternalExample'),
              'alias': mapurl('@@AliasExample'),
              'formatted': mapurl('@@IntegerComponent', 1042),
+             'consrest': mapurl('@@RemainingComponents', '01/02/03/04'),
              'unrooted': mapurl('@@Atocha'),
              'source': mapurl('@@SourceCode'),
              'covreset': mapurl('@@ResetCoverage'),
@@ -331,6 +333,10 @@ new windows will be open automatically.  Click on the links below to start:</p>
   components of URLS.  For example, <a href="%(formatted)s"
   target="testwin">this page</a> should contain an integer in the target that is
   formatted with lots of 0 digits.</li>
+
+  <li> <b>Variable Number Of Components</b>: You can fetch all of the rest of
+  the components from a handler anywhere on the path.  Try <a
+  href="%(consrest)s">this page</a> for example.</li>
 
   <li> <b>Coverage Analysis</b>: You can enable coverage analysis for the
   resources.  Once you start it, everytime a resource is handled, a counter gets
@@ -445,6 +451,19 @@ class IntegerComponent(VarResource):
         ctxt.page.render_header(ctxt)
         ctxt.response.write('''<p>The leaf component is %s.</p>''' %
                             repr(ctxt.uid))
+        ctxt.page.render_footer(ctxt)
+
+class RemainingComponents(VarVarResource):
+    """
+    This is an example of consuming all the remaining components.
+    """
+    def __init__(self, **kwds):
+        VarVarResource.__init__(self, 'rest', **kwds)
+
+    def handle(self, ctxt):
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write('''<p>The components are %s.</p>''' %
+                            repr(ctxt.rest))
         ctxt.page.render_footer(ctxt)
 
 #-------------------------------------------------------------------------------

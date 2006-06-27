@@ -81,6 +81,10 @@ class PathLocator(object):
         return '<PathLocator %s %s>' % (self.path, self.index)
 
     def current(self):
+        """
+        Return the next component to be consumed.
+        If the locator is at the leaf, this should fail with a KeyError.
+        """
         return self.path[self.index]
 
     def getnext(self):

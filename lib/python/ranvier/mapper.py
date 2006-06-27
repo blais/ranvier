@@ -587,7 +587,8 @@ class Mapping(object):
             if var:
                 # Check for variable collisions.
                 if name in defdict:
-                    raise RanvierError("Variable name collision in URI path.")
+                    raise RanvierError(
+                        "Variable name collision in URI path: '%s'" % name)
 
                 positional.append(name)
                 defdict[name] = default

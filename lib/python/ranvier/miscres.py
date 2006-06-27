@@ -12,7 +12,7 @@ from ranvier import _verbosity, RanvierError
 
 
 __all__ = ('LeafResource', 'DelegatorResource',
-           'VarResource', 'VarDelegatorResource',
+           'VarResource', 'VarVarResource', 'VarDelegatorResource',
            'RedirectResource', 'LogRequests', 'RemoveBase')
 
 
@@ -135,6 +135,30 @@ class VarResource(LeafResource):
         return Resource.handle_base(self, ctxt)
 
     handle = Resource.handle_nofail
+
+
+class VarVarResource(VarResource):
+    """
+    Resource class that consumes 0 to all path components and that serves as a
+    leaf.  The stored value is a list of the consumed components.
+    """
+    def consume_component(self, ctxt):
+        if _verbosity >= 1:
+            ctxt.response.log("resolver: %s" %
+                              ctxt.locator.path[ctxt.locator.index:])
+
+        # Get the rest of the components.
+        loc = ctxt.locator
+        comps = []
+        while not loc.isleaf():
+            comps.append(loc.current())
+            loc.next()
+        
+        # Store the component values in the context.
+        if hasattr(ctxt, self.compname):
+            raise RanvierError("Error: Context already has attribute '%s'." %
+                               self.compname)
+        setattr(ctxt, self.compname, comps)
 
 
 class VarDelegatorResource(DelegatorResource, VarResource):
