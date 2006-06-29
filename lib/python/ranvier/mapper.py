@@ -712,7 +712,7 @@ def getresid_any(res):
 
 #-------------------------------------------------------------------------------
 #
-compre = re.compile('^\\(([a-z]+)(?:%([a-z0-9\\-]+))?\\)$')
+compre = re.compile('^\\(([a-z][a-z_]*)(?:%([a-z0-9\\-]+))?\\)$')
 
 def urlpattern_to_components(urlpattern, defaults=None):
     """
