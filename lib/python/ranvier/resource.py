@@ -126,8 +126,9 @@ class Resource(object):
         meth_name = 'handle_%s' % ctxt.request_method
         try:
             meth = getattr(self, meth_name)
-            return meth(ctxt)
         except AttributeError:
             return None
 
+        # Call the method handler.
+        return meth(ctxt)
 
