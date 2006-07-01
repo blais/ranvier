@@ -25,27 +25,20 @@ class EnumVisitor(object):
     the chain of responsibility.
     """
 
-    def __init__(self):
+    def __init__(self, resource):
+        self.resource = resource
+        """The resource being visited."""
+        
         self.branchs = []
         """A list of the possible branchs for a specific resource node.  This
-        list takes on the form of a triple of (type, resource, arg), where arg
-        is either None, a fixed component of a variable name depending on the
-        type of the branch."""
+        list takes on the form of pairs of (resource, component to be added)"""
 
         self.leaf = None
-        """Flag that indicates if the visited node can be served as a leaf."""
-
-        self.leaf_var = None
-        """Variable for the leaf, if any."""
+        """Flag that indicates if the visited node can be served as a leaf.
+        This takes the same form as the list of branches."""
 
         self.optparams = []
         """Optional parameters."""
-
-    def _add_branch(self, kind, delegate, arg):
-        if not isinstance(delegate, Resource):
-            raise RanvierError("Delegate %s must be derived from Resource." %
-                               delegate)
-        self.branchs.append( (kind, delegate, arg) )
 
     # Each of the three following functions declares an individual branch of the
     # resource tree.
@@ -60,16 +53,17 @@ class EnumVisitor(object):
         'varname' can be used to declare that it consumes some path components
         as well (optional).
         """
-        if self.leaf:
-            raise RanvierError("Error: Resource is twice declared as a leaf.")
-        self.leaf = True
+        if self.isleaf():
+            raise RanvierError("Error: Resource is declared twice as a leaf.")
 
-        if varname is not None:
-            self.leaf_var = (varname, format)
-
-        elif format is not None:
-                raise RanvierError("Error: You cannot declare a  "
-                                   "format without a variable.")
+        if format and not varname:
+            raise RanvierError("Error: You cannot declare a format without "
+                               "a variable.")
+        
+        if varname is None:
+            self.leaf = (self.resource, None)
+        else:
+            self.leaf = (self.resource, VarComponent(varname, format))
 
     def declare_optparam(self, varname, default=None, format=None):
         """
@@ -88,27 +82,31 @@ class EnumVisitor(object):
             raise RanvierError(
                 "Error: optional parameter names must be strings.")
         
+## FIXME: todo  change this to use the OptParam class
         self.optparams.append( (varname, default, format) )
 
     def branch_anon(self, delegate):
         """
         Declare an anonymous delegate branch.
         """
-        self._add_branch(Enumerator.BR_ANONYMOUS, delegate, None)
+        self.branchs.append( (delegate, None) )
 
     def branch_static(self, component, delegate):
         """
         Declare the consumption of a fixed component of the locator to a
         delegate branch.
         """
-        self._add_branch(Enumerator.BR_FIXED, delegate, component)
+        assert isinstance(component, str), "Component name must be string."
+        self.branchs.append( (delegate, FixedComponent(component)) )
 
     def branch_var(self, varname, delegate, format=None):
         """
         Declare a variable component delegate.  This is used if your resource
         consumes a variable path of the locator.
         """
-        self._add_branch(Enumerator.BR_VARIABLE, delegate, (varname, format))
+        assert isinstance(varname, str), "Variable name must be string."
+        assert isinstance(format, (type(None), str)), "Format must be string."
+        self.branchs.append( (delegate, VarComponent(varname, format)) )
 
     def get_branches(self):
         """
@@ -120,7 +118,7 @@ class EnumVisitor(object):
         """
         Returns true if the visited node has declared itself a leaf.
         """
-        return self.leaf
+        return self.leaf is not None
 
 
 #-------------------------------------------------------------------------------
@@ -130,9 +128,6 @@ class Enumerator(object):
     A class used to visit and enumerate all the possible URL paths that are
     served by a resource tree.
     """
-    BR_ANONYMOUS, BR_FIXED, BR_VARIABLE = xrange(3)
-    """Delegate types."""
-
     def __init__(self):
         self.accpaths = []
         """The entire list of accumulated paths resulting from the traversal."""
@@ -140,23 +135,23 @@ class Enumerator(object):
     def visit_root(self, resource):
         return self.visit(resource, [], 0)
 
-    def visit(self, resource, path, level):
+    def visit(self, resource, components, level):
         """
         Visit a resource node.  This method calls itself recursively.
         * 'resources' is the resource node to visit.
-        * 'path' is the current path of components and variables that this
+        * 'components' is the current list of components and variables that this
           visitor is currently at.
         """
         # Visit the resource and let it declare the properties of its
         # propagation/search.
-        visitor = EnumVisitor()
+        visitor = EnumVisitor(resource)
         resource.enum_targets(visitor)
 
         # Get the accumulated branches.
         branches = visitor.get_branches()
 
         # If we have reached a leaf node (i.e. the node has declared itself a
-        # potential leaf), add the path to the list of paths.
+        # potential leaf), add the components to the list of componentss.
         if visitor.isleaf():
 
             # If this resource is a leaf and it does not have any other possible
@@ -164,21 +159,67 @@ class Enumerator(object):
             # determine if we need append a trailing slash or not.
             isterminal = bool(branches)
             
-            path = list(path) # Make a copy.
-            if visitor.leaf_var:
-                # Append a path with a variable component at the end.
-                path.append( (Enumerator.BR_VARIABLE, None, visitor.leaf_var) )
+            components = list(components) # Make a copy.
 
-            self.accpaths.append( (path, isterminal, visitor.optparams) )
+            leafres, leafcomp = visitor.leaf
+            if leafcomp is not None:
+                components.append(leafcomp)
+
+            self.accpaths.append(
+                (leafres, components, isterminal, visitor.optparams) )
 
         # Process the possible paths.  This is a breadth-first search.
-        for branch in branches:
-            kind, delegate, arg = branch
-            self.visit(delegate, path + [branch], level+1)
+        for branch_res, branch_comp in branches:
+            child_components = list(components)
+            if branch_comp:
+                child_components.append(branch_comp)
+
+            self.visit(branch_res, child_components, level+1)
 
     def getpaths(self):
         """
         Return a list of (path, isterminal, optparams) paths.
         """
         return self.accpaths
+
+
+
+#-------------------------------------------------------------------------------
+#
+class Component(object):
+    """
+    Base class for URI path components.
+    """
+
+class FixedComponent(Component):
+    """
+    A fixed component.
+    """
+    def __init__(self, name):
+        self.name = name
+
+class VarComponent(Component):
+    """
+    A variable component.
+    """
+    def __init__(self, varname, format=None):
+        self.varname = varname
+
+        # Remove leading %, if present.
+        if format and format.startswith('%'):
+            format = format[1:]
+
+        self.format = format
+
+
+#-------------------------------------------------------------------------------
+#
+class OptParam(object):
+    """
+    Optional parameter.
+    """
+    def __init__(self, varname, default=None, format=None):
+        self.varname = varname
+        self.default = default
+        self.format = format
 

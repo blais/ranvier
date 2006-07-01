@@ -14,7 +14,8 @@ from ranvier import rodict, RanvierError, respproxy
 from ranvier.resource import Resource
 from ranvier.miscres import LeafResource
 from ranvier.context import HandlerContext, InternalRedirect
-from ranvier.enumerator import Enumerator
+from ranvier.enumerator import \
+    Enumerator, FixedComponent, VarComponent, OptParam
 
 
 __all__ = ('UrlMapper', 'EnumResource')
@@ -73,42 +74,19 @@ class UrlMapper(rodict.ReadOnlyDict):
         enumrator = Enumerator()
         enumrator.visit_root(root_resource)
 
-        for path, isterminal, optparams in enumrator.getpaths():
-            # Compute the URL string and a dictionary with the defaults.
-            # Defaults that are unset are left to None.
-            components = []
-            last_resource = root_resource
-
-            for kind, resource, arg in path:
-                # Keep a reference to the last resource.
-                if resource is not None:
-                    last_resource = resource
-
-                # Build the URL string.
-                if kind is Enumerator.BR_ANONYMOUS:
-                    continue
-
-                elif kind is Enumerator.BR_FIXED:
-                    components.append( FixedComponent(arg) )
-
-                elif kind is Enumerator.BR_VARIABLE:
-                    varname, varformat = arg
-
-                    if varformat and varformat.startswith('%'):
-                        varformat = varformat[1:]
-
-                    components.append( VarComponent(varname, varformat) )
+        for (resource, components,
+             isterminal, optparams) in enumrator.getpaths():
 
             # Calculate the resource-id from the resource at the leaf.
-            resid = getresid_any(last_resource)
+            resid = getresid_any(resource)
 
             # Mappings provided by the resource tree are always relative to the
             # rootloc.
             absolute = None
 
             unparsed = ('', '', absolute, components, '', '')
-            mapping = Mapping(resid, unparsed, isterminal,
-                              last_resource, optparams)
+            mapping = Mapping(resid, unparsed, isterminal, resource, optparams)
+
             self._add_mapping(mapping)
 
     def inject_builtins(self, mapname=None):
@@ -536,42 +514,6 @@ class UrlMapper(rodict.ReadOnlyDict):
                 results[name] = value
 
         return results
-
-
-
-#-------------------------------------------------------------------------------
-#
-class Component(object):
-    """
-    Base class for URI path components.
-    """
-
-class FixedComponent(Component):
-    """
-    A fixed component.
-    """
-    def __init__(self, name):
-        self.name = name
-
-class VarComponent(Component):
-    """
-    A variable component.
-    """
-    def __init__(self, varname, format=None):
-        self.varname = varname
-        self.format = format
-
-
-#-------------------------------------------------------------------------------
-#
-class OptParam(object):
-    """
-    Optional parameter.
-    """
-    def __init__(self, varname, default=None, format=None):
-        self.varname = varname
-        self.default = default
-        self.format = format
 
 
 #-------------------------------------------------------------------------------
