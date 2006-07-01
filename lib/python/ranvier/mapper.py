@@ -89,7 +89,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                     continue
 
                 elif kind is Enumerator.BR_FIXED:
-                    components.append( (arg, False, None) )
+                    components.append( FixedComponent(arg) )
 
                 elif kind is Enumerator.BR_VARIABLE:
                     varname, varformat = arg
@@ -97,7 +97,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                     if varformat and varformat.startswith('%'):
                         varformat = varformat[1:]
 
-                    components.append( (varname, True, varformat) )
+                    components.append( VarComponent(varname, varformat) )
 
             # Calculate the resource-id from the resource at the leaf.
             resid = getresid_any(last_resource)
@@ -541,6 +541,29 @@ class UrlMapper(rodict.ReadOnlyDict):
 
 #-------------------------------------------------------------------------------
 #
+class Component(object):
+    """
+    Base class for URI path components.
+    """
+
+class FixedComponent(Component):
+    """
+    A fixed component.
+    """
+    def __init__(self, name):
+        self.name = name
+
+class VarComponent(Component):
+    """
+    A variable component.
+    """
+    def __init__(self, varname, format=None):
+        self.varname = varname
+        self.format = format
+
+
+#-------------------------------------------------------------------------------
+#
 class OptParam(object):
     """
     Optional parameter.
@@ -598,16 +621,16 @@ class Mapping(object):
 
         # Get positional args, defaults and formats dicts.
         positional, vardict, formats = [], {}, {}
-        for name, var, format in components:
-            if var:
-                # Check for variable collisions.
-                if name in vardict:
-                    raise RanvierError(
-                        "Variable name collision in URI path: '%s'" % name)
+        for comp in filter(lambda x: isinstance(x, VarComponent), components):
+            name = comp.varname
+            # Check for variable collisions.
+            if name in vardict:
+                raise RanvierError(
+                    "Variable name collision in URI path: '%s'" % name)
 
-                positional.append(name)
-                vardict[name] = None
-                formats[name] = format
+            positional.append(name)
+            vardict[name] = None
+            formats[name] = comp.format
 
         # A list of the positional variable components, in order.
         self.positional = positional
@@ -628,19 +651,19 @@ class Mapping(object):
         types.
         """
         rcomps, rcomps_untyped = [], []
-        for name, var, format in self.components:
-            if var:
-                if format:
-                    repl = '%%(%s)%s' % (name, format)
-                    repl_untyped = '%%(%s)s' % name # ignore format
+        for comp in self.components:
+            if isinstance(comp, VarComponent):
+                if comp.format:
+                    repl = '%%(%s)%s' % (comp.varname, comp.format)
+                    repl_untyped = '%%(%s)s' % comp.varname # ignore format
                 else:
-                    repl = '%%(%s)s' % name
+                    repl = '%%(%s)s' % comp.varname
                     repl_untyped = repl
                 rcomps.append(repl)
                 rcomps_untyped.append(repl_untyped)
             else:
-                rcomps.append(name)
-                rcomps_untyped.append(name)
+                rcomps.append(comp.name)
+                rcomps_untyped.append(comp.name)
         return '/'.join(rcomps), '/'.join(rcomps_untyped)
 
     def render(self, params, rootloc=None):
@@ -651,13 +674,13 @@ class Mapping(object):
         Render the URL pattern using the given params.
         """
         params = {}
-        for name, var, format in self.components:
-            if var:
-                if format:
-                    repl = '(%s%%%s)' % (name, format)
-                else:
-                    repl = '(%s)' % name
-                params[name] = repl
+        for comp in filter(lambda x: isinstance(x, VarComponent),
+                           self.components):
+            if comp.format:
+                repl = '(%s%%%s)' % (comp.varname, comp.format)
+            else:
+                repl = '(%s)' % comp.varname
+            params[comp.varname] = repl
 
         return self._render(self.urltmpl_untyped, params, rootloc)
 
@@ -666,14 +689,15 @@ class Mapping(object):
         Render a regular expression string for matching against a known URL.
         """
         params = {}
-        for name, var, format in self.components:
-            if var:
-                if format is None or format.endswith('s'):
-                    params[name] = '(?P<%s>[^/]+)' % name
-                elif format.endswith('d'):
-                    params[name] = '(?P<%s>[0-9]+)' % name
-                elif format.endswith('f'):
-                    params[name] = '(?P<%s>[0-9\\.\\+\\-]+)' % name
+        for comp in filter(lambda x: isinstance(x, VarComponent),
+                           self.components):
+            format = comp.format
+            if format is None or format.endswith('s'):
+                params[comp.varname] = '(?P<%s>[^/]+)' % comp.varname
+            elif format.endswith('d'):
+                params[comp.varname] = '(?P<%s>[0-9]+)' % comp.varname
+            elif format.endswith('f'):
+                params[comp.varname] = '(?P<%s>[0-9\\.\\+\\-]+)' % comp.varname
 
         restring = self._render(self.urltmpl_untyped, params, rootloc)
         if restring.endswith('/'):
@@ -789,7 +813,7 @@ def urlpattern_to_components(urlpattern):
         path = path[:-1]
 
     # Parse the URL pattern.
-    components = []
+    components = []  # name, var, format
 
     for comp in path.split('/'):
         mo = compre.match(comp)
@@ -801,11 +825,11 @@ def urlpattern_to_components(urlpattern):
                     urlpattern)
 
             # Add a fixed component
-            components.append( (comp, False, None) )
+            components.append( FixedComponent(comp) )
             continue
         else:
             varname, varformat = mo.group(1, 2)
-            components.append( (varname, True, varformat) )
+            components.append( VarComponent(varname, varformat) )
 
     return (scheme, netloc, absolute, components, query, fragment), isterminal
 

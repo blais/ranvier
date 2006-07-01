@@ -108,8 +108,7 @@ class EnumVisitor(object):
         Declare a variable component delegate.  This is used if your resource
         consumes a variable path of the locator.
         """
-        self._add_branch(Enumerator.BR_VARIABLE, delegate,
-                         (varname, format))
+        self._add_branch(Enumerator.BR_VARIABLE, delegate, (varname, format))
 
     def get_branches(self):
         """
@@ -165,11 +164,10 @@ class Enumerator(object):
             # determine if we need append a trailing slash or not.
             isterminal = bool(branches)
             
+            path = list(path) # Make a copy.
             if visitor.leaf_var:
                 # Append a path with a variable component at the end.
-                path = path + [(Enumerator.BR_VARIABLE, None, visitor.leaf_var)]
-            else:
-                path = list(path)
+                path.append( (Enumerator.BR_VARIABLE, None, visitor.leaf_var) )
 
             self.accpaths.append( (path, isterminal, visitor.optparams) )
 

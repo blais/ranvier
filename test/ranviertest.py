@@ -301,8 +301,8 @@ class TestConversions(testBaseCls):
 
         mapper = UrlMapper(rootloc='/demo')
         mapper, root = demoapp.create_application(mapper)
-        for l in mapper.render():
-            print l
+        #for l in mapper.render():
+        #    print l
         mapurl = mapper.mapurl
 
         assertEquals(mapurl('@@OptionalParams'), '/demo/wopts')
