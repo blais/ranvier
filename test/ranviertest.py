@@ -20,9 +20,11 @@ import ranvier.mapper
 import demoapp
 
 
+testBaseCls = unittest.TestCase
+
 #-------------------------------------------------------------------------------
 #
-class TestMappings(unittest.TestCase):
+class TestMappings(testBaseCls):
     """
     Tests backward mapping of URLs.
     """
@@ -101,7 +103,7 @@ class TestMappings(unittest.TestCase):
         self.assertEquals(mapper.mapurl('@@Static5', 'blais'),
                           '/users/blais/home')
 
-        mapper.add_static('@@Static6', '/users/(user)/home', {'user': 'blais'})
+        mapper.add_static('@@Static6', '/users/(user)/home')
         mapper.add_static('@@Static7', '/users/(user)/(address)')
         mapper.add_static('@@Static8', 'http://aluya.ca/u/(user)/home')
         self.assertEquals(mapper.mapurl('@@Static8', 'blais'),
@@ -114,9 +116,6 @@ class TestMappings(unittest.TestCase):
 
         mapper.add_static('@@Missing1', '/users/(user)/home')
         self.assertRaises(RanvierError, mapper.mapurl, '@@Missing1')
-
-        mapper.add_static('@@Default1', '/users/(user)/home', {'user': 'blais'})
-        self.assertEquals(mapper.mapurl('@@Default1'), '/users/blais/home')
 
         mapper.add_static('@@Context1', '/users/(user)/home')
         class Dummy: pass
@@ -136,12 +135,6 @@ class TestMappings(unittest.TestCase):
                           '@@Static1', '/duplicate')
 
         self.assertRaises(RanvierError, mapper.add_static,
-                          '@@ExtraneousDef1', '/home', {'somevar': 'bli'})
-
-        self.assertRaises(RanvierError, mapper.add_static,
-                          '@@ExtraneousDef2', '/users/(user)', {'user': 'blais',
-                                                                'other': 'bli'})
-        self.assertRaises(RanvierError, mapper.add_static,
                           '@@InvalidPattern1', '/users/(user)bli')
 
         self.assertRaises(RanvierError, mapper.add_static,
@@ -156,7 +149,7 @@ class TestMappings(unittest.TestCase):
 
 #-------------------------------------------------------------------------------
 #
-class TestConversions(unittest.TestCase):
+class TestConversions(testBaseCls):
     """
     Tests string/pattern conversions.
     """
@@ -167,54 +160,47 @@ class TestConversions(unittest.TestCase):
         # All fixed.
         self.assertEquals(
             fun('/documents/faq/part1'), 
-            (('', '', True, [('documents', False, None, None),
-                             ('faq', False, None, None),
-                             ('part1', False, None, None)], '', ''), False) )
+            (('', '', True, [('documents', False, None),
+                             ('faq', False, None),
+                             ('part1', False, None)], '', ''), False) )
         
         # Non-terminal
         self.assertEquals(
             fun('/documents/faq/'), 
-            (('', '', True, [('documents', False, None, None),
-                             ('faq', False, None, None),], '', ''), True) )
+            (('', '', True, [('documents', False, None),
+                             ('faq', False, None),], '', ''), True) )
 
         # With one variable.
         self.assertEquals(
             fun('/users/(username)/profile'), 
-            (('', '', True, [('users', False, None, None),
-                             ('username', True, None, None),
-                             ('profile', False, None, None)], '', ''), False) )
-
-        # Variable with default
-        self.assertEquals(
-            fun('/users/(username)/profile', {'username': 'martin'}), 
-            (('', '', True, [('users', False, None, None),
-                                ('username', True, 'martin', None),
-                                ('profile', False, None, None)], '', ''), False) )
+            (('', '', True, [('users', False, None),
+                             ('username', True, None),
+                             ('profile', False, None)], '', ''), False) )
 
         # Variable with formatting
         self.assertEquals(
             fun('/users/(userid%08d)/profile'), 
-            (('', '', True, [('users', False, None, None),
-                                ('userid', True, None, '08d'),
-                                ('profile', False, None, None)], '', ''), False) )
+            (('', '', True, [('users', False, None),
+                                ('userid', True, '08d'),
+                                ('profile', False, None)], '', ''), False) )
 
         # Test with multiple components
         self.assertEquals(
             fun('/users/(username)/trip/(id)/view'), 
-            (('', '', True, [('users', False, None, None),
-                                ('username', True, None, None),
-                                ('trip', False, None, None),
-                                ('id', True, None, None),
-                                ('view', False, None, None)], '', ''), False) )
+            (('', '', True, [('users', False, None),
+                                ('username', True, None),
+                                ('trip', False, None),
+                                ('id', True, None),
+                                ('view', False, None)], '', ''), False) )
 
         # Test with many components, defaults and formatting.
         self.assertEquals(
-            fun('/users/(username)/trip/(id%08d)/view', {'id': 4}), 
-            (('', '', True, [('users', False, None, None),
-                                ('username', True, None, None),
-                                ('trip', False, None, None),
-                                ('id', True, 4, '08d'),
-                                ('view', False, None, None)], '', ''), False) )
+            fun('/users/(username)/trip/(id%08d)/view'), 
+            (('', '', True, [('users', False, None),
+                                ('username', True, None),
+                                ('trip', False, None),
+                                ('id', True, '08d'),
+                                ('view', False, None)], '', ''), False) )
 
         # All fixed, external.
         fun('http://domain.com/users')
@@ -225,13 +211,9 @@ class TestConversions(unittest.TestCase):
         # Relative.
         self.assertEquals(
             fun('users/(username)/profile'), 
-            (('', '', False, [('users', False, None, None),
-                                 ('username', True, None, None),
-                                 ('profile', False, None, None)], '', ''), False) )
-
-        # Test with invalid defaults.
-        assertRaises(RanvierError, fun,
-                     '/users/(username)/profile', {'userid': 17})
+            (('', '', False, [('users', False, None),
+                                 ('username', True, None),
+                                 ('profile', False, None)], '', ''), False) )
 
 
     def test_template(self):
@@ -314,6 +296,18 @@ class TestConversions(unittest.TestCase):
             assertEquals(match(resid, url), expected)
 
 
+    def test_optparam(self):
+        "Test with optional parameters."
+
+        mapper = UrlMapper(rootloc='/demo')
+        mapper, root = demoapp.create_application(mapper)
+        for l in mapper.render():
+            print l
+        mapurl = mapper.mapurl
+
+        assertEquals(mapurl('@@OptionalParams'), '/demo/wopts')
+
+
 #-------------------------------------------------------------------------------
 #
 def assertRaises(excClass, callableObj, *args, **kwargs):
@@ -335,12 +329,13 @@ def assertEquals(first, second):
 #
 def suite():
     suite = unittest.TestSuite()
-    suite.addTest(TestMappings("test_backmaps"))
-    suite.addTest(TestMappings("test_render_reload"))
-    suite.addTest(TestMappings("test_static"))
-    suite.addTest(TestConversions("test_urlpattern"))
-    suite.addTest(TestConversions("test_template"))
-    suite.addTest(TestConversions("test_match"))
+##     suite.addTest(TestMappings("test_backmaps"))
+##     suite.addTest(TestMappings("test_render_reload"))
+##     suite.addTest(TestMappings("test_static"))
+##     suite.addTest(TestConversions("test_urlpattern"))
+##     suite.addTest(TestConversions("test_template"))
+##     suite.addTest(TestConversions("test_match"))
+    suite.addTest(TestConversions("test_optparam"))
     return suite
 
 if __name__ == '__main__':

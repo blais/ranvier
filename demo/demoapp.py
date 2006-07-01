@@ -34,6 +34,7 @@ def create_application(mapper, cov_reporter=None):
                                   data=UserData())),
         redirtest=RedirectResource('@@Home', resid='@@RedirectTest'),
         internalredir=InternalRedirectTest(),
+        wopts=OptionalParams(),
         lcomp=LeafPlusOneComponent(),
 
         fold=DemoFolderWithMenu(
@@ -179,6 +180,31 @@ class InternalRedirectTest(LeafResource):
 
 #-------------------------------------------------------------------------------
 #
+class OptionalParams(LeafResource):
+    """
+    A resource that declares some optional parameters.
+    """
+    def enum_targets(self, enumrator):
+        LeafResource.enum_targets(self, enumrator)
+
+        # Declare some optional parameters.
+        enumrator.declare_optparam('cat')
+        enumrator.declare_optparam('dog', 'Fido')
+        enumrator.declare_optparam('nbanimals', 5, '%05d')
+
+    def handle_GET(self, ctxt):
+        ctxt.page.render_header(ctxt)
+        ctxt.response.write("""
+        <p>Cat: %(cat)s, Dog: %(dog)s, Animals: %(animals)s.</p>
+        """ % {'cat': ctxt.args.get('cat', None),
+               'dog': ctxt.args.get('dog', None),
+               'nbanimals': ctxt.args.get('nbanimals', None)
+               })
+        ctxt.page.render_footer(ctxt)
+
+
+#-------------------------------------------------------------------------------
+#
 class DemoPrettyEnumResource(PrettyEnumResource):
     """
     A renderer for pretty resources within our template.
@@ -260,6 +286,9 @@ class Home(LeafResource):
              'source': mapurl('@@SourceCode'),
              'covreset': mapurl('@@ResetCoverage'),
              'covreport': mapurl('@@CoverageReport'),
+             'opt1': mapurl('@@OptionalParams'),
+             'opt2': mapurl('@@OptionalParams', cat='Miou-Miou'),
+             'opt3': mapurl('@@OptionalParams', nbanimals=42),
              }
 
         ctxt.response.write('''
@@ -299,6 +328,14 @@ new windows will be open automatically.  Click on the links below to start:</p>
   <a href="%(username)s" target="testwin">username</a> and <a href="%(name)s"
   target="testwin">name</a>.  We can of course <a href="%(multiple)s"
   target="testwin">consume multiple parts of the URL</a>.</li>
+
+  <li> <b>Optional Parameters</b>: Optional parameters can be rendered via the
+  same mapurl() interface in the soure code.  Try these few resources for
+  example:
+     <a href="%(opt1)s">1</a>
+     <a href="%(opt2)s">2</a>
+     <a href="%(opt3)s">3</a>
+  </li>
 
   <li> <b>Delegator</b>: The chain of responsibility pattern does not imply that
   each resource consume a part of the component.  We have a base class that

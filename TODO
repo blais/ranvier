@@ -4,28 +4,12 @@
 
 .. contents::
 ..
-    1  Current (For Release)
-    2  Future Tasks and Ideas
-      2.1   Callback Resource
-      2.2   Node Visitor
-      2.3   Emacs Helper Mode
-      2.4   Multiple Components in a Row
-      2.5   Custom Validation on Back-Mapping URLs
-      2.6   Map Multiple URLs
-      2.7   Features in Docs
-      2.8   Interfaces
-      2.9   Random Tests
-      2.10  Query Parameters
-      2.11  Extra Data and Privileges
-      2.12  A Routes-Like Interface
-      2.13  Template Replacement
-      2.14  Redirection Oddity
-      2.15  Formats for static routes
-      2.16  Better Static Checking
+    1  Current
+    2  Redirection Oddity
 
 
-Current (For Release)
-=====================
+Current
+=======
 
 (code)
 
@@ -65,11 +49,10 @@ Current (For Release)
 * Send Ranvier information to twill list when the coverage analysis is done.
 
 
-
-
 Redirection Oddity
-------------------
+==================
 
 * Investigate this: when you just return a Location: header without a status,
   Apache goes into an infinite loop.  What is this implementation of internal
   redirect?  Look for internal redirection on Wikipedia.
+

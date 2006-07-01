@@ -46,8 +46,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         appended."""
 
         self.mappings = self.rwdict
-        """Mappings from resource-id to (url, defaults-dict, resource)
-        triples."""
+        """Mappings from resource-id to mapping objects."""
 
         self.reporters = []
         """A lis of interfaces to reporter objects used to do something each
@@ -74,7 +73,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         enumrator = Enumerator()
         enumrator.visit_root(root_resource)
 
-        for path, isterminal in enumrator.getpaths():
+        for path, isterminal, optparams in enumrator.getpaths():
             # Compute the URL string and a dictionary with the defaults.
             # Defaults that are unset are left to None.
             components = []
@@ -90,15 +89,15 @@ class UrlMapper(rodict.ReadOnlyDict):
                     continue
 
                 elif kind is Enumerator.BR_FIXED:
-                    components.append( (arg, False, None, None) )
+                    components.append( (arg, False, None) )
 
                 elif kind is Enumerator.BR_VARIABLE:
-                    varname, vardef, varformat = arg
+                    varname, varformat = arg
 
                     if varformat and varformat.startswith('%'):
                         varformat = varformat[1:]
 
-                    components.append( (varname, True, vardef, varformat) )
+                    components.append( (varname, True, varformat) )
 
             # Calculate the resource-id from the resource at the leaf.
             resid = getresid_any(last_resource)
@@ -108,7 +107,8 @@ class UrlMapper(rodict.ReadOnlyDict):
             absolute = None
 
             unparsed = ('', '', absolute, components, '', '')
-            mapping = Mapping(resid, unparsed, isterminal, last_resource)
+            mapping = Mapping(resid, unparsed, isterminal,
+                              last_resource, optparams)
             self._add_mapping(mapping)
 
     def inject_builtins(self, mapname=None):
@@ -143,7 +143,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # Store the mapping.
         self.mappings[resid] = mapping
 
-    def add_static(self, resid, urlpattern, defaults=None):
+    def add_static(self, resid, urlpattern):
         """
         Add a static URL mapping from 'resid' to the given URL pattern.  This
         may be an external mapping.  The root location will only be prepended to
@@ -152,10 +152,9 @@ class UrlMapper(rodict.ReadOnlyDict):
         details.
         """
         assert isinstance(resid, str)
-        defaults = defaults or {}
 
         # Parse the URL pattern.
-        unparsed, isterminal = urlpattern_to_components(urlpattern, defaults)
+        unparsed, isterminal = urlpattern_to_components(urlpattern)
 
         # Add the mapping.
         mapping = Mapping(resid, unparsed, isterminal)
@@ -235,9 +234,9 @@ class UrlMapper(rodict.ReadOnlyDict):
                         "Error: Creating URL for '%s', got multiple "
                         "values for component '%s'." % (mapping.resid, posname))
                 kwds[posname] = posarg
-        
+
         # Get a copy of the defaults.
-        params = mapping.defdict.copy()
+        params = mapping.vardict.copy()
 
         # Attempt to fill in the missing values from the object or dict, if one
         # was given.  We do this before integrating the keywords, because we
@@ -251,10 +250,10 @@ class UrlMapper(rodict.ReadOnlyDict):
                     except KeyError:
                         pass
 
-        # Override the defaults dict with the provided values.
+        # Override the defaults dict with the values provided by the caller.
         for cname, cvalue in kwds.iteritems():
             # Check all provided values are legal.
-            if cname not in params:
+            if not mapping.isvalid(cname):
                 raise RanvierError(
                     "Error: '%s' is not a valid component key for mapping the "
                     "'%s' resource.'" % (cname, mapping.resid))
@@ -331,14 +330,14 @@ class UrlMapper(rodict.ReadOnlyDict):
         else:
             maxidlen = 0
         fmt = '%%-%ds : %%s' % maxidlen
-        
+
         return [fmt % (m.resid, m.render_pattern(self.rootloc))
                 for m in mappings]
 
         # Note: we are considering whether rendering the defaults-dict would be
         # interesting for reconstructing the UrlMapper from a list of lines, as
         # would be done for generating test cases.  For now we ignore the
-        # defdict.
+        # vardict.
 
     @staticmethod
     def urlload(url):
@@ -377,7 +376,7 @@ class UrlMapper(rodict.ReadOnlyDict):
             except ValueError:
                 raise RanvierError("Warning: Error parsing line '%s' on load." %
                                    line)
-            
+
             # Note: we do not have defaults when loading from the rendered
             # representation.
 
@@ -504,7 +503,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         # to match links within a document (e.g. in some test).
         mre = re.compile(restring)
         return mre
-    
+
     def match(self, resid, url):
         """
         Attempt to match the given URL to the pattern that resid produces.  On
@@ -542,11 +541,24 @@ class UrlMapper(rodict.ReadOnlyDict):
 
 #-------------------------------------------------------------------------------
 #
+class OptParam(object):
+    """
+    Optional parameter.
+    """
+    def __init__(self, varname, default=None, format=None):
+        self.varname = varname
+        self.default = default
+        self.format = format
+
+
+#-------------------------------------------------------------------------------
+#
 class Mapping(object):
     """
     Internal class used for storing mappings.
     """
-    def __init__(self, resid, unparsed, isterminal, resobj=None):
+    def __init__(self, resid, unparsed, isterminal,
+                 resobj=None, optparams=None):
         """
         'unparsed' is a tuple of ::
 
@@ -574,6 +586,9 @@ class Mapping(object):
         # True if this resource does not have any further branches
         self.isterminal = isterminal
 
+        # A dict of the optional parameters.
+        self.optparams = dict((x[0], OptParam(x)) for x in optparams or ())
+
         #
         # Pre-calculate stuff for faster backmapping when rendering pages.
         #
@@ -582,25 +597,28 @@ class Mapping(object):
         self.urltmpl, self.urltmpl_untyped = self.create_path_templates()
 
         # Get positional args, defaults and formats dicts.
-        positional, defdict, formats = [], {}, {}
-        for name, var, default, format in components:
+        positional, vardict, formats = [], {}, {}
+        for name, var, format in components:
             if var:
                 # Check for variable collisions.
-                if name in defdict:
+                if name in vardict:
                     raise RanvierError(
                         "Variable name collision in URI path: '%s'" % name)
 
                 positional.append(name)
-                defdict[name] = default
+                vardict[name] = None
                 formats[name] = format
 
         # A list of the positional variable components, in order.
         self.positional = positional
 
-        # A dictionary for defaults and formats.  All variable names are
+        # A dictionary for variables and formats.  All variable names are
         # present, values are set to None if unset.
-        self.defdict = defdict
+        self.vardict = vardict
         self.formats = formats
+
+    def isvalid(self, cname):
+        return cname in self.vardict or cname in self.optparams
 
     def create_path_templates(self):
         """
@@ -610,7 +628,7 @@ class Mapping(object):
         types.
         """
         rcomps, rcomps_untyped = [], []
-        for name, var, default, format in self.components:
+        for name, var, format in self.components:
             if var:
                 if format:
                     repl = '%%(%s)%s' % (name, format)
@@ -633,7 +651,7 @@ class Mapping(object):
         Render the URL pattern using the given params.
         """
         params = {}
-        for name, var, default, format in self.components:
+        for name, var, format in self.components:
             if var:
                 if format:
                     repl = '(%s%%%s)' % (name, format)
@@ -648,7 +666,7 @@ class Mapping(object):
         Render a regular expression string for matching against a known URL.
         """
         params = {}
-        for name, var, default, format in self.components:
+        for name, var, format in self.components:
             if var:
                 if format is None or format.endswith('s'):
                     params[name] = '(?P<%s>[^/]+)' % name
@@ -683,7 +701,15 @@ class Mapping(object):
 
         unparsed = self.prefix + (rendered_path,) + self.suffix
 
-        return urlparse.urlunsplit(unparsed)
+        rendered = urlparse.urlunsplit(unparsed)
+
+        # Render the optional parameters.
+
+
+## FIXME: todo
+
+        return rendered
+
 
 
 #-------------------------------------------------------------------------------
@@ -714,7 +740,7 @@ def getresid_any(res):
 #
 compre = re.compile('^\\(([a-z][a-z_]*)(?:%([a-z0-9\\-]+))?\\)$')
 
-def urlpattern_to_components(urlpattern, defaults=None):
+def urlpattern_to_components(urlpattern):
     """
     Convert a URL pattern string to a list of components.  Return a tuple of
 
@@ -764,7 +790,6 @@ def urlpattern_to_components(urlpattern, defaults=None):
 
     # Parse the URL pattern.
     components = []
-    indefs = defaults and defaults.copy() or {}
 
     for comp in path.split('/'):
         mo = compre.match(comp)
@@ -776,18 +801,11 @@ def urlpattern_to_components(urlpattern, defaults=None):
                     urlpattern)
 
             # Add a fixed component
-            components.append( (comp, False, None, None) )
+            components.append( (comp, False, None) )
             continue
         else:
             varname, varformat = mo.group(1, 2)
-            vardef = indefs.pop(varname, None)
-            components.append( (varname, True, vardef, varformat) )
-
-    # Check that the provided defaults are all valid (i.e. there is not a
-    # default that does not match a variable in the given URL pattern).
-    if indefs:
-        raise RanvierError(
-            "Error: invalid extra defaults for given URL pattern.")
+            components.append( (varname, True, varformat) )
 
     return (scheme, netloc, absolute, components, query, fragment), isterminal
 

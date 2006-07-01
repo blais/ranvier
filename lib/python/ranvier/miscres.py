@@ -88,7 +88,7 @@ class VarResource(LeafResource):
     Resource base class that unconditionally consumes one path component and
     that serves as a leaf.
     """
-    def __init__(self, compname, compdef=None, compfmt=None, **kwds):
+    def __init__(self, compname, compfmt=None, **kwds):
         """
         'compname': if specified, we store the component under an attribute with
                     this name in the context.
@@ -99,15 +99,11 @@ class VarResource(LeafResource):
         self.compname = compname
         """The name of the attribute to store the component as."""
 
-        self.compdef = compdef
-        """The default value for the component, if any."""
-
         self.compfmt = compfmt
         """The format of the component, if any."""
 
     def enum_targets(self, enumrator):
-        enumrator.declare_target(self.compname,
-                                 default=self.compdef, format=self.compfmt)
+        enumrator.declare_target(self.compname, format=self.compfmt)
 
     def consume_component(self, ctxt):
         if _verbosity >= 1:

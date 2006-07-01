@@ -38,6 +38,8 @@ class EnumVisitor(object):
         self.leaf_var = None
         """Variable for the leaf, if any."""
 
+        self.optparams = []
+        """Optional parameters."""
 
     def _add_branch(self, kind, delegate, arg):
         if not isinstance(delegate, Resource):
@@ -48,7 +50,7 @@ class EnumVisitor(object):
     # Each of the three following functions declares an individual branch of the
     # resource tree.
 
-    def declare_target(self, varname=None, default=None, format=None):
+    def declare_target(self, varname=None, format=None):
         """
         Declare that the given resource may serve the contents at this point in
         the path (this does not have to be a leaf, this could be used for a
@@ -63,11 +65,30 @@ class EnumVisitor(object):
         self.leaf = True
 
         if varname is not None:
-            self.leaf_var = (varname, default, format)
+            self.leaf_var = (varname, format)
 
-        elif not (default is None and format is None):
-                raise RanvierError("Error: You cannot declare a default or "
+        elif format is not None:
+                raise RanvierError("Error: You cannot declare a  "
                                    "format without a variable.")
+
+    def declare_optparam(self, varname, default=None, format=None):
+        """
+        Declare an optional query parameter that this node consumes. Query
+        parameters are the arguments specified after the `?' as in ::
+
+           /users/<user>)/index?category=<category>
+
+        They are used to allow back-mapping URLs with a single syntax.  In the
+        example, above, this would be::
+
+           mapurl('@@IndexForUser', <user>, category=<category>)
+
+        """
+        if not isinstance(varname, str):
+            raise RanvierError(
+                "Error: optional parameter names must be strings.")
+        
+        self.optparams.append( (varname, default, format) )
 
     def branch_anon(self, delegate):
         """
@@ -82,13 +103,13 @@ class EnumVisitor(object):
         """
         self._add_branch(Enumerator.BR_FIXED, delegate, component)
 
-    def branch_var(self, varname, delegate, default=None, format=None):
+    def branch_var(self, varname, delegate, format=None):
         """
         Declare a variable component delegate.  This is used if your resource
         consumes a variable path of the locator.
         """
         self._add_branch(Enumerator.BR_VARIABLE, delegate,
-                         (varname, default, format))
+                         (varname, format))
 
     def get_branches(self):
         """
@@ -143,13 +164,14 @@ class Enumerator(object):
             # branches, it is a terminal resource.  This is used later to
             # determine if we need append a trailing slash or not.
             isterminal = bool(branches)
-
+            
             if visitor.leaf_var:
                 # Append a path with a variable component at the end.
                 path = path + [(Enumerator.BR_VARIABLE, None, visitor.leaf_var)]
-                self.accpaths.append( (path, isterminal) )
             else:
-                self.accpaths.append( (list(path), isterminal) )
+                path = list(path)
+
+            self.accpaths.append( (path, isterminal, visitor.optparams) )
 
         # Process the possible paths.  This is a breadth-first search.
         for branch in branches:
@@ -157,5 +179,8 @@ class Enumerator(object):
             self.visit(delegate, path + [branch], level+1)
 
     def getpaths(self):
+        """
+        Return a list of (path, isterminal, optparams) paths.
+        """
         return self.accpaths
 

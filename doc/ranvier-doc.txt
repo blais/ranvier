@@ -482,8 +482,7 @@ This is extremely useful, because:
    that a particular application provides, including its documentation.
 
    In addition, this pretty page renders the links so you can try them directly
-   from the listing.  You can supply parameters to it, for default values to be
-   used in the links to resources which contain variable components.
+   from the listing.  You can supply parameters to it.
 
 #. You could implement a resource that automatically generate your site map from
    the URL mapper, possibly including just some of the resources on your site.
@@ -1060,7 +1059,8 @@ Query Parameters
 
     declare_param( ..., optional=True ) -> adds a query arg
 
-  Unlike the component variables, these query parameters can be optional.
+  Unlike the component variables, these query parameters can be optional and
+  would be declared at the leaf most of the time.
 
 * Glue code with Atocha: also, a special function could be provided to do these
   declarations given an Atocha form, thus providing us with the complete
