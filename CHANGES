@@ -5,6 +5,8 @@
 Current
 =======
 
+* Added support for optional parameters.
+
 * Added discrimination for rendering method, the handle method now gets
   dispatched onto the appropriate method, i.e.g
 

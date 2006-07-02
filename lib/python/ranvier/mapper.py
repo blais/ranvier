@@ -258,7 +258,7 @@ class UrlMapper(rodict.ReadOnlyDict):
             rep.register_rendered(resid)
 
         # Perform the substitution.
-        return mapping.render(posargs, self.rootloc)
+        return mapping.render(posargs, optargs, self.rootloc)
 
     def mapurl_noerror(self, resid, *args, **kwds):
         """
@@ -536,7 +536,7 @@ class Mapping(object):
         # Unpack and store the prefix/suffix for later
         scheme, netloc, absolute, components, query, fragment = unparsed
         self.prefix = scheme, netloc
-        self.suffix = query, fragment
+        self.suffix = fragment,
 
         # Whether the path is relative to the mapper's rootloc or absolute
         # (without or outside of this site).
@@ -603,8 +603,8 @@ class Mapping(object):
                 rcomps_untyped.append(comp.name)
         return '/'.join(rcomps), '/'.join(rcomps_untyped)
 
-    def render(self, posargs, rootloc=None):
-        return self._render(self.urltmpl, posargs, rootloc)
+    def render(self, posargs, optargs, rootloc=None):
+        return self._render(self.urltmpl, posargs, optargs, rootloc)
 
     def render_pattern(self, rootloc=None):
         """
@@ -618,7 +618,7 @@ class Mapping(object):
                 repl = '(%s)' % comp.varname
             posargs[comp.varname] = repl
 
-        return self._render(self.urltmpl_untyped, posargs, rootloc)
+        return self._render(self.urltmpl_untyped, posargs, None, rootloc)
 
     def render_regexp_matcher(self, rootloc=None):
         """
@@ -634,14 +634,15 @@ class Mapping(object):
             elif format.endswith('f'):
                 posargs[comp.varname] = '(?P<%s>[0-9\\.\\+\\-]+)' % comp.varname
 
-        restring = self._render(self.urltmpl_untyped, posargs, rootloc)
+        restring = self._render(self.urltmpl_untyped, posargs, None, rootloc)
         if restring.endswith('/'):
             restring += '?'
         else:
             restring += '/?'
         return restring
 
-    def _render(self, template, posargs, rootloc=None, render_trailing=True):
+    def _render(self, template, posargs, optargs,
+                rootloc=None, render_trailing=True):
         """
         Render the final URL using the given posargs.  The dict should exactly
         match the variables in the template.
@@ -658,14 +659,19 @@ class Mapping(object):
             if not rendered_path.endswith('/'):
                 rendered_path += '/'
 
-        unparsed = self.prefix + (rendered_path,) + self.suffix
-
-        rendered = urlparse.urlunsplit(unparsed)
-
         # Render the optional parameters.
+        if optargs:
+            for name, value in optargs.iteritems():
+                comp = self.optparams[name]
+                if comp.format:
+                    optargs[name] = comp.format % value
+            query = urllib.urlencode(optargs)
+        else:
+            query = ''
 
-
-## FIXME: todo
+        # Join all this happy family together.
+        unparsed = self.prefix + (rendered_path, query) + self.suffix
+        rendered = urlparse.urlunsplit(unparsed)
 
         return rendered
 

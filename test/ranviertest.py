@@ -306,7 +306,30 @@ class TestConversions(testBaseCls):
         #    print l
         mapurl = mapper.mapurl
 
+        # Test number of arguments.
         assertEquals(mapurl('@@OptionalParams'), '/demo/wopts')
+        assertRaises(RanvierError, mapurl, '@@OptionalParams', 2)
+        assertRaises(RanvierError, mapurl, '@@OptionalParams', 2, 3)
+        assertRaises(RanvierError, mapurl, '@@OptionalParams', 2, 3, 4)
+
+        # Try with optional parameter that does not exist.
+        assertRaises(RanvierError, mapurl, '@@OptionalParams', symbol='lambda')
+
+        # Test results of optional parameters.
+        assertEquals(mapurl('@@OptionalParams', cat='Miaouw'),
+                     '/demo/wopts?cat=Miaouw')
+        assertEquals(mapurl('@@OptionalParams', dog='Wouf'),
+                     '/demo/wopts?dog=Wouf')
+        assertEquals(mapurl('@@OptionalParams', cat='Miawou', dog='Wouf'),
+                     '/demo/wopts?dog=Wouf&cat=Miawou')
+
+        # Test with formatting.
+        assertEquals(mapurl('@@OptionalParams', nbanimals=42),
+                     '/demo/wopts?nbanimals=00042')
+
+        # Test escaping.
+        assertEquals(mapurl('@@OptionalParams', dog='Wouf Wouf!'),
+                     '/demo/wopts?dog=Wouf+Wouf%21')
 
 
 #-------------------------------------------------------------------------------

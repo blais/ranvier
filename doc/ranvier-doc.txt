@@ -893,6 +893,9 @@ from the current resource's URL path, if you are referring to another resource
 based in a similar way, oftentimes all that is needed is for your to pass in the
 context object.
 
+If they have been declared in advance, unmatched keyword arguments are rendered
+as query parameters.  These are optional.
+
 
 Mapping Function Injection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1050,17 +1053,6 @@ Query Parameters
   by passing in extra arguments instead of raising an error):
 
      /a/bli/blou?myextra=42
-
-* The enumerator visitor could be augmented with a method to accept declaration
-  of possible query arguments, some being mandatory (this sounds like a cool
-  idea).
-
-  Add the following method::
-
-    declare_param( ..., optional=True ) -> adds a query arg
-
-  Unlike the component variables, these query parameters can be optional and
-  would be declared at the leaf most of the time.
 
 * Glue code with Atocha: also, a special function could be provided to do these
   declarations given an Atocha form, thus providing us with the complete
