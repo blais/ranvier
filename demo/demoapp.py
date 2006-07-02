@@ -189,8 +189,8 @@ class OptionalParams(LeafResource):
 
         # Declare some optional parameters.
         enumrator.declare_optparam('cat')
-        enumrator.declare_optparam('dog', 'Fido')
-        enumrator.declare_optparam('nbanimals', 5, '%05d')
+        enumrator.declare_optparam('dog')
+        enumrator.declare_optparam('nbanimals', '%05d')
 
     def handle_GET(self, ctxt):
         ctxt.page.render_header(ctxt)

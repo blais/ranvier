@@ -65,7 +65,7 @@ class EnumVisitor(object):
         else:
             self.leaf = (self.resource, VarComponent(varname, format))
 
-    def declare_optparam(self, varname, default=None, format=None):
+    def declare_optparam(self, varname, format=None):
         """
         Declare an optional query parameter that this node consumes. Query
         parameters are the arguments specified after the `?' as in ::
@@ -82,7 +82,7 @@ class EnumVisitor(object):
             raise RanvierError(
                 "Error: optional parameter names must be strings.")
         
-        self.optparams.append( OptParam(varname, default, format) )
+        self.optparams.append( OptParam(varname, format) )
 
     def branch_anon(self, delegate):
         """
@@ -235,9 +235,8 @@ class OptParam(object):
     """
     Optional parameter.
     """
-    def __init__(self, varname, default=None, format=None):
+    def __init__(self, varname, format=None):
         self.varname = varname
-        self.default = default
         self.format = format
 
 

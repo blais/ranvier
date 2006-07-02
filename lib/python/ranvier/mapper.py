@@ -248,6 +248,8 @@ class UrlMapper(rodict.ReadOnlyDict):
                                        "values for optional parameter '%s'" %
                                        (mapping.resid, name))
                 else:
+                    # Note: we may want to accept all optional parameters
+                    # regardless, i.e. remove this error.
                     raise RanvierError("Error: Resource '%s' got an "
                                        "unexpected optional parameter '%s'" %
                                        (mapping.resid, name))
