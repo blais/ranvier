@@ -8,6 +8,7 @@ URL mapper and enumerator classes.
 
 # stdlib imports
 import __builtin__, os, re, types, copy, urllib, urlparse
+from itertools import chain
 
 # ranvier imports
 from ranvier import rodict, RanvierError, respproxy
@@ -74,8 +75,8 @@ class UrlMapper(rodict.ReadOnlyDict):
         enumrator = Enumerator()
         enumrator.visit_root(root_resource)
 
-        for (resource, components,
-             isterminal, optparams) in enumrator.getpaths():
+        for (resource, components, optparams,
+             isterminal) in enumrator.getpaths():
 
             # Calculate the resource-id from the resource at the leaf.
             resid = getresid_any(resource)
@@ -190,70 +191,74 @@ class UrlMapper(rodict.ReadOnlyDict):
         """
         mapping = self._get_mapping(resid)
 
+        # Create a dict of the required positional arguments.
+        posargs = mapping.posmap.copy()
+
         # Check for an instance or dict to fetch some positional args from.
         if len(args) == 1 and not isinstance(args[0],
                                              (str, unicode, int, long)):
-            dicmissing = args[0]
-            if not isinstance(dicmissing, dict):
+            diccontainer = args[0]
+            if not isinstance(diccontainer, dict):
                 # Then we must have hold of a user defined class.
-                dicmissing = dicmissing.__dict__
+                diccontainer = diccontainer.__dict__
         else:
-            # Normal positional arguments are integrated with the keyword
-            # arguments..
-            dicmissing = None
-            nbpos = len(mapping.positional)
+            # No dict, instead we have positional arguments.
+            diccontainer = {}
+
+            # Check that we don't have extra positional arguments.
+            nbpos = len(posargs)
             if len(args) > nbpos:
-                raise RanvierError("Error: Resource '%s' takes at most '%d' "
-                                   "arguments." % (mapping.resid, nbpos))
-
-            for posname, posarg in zip(mapping.positional, args):
-                if posname in kwds:
-                    raise RanvierError(
-                        "Error: Creating URL for '%s', got multiple "
-                        "values for component '%s'." % (mapping.resid, posname))
-                kwds[posname] = posarg
-
-        # Get a copy of the defaults.
-        params = mapping.vardict.copy()
-
-        # Attempt to fill in the missing values from the object or dict, if one
-        # was given.  We do this before integrating the keywords, because we
-        # want the keywords to have priority and override the dict/object
-        # values if they are present in both.
-        if dicmissing is not None:
-            for cname, cvalue in params.iteritems():
-                if cvalue is None:
-                    try:
-                        params[cname] = dicmissing[cname]
-                    except KeyError:
-                        pass
-
-        # Override the defaults dict with the values provided by the caller.
-        for cname, cvalue in kwds.iteritems():
-            # Check all provided values are legal.
-            if not mapping.isvalid(cname):
                 raise RanvierError(
-                    "Error: '%s' is not a valid component key for mapping the "
-                    "'%s' resource.'" % (cname, mapping.resid))
+                    "Error: Resource '%s' takes at most %d arguments "
+                    "(%d given)." % (mapping.resid, nbpos, len(args)))
 
-            # Fill the slot with the specified value
-            params[cname] = cvalue
+            # Set the positional arguments.
+            for comp, arg in zip(mapping.positional, args):
+                posargs[comp.varname] = arg
 
-        # Check that all the required values have been provided.
-        missing = [cname for cname, cvalue in params.iteritems()
-                   if cvalue is None]
+        # Fill in the missing positional arguments.
+        for name, value in posargs.iteritems():
+            if value is None:
+                # Try to get the name from the keyword arguments.
+                try:
+                    value = kwds.pop(name)
+                except KeyError:
+                    # Try to get the name from the container object.
+                    try:
+                        value = diccontainer[name]
+                    except KeyError:
+                        raise RanvierError(
+                            "Error: Resource '%s' had no value supplied for "
+                            "positional argument '%s'" % (mapping.resid, name))
 
-        if missing:
-            raise RanvierError(
-                "Error: Missing values attempting to map resource '%s': %s" %
-                (resid, ', '.join("'%s'" % x for x in missing)))
+                posargs[name] = value
+
+        # Sanity check.
+        if __debug__:
+            for value in posargs.itervalues():
+                assert value is not None
+
+        # Process the remaining keyword arguments.  They should specify only
+        # optional parameters at this point, we should have extracted positional
+        # arguments specified as keywords arguments above.
+        for name, value in kwds.iteritems():
+            if name not in mapping.optparams:
+                if name in posargs:
+                    raise RanvierError("Error: Resource '%s' got multiple "
+                                       "values for optional parameter '%s'" %
+                                       (mapping.resid, name))
+                else:
+                    raise RanvierError("Error: Resource '%s' got an "
+                                       "unexpected optional parameter '%s'" %
+                                       (mapping.resid, name))
+        optargs = kwds
 
         # Register the target in the call graph, if enabled.
         for rep in self.reporters:
             rep.register_rendered(resid)
 
         # Perform the substitution.
-        return mapping.render(params, self.rootloc)
+        return mapping.render(posargs, self.rootloc)
 
     def mapurl_noerror(self, resid, *args, **kwds):
         """
@@ -280,7 +285,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         This can be useful for a test program.
         """
         mapping = self._get_mapping(resid)
-        return tuple(mapping.positional)
+        return tuple(x.varname for x in mapping.positional)
 
     def render(self, sort_by_url=True):
         """
@@ -312,10 +317,6 @@ class UrlMapper(rodict.ReadOnlyDict):
         return [fmt % (m.resid, m.render_pattern(self.rootloc))
                 for m in mappings]
 
-        # Note: we are considering whether rendering the defaults-dict would be
-        # interesting for reconstructing the UrlMapper from a list of lines, as
-        # would be done for generating test cases.  For now we ignore the
-        # vardict.
 
     @staticmethod
     def urlload(url):
@@ -505,13 +506,13 @@ class UrlMapper(rodict.ReadOnlyDict):
         else:
             # Convert the match to the target type, guessed using the format.
             results = {}
-            for name, value in zip(mapping.positional, mo.groups()):
-                format = mapping.formats.get(name)
+            for comp, value in zip(mapping.positional, mo.groups()):
+                format = comp.format
                 if format and format.endswith('d'):
                     value = int(value)
                 elif format and format.endswith('f'):
                     value = float(value)
-                results[name] = value
+                results[comp.varname] = value
 
         return results
 
@@ -551,9 +552,6 @@ class Mapping(object):
         # True if this resource does not have any further branches
         self.isterminal = isterminal
 
-        # A dict of the optional parameters.
-        self.optparams = dict((x[0], OptParam(x)) for x in optparams or ())
-
         #
         # Pre-calculate stuff for faster backmapping when rendering pages.
         #
@@ -561,29 +559,25 @@ class Mapping(object):
         # Build a usable URL string template.
         self.urltmpl, self.urltmpl_untyped = self.create_path_templates()
 
-        # Get positional args, defaults and formats dicts.
-        positional, vardict, formats = [], {}, {}
-        for comp in filter(lambda x: isinstance(x, VarComponent), components):
-            name = comp.varname
-            # Check for variable collisions.
-            if name in vardict:
+        # Set the positional args to the list of components with variables.
+        self.positional = filter(lambda x: isinstance(x, VarComponent),
+                                 components)
+        self.posmap = dict((x.varname, None) for x in self.positional)
+        # Note: only exists for efficient copy in mapurl.
+
+        # Check for collisions.  We keep the set around for fast validity
+        # checks afterwards.
+        varset = set()
+        for comp in chain(self.positional, optparams or ()):
+            if comp.varname in varset:
                 raise RanvierError(
-                    "Variable name collision in URI path: '%s'" % name)
+                    "Variable name collision in URI path: '%s'" % comp.varname)
+            varset.add(comp.varname)
+        self.varset = varset
+        # Note: varset includes both the positional and optional parameters.
 
-            positional.append(name)
-            vardict[name] = None
-            formats[name] = comp.format
-
-        # A list of the positional variable components, in order.
-        self.positional = positional
-
-        # A dictionary for variables and formats.  All variable names are
-        # present, values are set to None if unset.
-        self.vardict = vardict
-        self.formats = formats
-
-    def isvalid(self, cname):
-        return cname in self.vardict or cname in self.optparams
+        # A dict of the optional parameters.
+        self.optparams = dict((x.varname, x) for x in optparams or ())
 
     def create_path_templates(self):
         """
@@ -604,56 +598,55 @@ class Mapping(object):
                 rcomps.append(repl)
                 rcomps_untyped.append(repl_untyped)
             else:
+                assert isinstance(comp, FixedComponent)
                 rcomps.append(comp.name)
                 rcomps_untyped.append(comp.name)
         return '/'.join(rcomps), '/'.join(rcomps_untyped)
 
-    def render(self, params, rootloc=None):
-        return self._render(self.urltmpl, params, rootloc)
+    def render(self, posargs, rootloc=None):
+        return self._render(self.urltmpl, posargs, rootloc)
 
     def render_pattern(self, rootloc=None):
         """
-        Render the URL pattern using the given params.
+        Render the URL pattern using the given posargs.
         """
-        params = {}
-        for comp in filter(lambda x: isinstance(x, VarComponent),
-                           self.components):
+        posargs = {}
+        for comp in self.positional:
             if comp.format:
                 repl = '(%s%%%s)' % (comp.varname, comp.format)
             else:
                 repl = '(%s)' % comp.varname
-            params[comp.varname] = repl
+            posargs[comp.varname] = repl
 
-        return self._render(self.urltmpl_untyped, params, rootloc)
+        return self._render(self.urltmpl_untyped, posargs, rootloc)
 
     def render_regexp_matcher(self, rootloc=None):
         """
         Render a regular expression string for matching against a known URL.
         """
-        params = {}
-        for comp in filter(lambda x: isinstance(x, VarComponent),
-                           self.components):
+        posargs = {}
+        for comp in self.positional:
             format = comp.format
             if format is None or format.endswith('s'):
-                params[comp.varname] = '(?P<%s>[^/]+)' % comp.varname
+                posargs[comp.varname] = '(?P<%s>[^/]+)' % comp.varname
             elif format.endswith('d'):
-                params[comp.varname] = '(?P<%s>[0-9]+)' % comp.varname
+                posargs[comp.varname] = '(?P<%s>[0-9]+)' % comp.varname
             elif format.endswith('f'):
-                params[comp.varname] = '(?P<%s>[0-9\\.\\+\\-]+)' % comp.varname
+                posargs[comp.varname] = '(?P<%s>[0-9\\.\\+\\-]+)' % comp.varname
 
-        restring = self._render(self.urltmpl_untyped, params, rootloc)
+        restring = self._render(self.urltmpl_untyped, posargs, rootloc)
         if restring.endswith('/'):
             restring += '?'
         else:
             restring += '/?'
         return restring
 
-    def _render(self, template, params, rootloc=None, render_trailing=True):
+    def _render(self, template, posargs, rootloc=None, render_trailing=True):
         """
-        Render the final URL using the given params.  The dict should exactly
+        Render the final URL using the given posargs.  The dict should exactly
         match the variables in the template.
         """
-        rendered_path = template % params
+        rendered_path = template % posargs
         if self.absolute:
             first_comp = ''
         else:

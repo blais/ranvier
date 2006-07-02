@@ -195,7 +195,7 @@ class OptionalParams(LeafResource):
     def handle_GET(self, ctxt):
         ctxt.page.render_header(ctxt)
         ctxt.response.write("""
-        <p>Cat: %(cat)s, Dog: %(dog)s, Animals: %(animals)s.</p>
+        <p>Cat: %(cat)s, Dog: %(dog)s, Animals: %(nbanimals)s.</p>
         """ % {'cat': ctxt.args.get('cat', None),
                'dog': ctxt.args.get('dog', None),
                'nbanimals': ctxt.args.get('nbanimals', None)
@@ -332,9 +332,9 @@ new windows will be open automatically.  Click on the links below to start:</p>
   <li> <b>Optional Parameters</b>: Optional parameters can be rendered via the
   same mapurl() interface in the soure code.  Try these few resources for
   example:
-     <a href="%(opt1)s">1</a>
-     <a href="%(opt2)s">2</a>
-     <a href="%(opt3)s">3</a>
+     <a href="%(opt1)s" target="testwin">1</a>
+     <a href="%(opt2)s" target="testwin">2</a>
+     <a href="%(opt3)s" target="testwin">3</a>
   </li>
 
   <li> <b>Delegator</b>: The chain of responsibility pattern does not imply that
@@ -373,7 +373,7 @@ new windows will be open automatically.  Click on the links below to start:</p>
 
   <li> <b>Variable Number Of Components</b>: You can fetch all of the rest of
   the components from a handler anywhere on the path.  Try <a
-  href="%(consrest)s">this page</a> for example.</li>
+  href="%(consrest)s" target="testwin">this page</a> for example.</li>
 
   <li> <b>Coverage Analysis</b>: You can enable coverage analysis for the
   resources.  Once you start it, everytime a resource is handled, a counter gets

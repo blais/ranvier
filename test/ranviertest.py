@@ -14,6 +14,7 @@ sys.path.append(join(dirname(dirname(abspath(__file__))), 'demo'))
 
 # ranvier imports
 from ranvier import *
+from ranvier.enumerator import VarComponent, FixedComponent
 import ranvier.mapper
 
 # ranvier demo imports
@@ -160,47 +161,47 @@ class TestConversions(testBaseCls):
         # All fixed.
         self.assertEquals(
             fun('/documents/faq/part1'), 
-            (('', '', True, [('documents', False, None),
-                             ('faq', False, None),
-                             ('part1', False, None)], '', ''), False) )
+            (('', '', True, [FixedComponent('documents'),
+                             FixedComponent('faq'),
+                             FixedComponent('part1')], '', ''), False) )
         
         # Non-terminal
         self.assertEquals(
             fun('/documents/faq/'), 
-            (('', '', True, [('documents', False, None),
-                             ('faq', False, None),], '', ''), True) )
+            (('', '', True, [FixedComponent('documents'),
+                             FixedComponent('faq'),], '', ''), True) )
 
         # With one variable.
         self.assertEquals(
             fun('/users/(username)/profile'), 
-            (('', '', True, [('users', False, None),
-                             ('username', True, None),
-                             ('profile', False, None)], '', ''), False) )
+            (('', '', True, [FixedComponent('users'),
+                             VarComponent('username'),
+                             FixedComponent('profile')], '', ''), False) )
 
         # Variable with formatting
         self.assertEquals(
             fun('/users/(userid%08d)/profile'), 
-            (('', '', True, [('users', False, None),
-                                ('userid', True, '08d'),
-                                ('profile', False, None)], '', ''), False) )
+            (('', '', True, [FixedComponent('users'),
+                             VarComponent('userid', '08d'),
+                             FixedComponent('profile')], '', ''), False) )
 
         # Test with multiple components
         self.assertEquals(
             fun('/users/(username)/trip/(id)/view'), 
-            (('', '', True, [('users', False, None),
-                                ('username', True, None),
-                                ('trip', False, None),
-                                ('id', True, None),
-                                ('view', False, None)], '', ''), False) )
+            (('', '', True, [FixedComponent('users'),
+                             VarComponent('username'),
+                             FixedComponent('trip'),
+                             VarComponent('id'),
+                             FixedComponent('view')], '', ''), False) )
 
         # Test with many components, defaults and formatting.
         self.assertEquals(
             fun('/users/(username)/trip/(id%08d)/view'), 
-            (('', '', True, [('users', False, None),
-                                ('username', True, None),
-                                ('trip', False, None),
-                                ('id', True, '08d'),
-                                ('view', False, None)], '', ''), False) )
+            (('', '', True, [FixedComponent('users'),
+                             VarComponent('username'),
+                             FixedComponent('trip'),
+                             VarComponent('id', '08d'),
+                             FixedComponent('view')], '', ''), False) )
 
         # All fixed, external.
         fun('http://domain.com/users')
@@ -211,9 +212,9 @@ class TestConversions(testBaseCls):
         # Relative.
         self.assertEquals(
             fun('users/(username)/profile'), 
-            (('', '', False, [('users', False, None),
-                                 ('username', True, None),
-                                 ('profile', False, None)], '', ''), False) )
+            (('', '', False, [FixedComponent('users'),
+                              VarComponent('username'),
+                              FixedComponent('profile')], '', ''), False) )
 
 
     def test_template(self):
@@ -329,12 +330,12 @@ def assertEquals(first, second):
 #
 def suite():
     suite = unittest.TestSuite()
-##     suite.addTest(TestMappings("test_backmaps"))
-##     suite.addTest(TestMappings("test_render_reload"))
-##     suite.addTest(TestMappings("test_static"))
-##     suite.addTest(TestConversions("test_urlpattern"))
-##     suite.addTest(TestConversions("test_template"))
-##     suite.addTest(TestConversions("test_match"))
+    suite.addTest(TestMappings("test_backmaps"))
+    suite.addTest(TestMappings("test_render_reload"))
+    suite.addTest(TestMappings("test_static"))
+    suite.addTest(TestConversions("test_urlpattern"))
+    suite.addTest(TestConversions("test_template"))
+    suite.addTest(TestConversions("test_match"))
     suite.addTest(TestConversions("test_optparam"))
     return suite
 

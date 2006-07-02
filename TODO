@@ -13,6 +13,8 @@ Current
 
 (code)
 
+* Coverage report should render aliases gray as well.
+
 * ranvier-static-check: 
 
   - Fix a bug: multiple resources on the same source line will not be found!

@@ -82,8 +82,7 @@ class EnumVisitor(object):
             raise RanvierError(
                 "Error: optional parameter names must be strings.")
         
-## FIXME: todo  change this to use the OptParam class
-        self.optparams.append( (varname, default, format) )
+        self.optparams.append( OptParam(varname, default, format) )
 
     def branch_anon(self, delegate):
         """
@@ -114,6 +113,12 @@ class EnumVisitor(object):
         """
         return self.branchs
 
+    def get_optparams(self):
+        """
+        Accessor for branches.
+        """
+        return self.optparams
+
     def isleaf(self):
         """
         Returns true if the visited node has declared itself a leaf.
@@ -133,9 +138,9 @@ class Enumerator(object):
         """The entire list of accumulated paths resulting from the traversal."""
 
     def visit_root(self, resource):
-        return self.visit(resource, [], 0)
+        return self.visit(resource, [], [], 0)
 
-    def visit(self, resource, components, level):
+    def visit(self, resource, components, optparams, level):
         """
         Visit a resource node.  This method calls itself recursively.
         * 'resources' is the resource node to visit.
@@ -150,6 +155,9 @@ class Enumerator(object):
         # Get the accumulated branches.
         branches = visitor.get_branches()
 
+        # Update the optparams for this node and its branches.
+        new_optparams = optparams + visitor.get_optparams() # Makes a copy.
+
         # If we have reached a leaf node (i.e. the node has declared itself a
         # potential leaf), add the components to the list of componentss.
         if visitor.isleaf():
@@ -159,22 +167,25 @@ class Enumerator(object):
             # determine if we need append a trailing slash or not.
             isterminal = bool(branches)
             
-            components = list(components) # Make a copy.
-
+            # Update the list of components for the list.
             leafres, leafcomp = visitor.leaf
+            leaf_components = list(components)
             if leafcomp is not None:
-                components.append(leafcomp)
+                leaf_components.append(leafcomp)
 
+            # Add the leaf as a valid path.
             self.accpaths.append(
-                (leafres, components, isterminal, visitor.optparams) )
+                (leafres, leaf_components, new_optparams, isterminal) )
 
         # Process the possible paths.  This is a breadth-first search.
         for branch_res, branch_comp in branches:
+            # Update the list of components for the child.
             child_components = list(components)
             if branch_comp:
                 child_components.append(branch_comp)
 
-            self.visit(branch_res, child_components, level+1)
+            # Visit the children, recursively.
+            self.visit(branch_res, child_components, new_optparams, level+1)
 
     def getpaths(self):
         """
@@ -198,6 +209,9 @@ class FixedComponent(Component):
     def __init__(self, name):
         self.name = name
 
+    def __cmp__(self, other):
+        return cmp(self.name, other.name)
+
 class VarComponent(Component):
     """
     A variable component.
@@ -211,9 +225,12 @@ class VarComponent(Component):
 
         self.format = format
 
+    def __cmp__(self, other):
+        c = cmp(self.varname, other.varname)
+        if c != 0:
+            return c
+        return cmp(self.format, other.format)
 
-#-------------------------------------------------------------------------------
-#
 class OptParam(object):
     """
     Optional parameter.
@@ -222,4 +239,5 @@ class OptParam(object):
         self.varname = varname
         self.default = default
         self.format = format
+
 
