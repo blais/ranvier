@@ -1103,14 +1103,6 @@ Better Static Checking
   likely that parameters have been forgotten or are missing or extraneous
 
 
-Support GET and POST on the Same Resource Objects
--------------------------------------------------
-
-* It would be nice to support calling a ``handle_GET()`` and ``handle_POST()``
-  methods like in Django. This may make internal redirection more transparent
-  for forms that validate input parameters and have errors.
-
-
 Conclusion
 ==========
 

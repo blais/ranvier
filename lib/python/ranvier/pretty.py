@@ -77,14 +77,14 @@ def pretty_render_mapper_body(mapper, defaults, sorturls):
         url = mapper.mapurl_pattern(o.resid)
 
         # Try to fill in missing values from in the defaults dict
-        vardict = o.vardict.copy()
+        posmap = o.posmap.copy()
         for cname, cvalue in defaults.iteritems():
-            if cname in vardict:
-                vardict[cname] = cvalue
+            if cname in posmap:
+                posmap[cname] = cvalue
 
         # Make the URL clickable if it contains no parameters.
-        if None not in vardict.itervalues():
-            url = '<a href="%s">%s</a>' % (mapper.mapurl(o.resid, vardict), url)
+        if None not in posmap.itervalues():
+            url = '<a href="%s">%s</a>' % (mapper.mapurl(o.resid, posmap), url)
 
         m = {'resid': o.resid,
              'url': url}
