@@ -63,7 +63,7 @@ class Resource(object):
         you need to declare all the possible resources that this delegates to.
         """
         # By default, no-op.
-
+        
     @staticmethod
     def delegate(nextres, ctxt):
         """

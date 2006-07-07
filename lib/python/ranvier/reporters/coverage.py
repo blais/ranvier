@@ -27,16 +27,19 @@ __all__ = ('coverage_render_html_table', 'coverage_render_cmdline',
 
 #-------------------------------------------------------------------------------
 #
-def coverage_output_generator(mapper, coverage, nohandle):
+def coverage_output_generator(mapper, coverage,
+                              ids_ignore_handle, ids_ignore_render):
     """
     Generator that drives the output of the coverage results.
     """
-    nohandle = set(nohandle or ())
-
     sortkey = lambda x: x.resid
     mappings = sorted(mapper.itervalues(), key=sortkey)
 
+    set_ignore_handle = frozenset(ids_ignore_handle)
+    set_ignore_render = frozenset(ids_ignore_render)
+
     for mapping in mappings:
+
         # Get the coverage information.
         hcount, rcount = coverage.get(mapping.resid, (0, 0))
 
@@ -44,15 +47,7 @@ def coverage_output_generator(mapper, coverage, nohandle):
         tip = mapper.mapurl_pattern(mapping.resid)
 
         # Render 'handled' count.
-        if mapping.resid in nohandle:
-            # Sanity check: since the resource is not relative to our root, we
-            # do not handle this ourselves, and therefore the count should be
-            # zero.
-            if hcount != 0:
-                raise RanvierError(
-                    "Absolute resource count is non-zero (%d) for "
-                    "resource '%s'." % (hcount, mapping.resid))
-
+        if mapping.resid in set_ignore_handle:
             hstate = 'ignore'
 
         elif hcount == 0:
@@ -62,7 +57,10 @@ def coverage_output_generator(mapper, coverage, nohandle):
             hstate = 'success'
 
         # Render 'rendered' count.
-        if rcount == 0:
+        if mapping.resid in set_ignore_render:
+            rstate = 'ignore'
+
+        elif rcount == 0:
             rstate = 'fail'
         else:
             rstate = 'success'
@@ -72,7 +70,8 @@ def coverage_output_generator(mapper, coverage, nohandle):
 
 #-------------------------------------------------------------------------------
 #
-def coverage_render_html_table(mapper, coverage, nohandle=None):
+def coverage_render_html_table(mapper, coverage,
+                               ids_ignore_handle, ids_ignore_render):
     """
     Render an HTML table of the coverage results.
 
@@ -81,7 +80,8 @@ def coverage_render_html_table(mapper, coverage, nohandle=None):
     'coverage' is the coverage information, a dict mapping a resource-id to a
     tuple of counts.
 
-    'nohandle' is a list of resource-ids that cannot be handled.
+    'ids_hide', 'ids_ignore_handle', 'ids_ignore_render': lists of resource-ids
+    that should be hidden or ignored (grayed out).
     """
     oss = StringIO.StringIO()
     oss.write('<table id="coverage-report">\n')
@@ -90,10 +90,11 @@ def coverage_render_html_table(mapper, coverage, nohandle=None):
               '<td>Handled</td>'
               '<td>Rendered</td>'
               '</tr></thead>\n')
-
+    
     for resid, tip, (hcount, hstate), (rcount, rstate) in \
-            coverage_output_generator(mapper, coverage, nohandle):
-
+            coverage_output_generator(mapper, coverage,
+                                      ids_ignore_handle, ids_ignore_render):
+        
         # Render a row.
         oss.write('  <tr>\n    <td class="cov-resid">'
                   '<acronym title="%s">%s</acronym></td>\n' %
@@ -144,7 +145,8 @@ table#coverage-report thead {
 
 #-------------------------------------------------------------------------------
 #
-def coverage_render_cmdline(mapper, coverage, nohandle=None):
+def coverage_render_cmdline(mapper, coverage,
+                            ids_ignore_handle, ids_ignore_render):
     """
     Render the coverage results as they should appear on the output of a
     command-line.  See coverage_render_html_table() for details about the input
@@ -162,7 +164,8 @@ def coverage_render_cmdline(mapper, coverage, nohandle=None):
     herrors, rerrors = 0, 0
     fmt = '%%-%ds   %%8d   %%8d  %%s\n' % maxlen
     for resid, tip, (hcount, hstate), (rcount, rstate) in \
-            coverage_output_generator(mapper, coverage, nohandle):
+            coverage_output_generator(mapper, coverage,
+                                      ids_ignore_handle, ids_ignore_render):
 
         marker = ''
         if rstate == 'fail':
@@ -186,7 +189,9 @@ class ReportCoverage(LeafResource):
     """
     Outputs a nice HTML table of the saved resource coverage.
     """
-    def __init__(self, mapper, reader_fun, nohandle=None, **kwds):
+    def __init__(self, mapper, reader_fun,
+                 ids_ignore_handle=None, ids_ignore_render=None,
+                 **kwds):
         """
         'reader_fun' is a function that can be invoked to obtain a dict of
         resource-id's to pairs of (handled-count, rendered-count).
@@ -201,7 +206,8 @@ class ReportCoverage(LeafResource):
         assert reader_fun is not None
         self.reader_fun = reader_fun
 
-        self.nohandle = nohandle and list(nohandle) or []
+        self.ignore_handle = tuple(ids_ignore_handle) or ()
+        self.ignore_render = tuple(ids_ignore_render) or ()
 
     def get_html_table(self):
         """
@@ -211,9 +217,11 @@ class ReportCoverage(LeafResource):
         coverage = self.reader_fun()
 
         # Automatically add the absolute ids to be ignored.
-        nohandle = self.nohandle + self.mapper.getabsoluteids()
+        absids = tuple(self.mapper.getabsoluteids())
 
-        return coverage_render_html_table(self.mapper, coverage, nohandle)
+        return coverage_render_html_table(self.mapper, coverage,
+                                          self.ignore_handle + absids,
+                                          self.ignore_render)
 
     def handle(self, ctxt):
         ctxt.response.setContentType('text/html')

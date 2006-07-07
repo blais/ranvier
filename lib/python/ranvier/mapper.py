@@ -90,6 +90,24 @@ class UrlMapper(rodict.ReadOnlyDict):
 
             self._add_mapping(mapping)
 
+    def enumerate_resids(self, root_resource):
+        """
+        Enumerate the resource ids from the given resource node.  Returns a list
+        of resids.
+        """
+        assert root_resource
+
+        enumrator = Enumerator()
+        enumrator.visit_root(root_resource)
+
+        resids = []
+        for (resource, components, optparams,
+             isterminal) in enumrator.getpaths():
+
+            resids.append(getresid_any(resource))
+
+        return resids
+
     def inject_builtins(self, mapname=None):
         """
         Inject some variables into the builtins namespace for global access.  It
@@ -663,11 +681,17 @@ class Mapping(object):
 
         # Render the optional parameters.
         if optargs:
+            fmt_optargs = {}
             for name, value in optargs.iteritems():
+                if value is None:
+                    continue # Skip None values.
+
                 comp = self.optparams[name]
                 if comp.format:
-                    optargs[name] = comp.format % value
-            query = urllib.urlencode(optargs)
+                    value = comp.format % value
+                fmt_optargs[name] = value
+
+            query = urllib.urlencode(fmt_optargs)
         else:
             query = ''
 

@@ -68,7 +68,7 @@ def main():
 
     # Render the output.
     output, errors, herrors, rerrors = \
-            coverage_render_cmdline(mapper, coverage, ignore_ids)
+        coverage_render_cmdline(mapper, coverage, ignore_ids, ignore_ids)
     if not opts.quiet:
         sys.stdout.write(output)
     sys.stderr.write(errors)

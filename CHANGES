@@ -5,6 +5,8 @@
 Current
 =======
 
+* Improved ignoring filters for coverage report.
+
 * Added support for optional parameters.
 
 * Added discrimination for rendering method, the handle method now gets

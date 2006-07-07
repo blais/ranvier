@@ -29,17 +29,6 @@ Current
 * We need to provide a way to ignore rendered resources as well, not just
   handled, e.g. @@AdwordsTracking, is never rendered and it's ok.
 
-* We need to provide a way to ignore all the resources located under the 'test'
-  folder.
-
-  1. Provide a delegater resource that disables coverage tracking, so that all
-     mapping performed under that resource will not show up later in the
-     coverage report.    Maybe that's too complicated?
-
-  2. Or perhaps provide a way to obtain all the resources under a specific node
-     of the tree, in order to provide that list to the coverage reporter to
-     ignore.
-
 * We have an issue: a folder with default, that has a target resource-id, will
   never get marked as handled by the coverage analysis because it always
   forwards to its default, which ends up being the resource that is being
