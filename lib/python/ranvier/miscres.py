@@ -23,6 +23,8 @@ class LeafResource(Resource):
     Base class for all leaf resources.
     """
     def enum_targets(self, enumrator):
+##         super(LeafResource, self).enum_targets(enumrator)
+
         # Declare the node a leaf.
         enumrator.declare_target()
 
@@ -50,6 +52,8 @@ class DelegatorResource(Resource):
         return self._next
 
     def enum_targets(self, enumrator):
+##         super(DelegatorResource, self).enum_targets(enumrator)
+
         enumrator.branch_anon(self._next)
 
     def handle_base(self, ctxt):
@@ -103,6 +107,8 @@ class VarResource(LeafResource):
         """The format of the component, if any."""
 
     def enum_targets(self, enumrator):
+##         super(VarResource, self).enum_targets(enumrator)
+
         enumrator.declare_target(self.compname, format=self.compfmt)
 
     def consume_component(self, ctxt):
@@ -138,6 +144,9 @@ class VarVarResource(VarResource):
     Resource class that consumes 0 to all path components and that serves as a
     leaf.  The stored value is a list of the consumed components.
     """
+##     def enum_targets(self, enumrator):
+##         super(VarVarResource, self).enum_targets(enumrator)
+
     def consume_component(self, ctxt):
         if _verbosity >= 1:
             ctxt.response.log("resolver: %s" %
@@ -176,6 +185,8 @@ class VarDelegatorResource(DelegatorResource, VarResource):
         DelegatorResource.__init__(self, next_resource, **kwds)
 
     def enum_targets(self, enumrator):
+##         super(VarDelegatorResource, self).enum_targets(enumrator)
+
         enumrator.branch_var(self.compname, self.getnext())
 
     def handle_base(self, ctxt):

@@ -688,7 +688,7 @@ class Mapping(object):
 
                 comp = self.optparams[name]
                 if comp.format:
-                    value = comp.format % value
+                    value = ('%' + comp.format) % value
                 fmt_optargs[name] = value
 
             query = urllib.urlencode(fmt_optargs)
