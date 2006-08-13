@@ -237,6 +237,9 @@ class OptParam(object):
     """
     def __init__(self, varname, format=None):
         self.varname = varname
+
+        if format and format.startswith('%'):
+            format = format[1:]
         self.format = format
 
 

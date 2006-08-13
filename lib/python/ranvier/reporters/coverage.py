@@ -206,8 +206,8 @@ class ReportCoverage(LeafResource):
         assert reader_fun is not None
         self.reader_fun = reader_fun
 
-        self.ignore_handle = tuple(ids_ignore_handle) or ()
-        self.ignore_render = tuple(ids_ignore_render) or ()
+        self.ignore_handle = tuple(ids_ignore_handle or ())
+        self.ignore_render = tuple(ids_ignore_render or ())
 
     def get_html_table(self):
         """
