@@ -35,6 +35,11 @@ Current
   served.  I'm not sure how to untangle this (not that this matters much
   anyway…).
 
+* We could make ``add_alias()`` take some fixed arguments, for example::
+
+    mapper.add_alias('@@PublicPhotoGallery', '@@DocumentFull', fixed_unid)
+
+
 
 (promotion)
 * Send Ranvier information to twill list when the coverage analysis is done.
