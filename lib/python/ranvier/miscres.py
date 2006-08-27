@@ -203,12 +203,13 @@ class RedirectResource(LeafResource):
     Simply redirect to a fixed location, identified by a resource-id.  This uses
     the mapper in the context to map the target to an URL.
     """
-    def __init__(self, targetid, **kwds):
+    def __init__(self, targetid, *args, **kwds):
         LeafResource.__init__(self, **kwds)
         self.targetid = targetid
+        self.args = args
 
     def handle(self, ctxt):
-        target = ctxt.mapurl(self.targetid)
+        target = ctxt.mapurl(self.targetid, *self.args)
         ctxt.response.redirect(target)
 
 
