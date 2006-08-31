@@ -11,6 +11,7 @@ import __builtin__, os, re, types, copy, urllib, urlparse
 from itertools import chain
 
 # ranvier imports
+import ranvier
 from ranvier import rodict, RanvierError, respproxy
 from ranvier.resource import Resource
 from ranvier.miscres import LeafResource
@@ -19,7 +20,7 @@ from ranvier.enumerator import \
     Enumerator, FixedComponent, VarComponent, OptParam
 
 
-__all__ = ('UrlMapper', 'EnumResource')
+__all__ = ('UrlMapper', 'EnumResource', 'getresid',)
 
 
 #-------------------------------------------------------------------------------
@@ -79,7 +80,7 @@ class UrlMapper(rodict.ReadOnlyDict):
              isterminal) in enumrator.getpaths():
 
             # Calculate the resource-id from the resource at the leaf.
-            resid = getresid_any(resource)
+            resid = getresid(resource)
 
             # Mappings provided by the resource tree are always relative to the
             # rootloc.
@@ -104,7 +105,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         for (resource, components, optparams,
              isterminal) in enumrator.getpaths():
 
-            resids.append(getresid_any(resource))
+            resids.append(getresid(resource))
 
         return resids
 
@@ -177,7 +178,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         """
         Get the mapping for a particular resource-id.
         """
-        resid = getresid_any(res)
+        resid = getresid(res)
 
         # Get the desired mapping.
         try:
@@ -705,7 +706,7 @@ class Mapping(object):
 
 #-------------------------------------------------------------------------------
 #
-def getresid_any(res):
+def getresid(res):
     """
     Get a resource-id.  This static method accepts 'res' being either of
 
