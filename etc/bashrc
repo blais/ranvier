@@ -6,14 +6,16 @@
 # Bash configuration for this project.
 #
 
-function ranvier-process-callgraph () {
-    source=$1
-    dest="/tmp/callgraph"
-    if [ -z "$source" ]; then
-	echo "You must specify source and destination." 1>&2
-	return
-    fi
+# function ranvier-process-callgraph () {
+#    source=$1
+#    dest="/tmp/callgraph"
+#    if [ -z "$source" ]; then
+#	echo "You must specify source and destination." 1>&2
+#	return
+#    fi
+#
+#    cat $source | uniq | partorder-to-graph | dot -Tps > $dest
+#    kghostview $dest
+#}
+#
 
-    cat $source | uniq | partorder-to-graph | dot -Tps > $dest
-    kghostview $dest
-}
