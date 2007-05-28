@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -17,8 +16,7 @@ from ranvier.miscres import LeafResource
 __all__ = ('PrettyEnumResource', 'pretty_render_mapper_body')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class PrettyEnumResource(LeafResource):
     """
     Output a rather nice page that describes all the pages that are being served
@@ -45,8 +43,7 @@ class PrettyEnumResource(LeafResource):
         ranvier.template.render_footer(ctxt.response)
 
 
-#-------------------------------------------------------------------------------
-#
+
 def pretty_render_mapper_body(mapper, defaults, sorturls):
     """
     Pretty-render just the body for the page that describes the contents of the

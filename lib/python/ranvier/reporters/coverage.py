@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -25,8 +24,7 @@ __all__ = ('coverage_render_html_table', 'coverage_render_cmdline',
            'DbmCoverageReporter', 'SqlCoverageReporter')
 
 
-#-------------------------------------------------------------------------------
-#
+
 def coverage_output_generator(mapper, coverage,
                               ids_ignore_handle, ids_ignore_render):
     """
@@ -68,8 +66,7 @@ def coverage_output_generator(mapper, coverage,
         yield mapping.resid, tip, (hcount, hstate), (rcount, rstate)
 
 
-#-------------------------------------------------------------------------------
-#
+
 def coverage_render_html_table(mapper, coverage,
                                ids_ignore_handle, ids_ignore_render):
     """
@@ -143,8 +140,7 @@ table#coverage-report thead {
 
 '''
 
-#-------------------------------------------------------------------------------
-#
+
 def coverage_render_cmdline(mapper, coverage,
                             ids_ignore_handle, ids_ignore_render):
     """
@@ -183,8 +179,7 @@ def coverage_render_cmdline(mapper, coverage,
     return output.getvalue(), errors.getvalue(), herrors, rerrors
 
 
-#-------------------------------------------------------------------------------
-#
+
 class ReportCoverage(LeafResource):
     """
     Outputs a nice HTML table of the saved resource coverage.
@@ -250,8 +245,7 @@ class ResetCoverage(LeafResource):
         ctxt.response.write('OK coverage reset')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class DbmCoverageReporter(SimpleReporter):
     """
     Concrete implementation that stores the mappings in a dbm databases.
@@ -302,8 +296,7 @@ class DbmCoverageReporter(SimpleReporter):
             allresults[resid] = self.read_entry(resid)
         return allresults
 
-#-------------------------------------------------------------------------------
-#
+
 class SqlCoverageReporter(SimpleReporter):
     """
     Concrete implementation that stores the mappings in an SQL database, or
@@ -419,8 +412,7 @@ class SqlCoverageReporter(SimpleReporter):
         return allresults
 
 
-#-------------------------------------------------------------------------------
-#
+
 # Regexp for connection string, e.g. postgres://user:password@host/dbname
 type_re = re.compile('([a-z]+)://(.+)$')
 conn_str_re = re.compile(

@@ -20,8 +20,7 @@ from ranvier.resource import Resource
 __all__ = ('Folder', 'FolderWithMenu')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class FolderBase(Resource, dict):
     """
     Base class for resources which contain other resources.
@@ -111,8 +110,7 @@ class FolderBase(Resource, dict):
         raise NotImplementedError
 
 
-#-------------------------------------------------------------------------------
-#
+
 class Folder(FolderBase):
     """
     A resource handler that simply eats a component of a path.
@@ -198,8 +196,7 @@ class Folder(FolderBase):
             self.delegate(default, ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class FolderWithMenu(Folder):
     """
     A folder resource handler who can render a default page that lists and

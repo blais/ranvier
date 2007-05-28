@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -10,8 +9,7 @@ Read-only dictionary.
 __all__ = ()
 
 
-#-------------------------------------------------------------------------------
-#
+
 class ReadOnlyDict(object):
     """
     A base class that is meant to provide read-only dictionary interface to an

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -14,8 +13,7 @@ from os.path import join
 __all__ = ('HandlerContext', 'InternalRedirect')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class HandlerContext(object):
     """
     Handler context.  This is an object meant to contain a locator and for
@@ -56,8 +54,7 @@ class HandlerContext(object):
         sys.stderr.write('\n')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class PathLocator(object):
     """
     Locator object used to resolve the paths.
@@ -110,8 +107,7 @@ class PathLocator(object):
         return self.uri(self.index)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class InternalRedirect(Exception):
     """
     Exception that you can use to perform internal redirects.  It is caught and
@@ -126,9 +122,6 @@ class InternalRedirect(Exception):
 
 
 
-#===============================================================================
-# TEST
-#===============================================================================
 
 import unittest
 

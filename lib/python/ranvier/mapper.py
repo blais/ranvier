@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -23,8 +22,7 @@ from ranvier.enumerator import \
 __all__ = ('UrlMapper', 'EnumResource', 'getresid',)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class UrlMapper(rodict.ReadOnlyDict):
     """
     A class that contains mappings from the resource names to the URLs to be
@@ -538,8 +536,7 @@ class UrlMapper(rodict.ReadOnlyDict):
         return results
 
 
-#-------------------------------------------------------------------------------
-#
+
 class Mapping(object):
     """
     Internal class used for storing mappings.
@@ -704,8 +701,7 @@ class Mapping(object):
 
 
 
-#-------------------------------------------------------------------------------
-#
+
 def getresid(res):
     """
     Get a resource-id.  This static method accepts 'res' being either of
@@ -728,8 +724,7 @@ def getresid(res):
     return resid
 
 
-#-------------------------------------------------------------------------------
-#
+
 compre = re.compile('^\\(([a-z][a-z_]*)(?:%([a-z0-9\\-]+))?\\)$')
 
 def urlpattern_to_components(urlpattern):
@@ -802,8 +797,7 @@ def urlpattern_to_components(urlpattern):
     return (scheme, netloc, absolute, components, query, fragment), isterminal
 
 
-#-------------------------------------------------------------------------------
-#
+
 class EnumResource(LeafResource):
     """
     Enumerate all the resources available from a resource tree.

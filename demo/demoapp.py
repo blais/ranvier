@@ -14,8 +14,7 @@ from os.path import basename
 from ranvier import *
 
 
-#-------------------------------------------------------------------------------
-#
+
 def create_application(mapper, cov_reporter=None):
     """
     Create a tree of application resources and return the corresponding root
@@ -70,8 +69,7 @@ def create_application(mapper, cov_reporter=None):
     return mapper, root
 
 
-#-------------------------------------------------------------------------------
-#
+
 class SourceCode(LeafResource):
     """
     Output the source code to a browser window.
@@ -81,8 +79,7 @@ class SourceCode(LeafResource):
         ctxt.response.write(open(__file__, 'r').read())
 
 
-#-------------------------------------------------------------------------------
-#
+
 class PageLayout:
     """
     A class that provides common rendering routines for the demo's page layouts.
@@ -142,8 +139,7 @@ class PageLayout:
        'cls': ctxt.resource.__class__.__name__})
 
 
-#-------------------------------------------------------------------------------
-#
+
 class DemoFolderWithMenu(FolderWithMenu):
     """
     Our prettified folder class.
@@ -169,8 +165,7 @@ class SimpleResource(LeafResource):
         ctxt.page.render_footer(ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class InternalRedirectTest(LeafResource):
     """
     A simple internal redirect, with parameters.
@@ -178,8 +173,7 @@ class InternalRedirectTest(LeafResource):
     def handle(self, ctxt):
         ctxt.redirect(ctxt.mapurl('@@PrintUsername', username='martin'))
 
-#-------------------------------------------------------------------------------
-#
+
 class OptionalParams(LeafResource):
     """
     A resource that declares some optional parameters.
@@ -203,8 +197,7 @@ class OptionalParams(LeafResource):
         ctxt.page.render_footer(ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class DemoPrettyEnumResource(PrettyEnumResource):
     """
     A renderer for pretty resources within our template.
@@ -217,8 +210,7 @@ class DemoPrettyEnumResource(PrettyEnumResource):
         ctxt.page.render_footer(ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class SpecialResource(LeafResource):
     """
     A resource referred to using an alternate id.
@@ -230,8 +222,7 @@ class SpecialResource(LeafResource):
         ctxt.page.render_footer(ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class Augmenter(DelegatorResource):
     """
     A resource that adds the answer to Life, the Universe and Everything to the
@@ -252,8 +243,7 @@ class AnswerBabbler(LeafResource):
         </p>""" % ctxt.answer)
         ctxt.page.render_footer(ctxt)
 
-#-------------------------------------------------------------------------------
-#
+
 class Home(LeafResource):
     """
     Root page of the demo.
@@ -399,8 +389,7 @@ new windows will be open automatically.  Click on the links below to start:</p>
         ctxt.page.render_footer(ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class UsernameRoot(VarDelegatorResource):
     """
     This is an example of consuming part of the locator.  Part of the this
@@ -457,8 +446,7 @@ class UserData(VarResource):
         ctxt.page.render_footer(ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class LeafPlusOneComponent(VarResource):
     """
     Example resource that consumes the leaf of the locator path, i.e. it is not
@@ -475,8 +463,7 @@ class LeafPlusOneComponent(VarResource):
         ctxt.page.render_footer(ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class IntegerComponent(VarResource):
     """
     This is an example of using a formatting string for the URL path.
@@ -503,8 +490,7 @@ class RemainingComponents(VarVarResource):
                             repr(ctxt.rest))
         ctxt.page.render_footer(ctxt)
 
-#-------------------------------------------------------------------------------
-#
+
 class CoverageResourceBase(LeafResource):
     """
     Base calss for all coverage resources.
@@ -548,8 +534,7 @@ class CoverageReport(CoverageResourceBase, ReportCoverage):
         ctxt.response.write(self.get_html_table())
         ctxt.page.render_footer(ctxt)
 
-#-------------------------------------------------------------------------------
-#
+
 def trace(o):
     """
     Inject a new builtin, this is a hack, for debugging only.

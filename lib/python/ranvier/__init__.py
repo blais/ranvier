@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -7,14 +6,12 @@ Package import.  Just import this and you should be fine.
 """
 
 
-#-------------------------------------------------------------------------------
-#
+
 # Global flag used to turn on some debugging and tracing for development.
 _verbosity = 0
 
 
-#-------------------------------------------------------------------------------
-#
+
 class RanvierError(Exception):
     """
     Class used for errors due to the misuse of the Atocha API.  An occurrence of
@@ -22,8 +19,7 @@ class RanvierError(Exception):
     using Atocha.
     """
 
-#-------------------------------------------------------------------------------
-#
+
 def _atat_namexform(clsname):
     """
     Use the class' name, prepended with two @ signs.  This kind of string rarely
@@ -51,8 +47,7 @@ def set_resource_id_name_function(fun):
 
 
 
-#-------------------------------------------------------------------------------
-#
+
 from resource import *
 from context import *
 from mapper import *

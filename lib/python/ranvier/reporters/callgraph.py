@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -16,8 +15,7 @@ from ranvier.reporters.reporter import SimpleReporter
 __all__ = ('CallGraphReporter', 'FileCallGraphReporter')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class CallGraphReporter(SimpleReporter):
     """
     Interface for call graph reporters.
@@ -37,8 +35,7 @@ class CallGraphReporter(SimpleReporter):
         raise NotImplementedError
 
 
-#-------------------------------------------------------------------------------
-#
+
 class FileCallGraphReporter(CallGraphReporter):
     """
     Concrete implementation that stores the mappings in a text file.  You can

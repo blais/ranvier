@@ -23,8 +23,7 @@ import demoapp
 
 testBaseCls = unittest.TestCase
 
-#-------------------------------------------------------------------------------
-#
+
 class TestMappings(testBaseCls):
     """
     Tests backward mapping of URLs.
@@ -148,8 +147,7 @@ class TestMappings(testBaseCls):
                           '@@Context1', o, 'posarg')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class TestConversions(testBaseCls):
     """
     Tests string/pattern conversions.
@@ -332,8 +330,7 @@ class TestConversions(testBaseCls):
                      '/demo/wopts?dog=Wouf+Wouf%21')
 
 
-#-------------------------------------------------------------------------------
-#
+
 def assertRaises(excClass, callableObj, *args, **kwargs):
     try:
         callableObj(*args, **kwargs)
@@ -349,8 +346,7 @@ def assertEquals(first, second):
         raise RuntimeError('%r != %r' % (first, second))
 
 
-#-------------------------------------------------------------------------------
-#
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(TestMappings("test_backmaps"))

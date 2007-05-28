@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -16,8 +15,7 @@ __all__ = ('LeafResource', 'DelegatorResource',
            'RedirectResource', 'LogRequests', 'RemoveBase')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class LeafResource(Resource):
     """
     Base class for all leaf resources.
@@ -36,8 +34,7 @@ class LeafResource(Resource):
         return Resource.handle_base(self, ctxt)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class DelegatorResource(Resource):
     """
     Resource base class for resources which do something and then
@@ -85,8 +82,7 @@ class DelegatorResource(Resource):
         # Noop.
         
 
-#-------------------------------------------------------------------------------
-#
+
 class VarResource(LeafResource):
     """
     Resource base class that unconditionally consumes one path component and
@@ -196,8 +192,7 @@ class VarDelegatorResource(DelegatorResource, VarResource):
     handle = Resource.handle_nofail
 
 
-#-------------------------------------------------------------------------------
-#
+
 class RedirectResource(LeafResource):
     """
     Simply redirect to a fixed location, identified by a resource-id.  This uses
@@ -213,8 +208,7 @@ class RedirectResource(LeafResource):
         ctxt.response.redirect(target)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class LogRequests(DelegatorResource):
     """
     Log a header to the error file and delegate.
@@ -226,8 +220,7 @@ class LogRequests(DelegatorResource):
         ctxt.response.log(self.fmt % ctxt.locator.uri())
 
 
-#-------------------------------------------------------------------------------
-#
+
 class RemoveBase(DelegatorResource):
     """
     Resource that removes a fixed number of base components.

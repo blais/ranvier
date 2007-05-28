@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -14,8 +13,7 @@ from ranvier.resource import Resource
 __all__ = ('Enumerator',)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class EnumVisitor(object):
     """
     Visitor for enumerators.  This class has methods so that the resources may
@@ -126,8 +124,7 @@ class EnumVisitor(object):
         return self.leaf is not None
 
 
-#-------------------------------------------------------------------------------
-#
+
 class Enumerator(object):
     """
     A class used to visit and enumerate all the possible URL paths that are
@@ -195,8 +192,7 @@ class Enumerator(object):
 
 
 
-#-------------------------------------------------------------------------------
-#
+
 class Component(object):
     """
     Base class for URI path components.

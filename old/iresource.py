@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from interface import interface
 
 class IResource(interface.Interface):

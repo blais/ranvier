@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
@@ -16,8 +15,7 @@ from ranvier.reporters.reporter import ResourceReporter
 __all__ = ('TracerReporter',)
 
 
-#-------------------------------------------------------------------------------
-#
+
 class TracerReporter(ResourceReporter):
     """
     A reporter that accumulates the resource ids that have been placed on the

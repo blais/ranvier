@@ -17,8 +17,7 @@ import sys, cgi
 __all__ = ('ResponseProxy', 'CGIResponse')
 
 
-#-------------------------------------------------------------------------------
-#
+
 class ResponseProxy(object):
     """
     Response proxy object.
@@ -62,8 +61,7 @@ class ResponseProxy(object):
         raise NotImplementedError
         
 
-#-------------------------------------------------------------------------------
-#
+
 class CGIResponse(ResponseProxy):
     """
     Simplistic response class for CGI programs.
@@ -134,8 +132,7 @@ class CGIResponse(ResponseProxy):
         outf.write(message)
         outf.flush()
         
-#-------------------------------------------------------------------------------
-#
+
 def cgi_getargs():
     """
     Get the CGI arguments and convert them into a nice dictionary.

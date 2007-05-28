@@ -20,8 +20,7 @@ __all__ = ()
 _generator = 'Ranvier URL Mapping Library'
 
 
-#-------------------------------------------------------------------------------
-#
+
 def render_header(oss, title, css=''):
     """
     Render an HTML page header.
@@ -45,8 +44,7 @@ p.docstring { margin-left: 2em; }
     ''' % m)
 
 
-#-------------------------------------------------------------------------------
-#
+
 def render_footer(oss):
     """
     Render an HTML page footer.
