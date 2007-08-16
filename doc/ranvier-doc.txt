@@ -422,7 +422,7 @@ Aliases
 The mapper supports the creation of aliases to existing resources.  You do it
 like this::
 
-    mapper.add_alias('@@Search, '@@GoogleSearch)
+    mapper.add_alias('@@Search', '@@GoogleSearch')
 
 This is useful during development if you're moving stuff around or are just
 testing stuff.
