@@ -103,8 +103,6 @@ class VarResource(LeafResource):
         """The format of the component, if any."""
 
     def enum_targets(self, enumrator):
-##         super(VarResource, self).enum_targets(enumrator)
-
         enumrator.declare_target(self.compname, format=self.compfmt)
 
     def consume_component(self, ctxt):
@@ -140,8 +138,6 @@ class VarVarResource(VarResource):
     Resource class that consumes 0 to all path components and that serves as a
     leaf.  The stored value is a list of the consumed components.
     """
-##     def enum_targets(self, enumrator):
-##         super(VarVarResource, self).enum_targets(enumrator)
 
     def consume_component(self, ctxt):
         if _verbosity >= 1:
