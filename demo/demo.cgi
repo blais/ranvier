@@ -34,8 +34,7 @@ from ranvier import respproxy
 import demoapp
 
 
-#-------------------------------------------------------------------------------
-#
+
 rootloc = '/ranvier/demo'
 
 # Reporters
@@ -47,8 +46,7 @@ enable_coverage = 1
 coverage_filename = '/tmp/ranvier.coverage.dbm'
 
 
-#-------------------------------------------------------------------------------
-#
+
 def main():
     """
     CGI handler for debugging/dumping the contents of the source upload.
@@ -105,8 +103,7 @@ def main():
     mapper.remove_reporter(tracer)
 
 
-#-------------------------------------------------------------------------------
-#
+
 if __name__ == '__main__':
     main()
 

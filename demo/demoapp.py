@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the Ranvier package.
 # See http://furius.ca/ranvier/ for license and details.
 
