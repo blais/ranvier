@@ -397,7 +397,9 @@ class UrlMapper(rodict.ReadOnlyDict):
         return [x.resid for x in self.itervalues() if x.absolute]
 
 
-    def handle_request(self, method, uri, args, response_proxy=None, **extra):
+    def handle_request(self, method, uri, args,
+                       response_proxy=None, ctxt_cls=None,
+                       **extra):
         """
         Handle a request, via the resource tree.  This is the pattern matching /
         forward mapping part.
@@ -409,6 +411,9 @@ class UrlMapper(rodict.ReadOnlyDict):
         'args': a dict of the arguments (POST or GET variables)
 
         'response_proxy': an adapter for the resources that Ranvier provides.
+
+        'ctxt_cls': a class object that is instantiated instead of the default
+        one. Must derive from HandlerContext.
 
         'extra': the extra keyword args are added as attribute to the context
         object that the handlers receive
@@ -438,7 +443,12 @@ class UrlMapper(rodict.ReadOnlyDict):
                 uri = uri[len(self.rootloc):]
 
             # Create a context for the handling.
-            ctxt = HandlerContext(method, uri, args, self.rootloc)
+            if ctxt_cls is None:
+                ctxt_cls = HandlerContext
+            else:
+                assert issubclass(ctxt_cls, HandlerContext)
+
+            ctxt = ctxt_cls(method, uri, args, self.rootloc)
             ctxt.mapper = self
 
             # Add the redirect data
@@ -473,7 +483,8 @@ class UrlMapper(rodict.ReadOnlyDict):
                 # Complete reporters.
                 for rep in self.reporters:
                     rep.end()
-
+        return ctxt
+    
     def add_reporter(self, reporter):
         """
         Add the given reporter to the active list.
