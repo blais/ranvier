@@ -31,14 +31,17 @@ class PrettyEnumResource(LeafResource):
         self.mapper = mapper
         self.sorturls = sorturls
 
+    def render_body(self, ctxt):
+        return pretty_render_mapper_body(self.mapper,
+                                         dict(ctxt.args),
+                                         self.sorturls)
     def handle(self, ctxt):
         ctxt.response.setContentType('text/html')
         ranvier.template.render_header(ctxt.response,
                                        'URL Mapper Resources')
 
-        ctxt.response.write(pretty_render_mapper_body(self.mapper,
-                                                      dict(ctxt.args),
-                                                      self.sorturls))
+        ctxt.response.write('<h1>URL Mapper Resources</h1>\n')
+        ctxt.response.write(self.render_body())
 
         ranvier.template.render_footer(ctxt.response)
 
@@ -58,7 +61,6 @@ def pretty_render_mapper_body(mapper, defaults, sorturls):
             pass
 
     oss = StringIO.StringIO()
-    oss.write('<h1>URL Mapper Resources</h1>\n')
     mappings = list(mapper.itervalues())
     if sorturls:
         sortkey = lambda x: x.urltmpl
