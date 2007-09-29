@@ -64,11 +64,11 @@ def pretty_render_mapper_body(mapper, defaults, sorturls):
     mappings = list(mapper.itervalues())
     if sorturls:
         sortkey = lambda x: x.urltmpl
-        titfmt = ('<h2 class="resource-title"><tt>%(url)s</tt> '
+        titfmt = ('<h2 class="title"><tt>%(url)s</tt> '
                   '(<tt>%(resid)s</tt>)</h2>')
     else:
         sortkey = lambda x: x.resid
-        titfmt = '<h2 class="resource-title"><tt>%(resid)s: %(url)s</tt></h2>'
+        titfmt = '<h2 class="title"><tt>%(resid)s: %(url)s</tt></h2>'
     mappings.sort(key=sortkey)
 
     for o in mappings:
@@ -88,8 +88,10 @@ def pretty_render_mapper_body(mapper, defaults, sorturls):
         m = {'resid': o.resid,
              'url': url}
 
+        oss.write('\n\n<div class="ranvier-pretty-resource">\n')
         oss.write(titfmt % m)
         if o.resource and o.resource.__doc__:
             oss.write('  <p class="docstring">%s</p>' % o.resource.__doc__)
+        oss.write('\n</div>\n')
     return oss.getvalue()
 
