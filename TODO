@@ -5,7 +5,8 @@
 .. contents::
 ..
     1  Current
-    2  Redirection Oddity
+    2  Easier Installation
+    3  Redirection Oddity
 
 
 Current
@@ -39,6 +40,13 @@ Current
 
     mapper.add_alias('@@PublicPhotoGallery', '@@DocumentFull', fixed_unid)
 
+
+Easier Installation
+===================
+
+* Package all the default admin resources somewhat, and make some of
+  the behaviour (e.g. static check) in it as well, so that less custom
+  setting up is required.
 
 
 (promotion)
