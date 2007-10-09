@@ -16,7 +16,7 @@ from ranvier.resource import Resource
 from ranvier.miscres import LeafResource
 from ranvier.context import HandlerContext, InternalRedirect
 from ranvier.enumerator import \
-    Enumerator, FixedComponent, VarComponent, OptParam
+    Enumerator, FixedComponent, VarComponent
 
 
 __all__ = ('UrlMapper', 'EnumResource', 'getresid',)

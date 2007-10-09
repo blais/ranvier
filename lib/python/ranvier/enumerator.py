@@ -7,7 +7,6 @@ Enumerator classes for making declartions for mapper.
 
 # ranvier imports
 from ranvier import RanvierError
-from ranvier.resource import Resource
 
 
 __all__ = ('Enumerator',)
