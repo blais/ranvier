@@ -6,5 +6,6 @@
 # used as an example for your own settings for development.
 
 USERPATH=$USERPATH:$PROJDIR/bin
-PYTHONPATH=$PYTHONPATH:$PROJDIR/lib/python:$PROJDIR/lib/python-fallback
+PYTHONPATH=$PYTHONPATH:$PROJDIR/lib/python
+PYTHONPATH_FALLBACK=$PYTHONPATH_FALLBACK:$PROJDIR/lib/python-fallback
 
