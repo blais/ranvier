@@ -73,10 +73,16 @@ class DispatchResource(object):
 
     isLeaf = False
 
-    def __init__(self, cfg, mapper, rootdir):
+    def __init__(self, cfg, mapper, rootdir, uriprefix=None):
         self.cfg = cfg
         self.mapper = mapper
         self.rootdir = rootdir
+
+        # A URI prefix to be prepended to the incoming path. This is used to do
+        # URL rewriting by ourselves when our program is being run on the server
+        # with a reverse-proxy that removes the prefix. We add it back (to make
+        # our UrlMapper happy).
+        self.uriprefix = uriprefix or ''
 
     def getChildWithDefault(self, name, request):
         return self
@@ -86,10 +92,13 @@ class DispatchResource(object):
 
     def render(self, request):
 
+        # Add back the URI prefix that has been removed by the reverse-proxy.
+        path = self.uriprefix + request.path
+
         # Handle the request with our response object.
         response = TwistedWebResponseProxy(request)
         ctxt = self.mapper.handle_request(
-            request.method, request.path, request.args, response,
+            request.method, path, request.args, response,
             ctxt_cls=HandlerContext, cfg=self.cfg)
 
         # Serve files from a specific root directory.
