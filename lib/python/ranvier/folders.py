@@ -123,18 +123,14 @@ class Folder(FolderBase):
         If '_default' is specified, it should be a string or a resource object
         to the default resource.
         """
+
+        # Note: if the default is specified as a string, we keep it as such
+        # throughout, we do not optimize by caching the resource, on purpose (to
+        # allow changing the actual nodes without messing with the default).
         self._default = children.pop('_default', None)
+
         FolderBase.__init__(self, **children)
 
-        # Try to get the child as a resource the right way, if we can.
-        if isinstance(self._default, str):
-            try:
-                self._default = children[self._default]
-            except KeyError:
-                # We keep the default as a string for the next time we reference
-                # it, we'll try again.
-                pass
-            
     def enum_targets(self, enumrator):
         FolderBase.enum_targets(self, enumrator)
 
@@ -174,14 +170,16 @@ class Folder(FolderBase):
             # the first time it is called, we replace it by the actual
             # resource object for the next calls.
             try:
-                self._default = self[self._default]
+                res = self[self._default]
             except KeyError:
                 raise RanvierError(
                     "Error: folder default child '%s' not found" %
                     self._default)
+        else:
+            res = self._default
 
-        assert isinstance(self._default, (types.NoneType, Resource))
-        return self._default
+        assert isinstance(res, (types.NoneType, Resource))
+        return res
 
     def handle_default(self, ctxt):
         default = self.getdefault()
