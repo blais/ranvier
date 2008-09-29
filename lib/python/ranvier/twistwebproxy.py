@@ -59,7 +59,7 @@ class TwistedWebResponseProxy(ResponseProxy):
         self.twistreq.setResponseCode(http.FORBIDDEN)
 
     def redirect(self, target):
-        self.twistreq.redirect(url)
+        self.twistreq.redirect(target)
 
     def log(self, message):
         logging.info(message)
