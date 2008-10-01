@@ -97,6 +97,7 @@ class DispatchResource(object):
         # If the path is not at the root, we assume it's an error and just
         # redirect to the root automatically.
         path = request.path
+        ##trace('path', path)
 
         # Handle the request with our response object.
         response = TwistedWebResponseProxy(request)
@@ -127,7 +128,7 @@ class DispatchResource(object):
 
         if badroot_redirect:
             request.setResponseCode(http.OK)
-            request.redirect(self.mapper.rootloc)
+            request.redirect(self.mapper.rootloc + '/')
             r = ''
             
         return r
