@@ -8,7 +8,7 @@ Twisted.Web server.
 """
 
 # stdlib imports
-import sys
+import sys, logging, re
 from os.path import *
 from StringIO import StringIO
 
@@ -18,6 +18,7 @@ from zope.interface import implements
 
 # ranvier imports
 from ranvier.respproxy import ResponseProxy
+from ranvier import RanvierBadRoot
 from ranvier.context import HandlerContext
 
 
@@ -37,7 +38,7 @@ class TwistedWebResponseProxy(ResponseProxy):
 
         # A buffer to contain the response text.
         self.buffer = StringIO()
-
+        
     def setContentType(self, contype):
         self.twistreq.setHeader("Content-type", contype)
 
@@ -93,29 +94,41 @@ class DispatchResource(object):
 
     def render(self, request):
 
-        # Add back the URI prefix that has been removed by the reverse-proxy.
-        path = (self.mapper.rootloc or '') + request.path
+        # If the path is not at the root, we assume it's an error and just
+        # redirect to the root automatically.
+        path = request.path
 
         # Handle the request with our response object.
         response = TwistedWebResponseProxy(request)
 
+        badroot_redirect = 0
         try:
             ctxt = self.mapper.handle_request(
                 request.method, path, request.args, response,
-                ctxt_cls=self.ctxt_cls, cfg=self.cfg)
+                ctxt_cls=self.ctxt_cls,
+                cfg=self.cfg,
+                referer=request.getHeader("referer") or None)
         except TwistedWebRedirect:
             pass
-
+        except RanvierBadRoot:
+            badroot_redirect = 1
+        
         # Serve files from a specific root directory.
         r = response.value()
-        if request.code == http.NOT_FOUND:
+        if badroot_redirect or request.code == http.NOT_FOUND:
             fn = join(self.rootdir, request.path[1:])
-            if exists(fn):
-
+            if exists(fn) and isfile(fn):
+                
                 # Directly serve the file from our directory.
                 request.setResponseCode(http.OK)
                 f = static.File(fn)
                 r = f.render(request)
+                badroot_redirect = 0
+
+        if badroot_redirect:
+            request.setResponseCode(http.OK)
+            request.redirect(self.mapper.rootloc)
+            r = ''
             
         return r
 

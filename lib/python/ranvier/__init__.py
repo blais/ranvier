@@ -19,6 +19,12 @@ class RanvierError(Exception):
     using Atocha.
     """
 
+class RanvierBadRoot(RanvierError):
+    """
+    Exception used to signal that the caller is trying to map a URL that is
+    below the root location.
+    """
+
 
 def _atat_namexform(clsname):
     """

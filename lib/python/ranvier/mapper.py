@@ -11,7 +11,7 @@ from itertools import chain
 
 # ranvier imports
 import ranvier
-from ranvier import rodict, RanvierError, respproxy
+from ranvier import rodict, RanvierError, RanvierBadRoot, respproxy
 from ranvier.resource import Resource
 from ranvier.miscres import LeafResource
 from ranvier.context import HandlerContext, InternalRedirect
@@ -437,9 +437,9 @@ class UrlMapper(rodict.ReadOnlyDict):
             # Remove the root location if necessary.
             if self.rootloc is not None:
                 if not uri.startswith(self.rootloc):
-                    raise RanvierError("Error: Incorrect root location '%s' "
-                                       "for requested URI '%s'." %
-                                       (self.rootloc, uri))
+                    raise RanvierBadRoot("Error: Incorrect root location '%s' "
+                                         "for requested URI '%s'." %
+                                         (self.rootloc, uri))
                 uri = uri[len(self.rootloc):]
 
             # Create a context for the handling.
