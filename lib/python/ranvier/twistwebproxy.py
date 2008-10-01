@@ -8,6 +8,7 @@ Twisted.Web server.
 """
 
 # stdlib imports
+import sys
 from os.path import *
 from StringIO import StringIO
 
@@ -21,7 +22,7 @@ from ranvier.context import HandlerContext
 
 
 
-__all__ = ('TwistedWebResponseProxy', 'DispatchResource')
+__all__ = ('DispatchResource',)
 
 
 class TwistedWebResponseProxy(ResponseProxy):
@@ -60,10 +61,15 @@ class TwistedWebResponseProxy(ResponseProxy):
 
     def redirect(self, target):
         self.twistreq.redirect(target)
+        raise TwistedWebRedirect()
 
     def log(self, message):
         logging.info(message)
 
+
+class TwistedWebRedirect(Exception):
+    "An exception used to redirect control flow out of the handler on redirects."
+    pass
 
 
 class DispatchResource(object):
@@ -73,16 +79,11 @@ class DispatchResource(object):
 
     isLeaf = False
 
-    def __init__(self, cfg, mapper, rootdir, uriprefix=None):
+    def __init__(self, cfg, mapper, rootdir, ctxt_cls=HandlerContext):
         self.cfg = cfg
         self.mapper = mapper
         self.rootdir = rootdir
-
-        # A URI prefix to be prepended to the incoming path. This is used to do
-        # URL rewriting by ourselves when our program is being run on the server
-        # with a reverse-proxy that removes the prefix. We add it back (to make
-        # our UrlMapper happy).
-        self.uriprefix = uriprefix or ''
+        self.ctxt_cls = ctxt_cls
 
     def getChildWithDefault(self, name, request):
         return self
@@ -93,13 +94,17 @@ class DispatchResource(object):
     def render(self, request):
 
         # Add back the URI prefix that has been removed by the reverse-proxy.
-        path = self.uriprefix + request.path
+        path = (self.mapper.rootloc or '') + request.path
 
         # Handle the request with our response object.
         response = TwistedWebResponseProxy(request)
-        ctxt = self.mapper.handle_request(
-            request.method, path, request.args, response,
-            ctxt_cls=HandlerContext, cfg=self.cfg)
+
+        try:
+            ctxt = self.mapper.handle_request(
+                request.method, path, request.args, response,
+                ctxt_cls=self.ctxt_cls, cfg=self.cfg)
+        except TwistedWebRedirect:
+            pass
 
         # Serve files from a specific root directory.
         r = response.value()

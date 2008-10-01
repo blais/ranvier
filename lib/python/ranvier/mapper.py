@@ -447,7 +447,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                 ctxt_cls = HandlerContext
             else:
                 assert issubclass(ctxt_cls, HandlerContext)
-
+                
             ctxt = ctxt_cls(method, uri, args, self.rootloc)
             ctxt.mapper = self
 
