@@ -11,6 +11,7 @@ Twisted.Web server.
 import sys, logging, re
 from os.path import *
 from StringIO import StringIO
+from base64 import b64decode
 
 # twisted imports
 from twisted.web import server, resource, http, static
@@ -94,6 +95,14 @@ class DispatchResource(object):
 
     def render(self, request):
 
+        if 'authorization' in request.received_headers:
+            authstr = request.received_headers['authorization']
+            mo = re.match('Basic (.*)$', authstr)
+            assert mo, authstr
+            username, password = b64decode(mo.group(1)).split(':')
+        else:
+            username = None
+            
         # If the path is not at the root, we assume it's an error and just
         # redirect to the root automatically.
         path = request.path
@@ -108,7 +117,8 @@ class DispatchResource(object):
                 request.method, path, request.args, response,
                 ctxt_cls=self.ctxt_cls,
                 cfg=self.cfg,
-                referer=request.getHeader("referer") or None)
+                referer=request.getHeader("referer") or None,
+                auth_user=username)
         except TwistedWebRedirect:
             pass
         except RanvierBadRoot:
