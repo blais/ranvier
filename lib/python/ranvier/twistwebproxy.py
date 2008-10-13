@@ -54,7 +54,8 @@ class TwistedWebResponseProxy(ResponseProxy):
         self.buffer.write(text)
 
     def errorNotFound(self, msg=None):
-        self.addHeader('Status', '404 %s' % msg or '')
+        self.addHeader('Status', '404 %s' % (msg or ''))
+        self.twistreq.setHeader("Content-type", 'text/plain')
         self.twistreq.setResponseCode(http.NOT_FOUND)
 
     def errorForbidden(self, msg=None):

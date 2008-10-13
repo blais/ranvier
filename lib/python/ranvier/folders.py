@@ -161,9 +161,6 @@ class Folder(FolderBase):
     def __setitem__(self, key, value):
         dict.__setitem__(self, key, value)
 
-        if isinstance(self._default, str) and self._default == key:
-            self._default = value
-
     def getdefault(self):
         if isinstance(self._default, str):
             # The default is a string, the name of the child, this must be
