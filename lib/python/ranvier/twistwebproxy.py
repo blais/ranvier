@@ -8,13 +8,13 @@ Twisted.Web server.
 """
 
 # stdlib imports
-import sys, logging, re
+import logging, re
 from os.path import *
 from StringIO import StringIO
 from base64 import b64decode
 
 # twisted imports
-from twisted.web import server, resource, http, static
+from twisted.web import resource, http, static
 from zope.interface import implements
 
 # ranvier imports

@@ -270,6 +270,7 @@ class UrlMapper(rodict.ReadOnlyDict):
                     raise RanvierError("Error: Resource '%s' got an "
                                        "unexpected optional parameter '%s'" %
                                        (mapping.resid, name))
+
         optargs = kwds
 
         # Register the target in the call graph, if enabled.
