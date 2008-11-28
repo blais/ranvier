@@ -60,4 +60,3 @@ Redirection Oddity
   Apache goes into an infinite loop.  What is this implementation of internal
   redirect?  Look for internal redirection on Wikipedia.
 
-a
