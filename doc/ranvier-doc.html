@@ -206,9 +206,9 @@ for example:</p>
 </pre>
 <p>consists in the following components:</p>
 <ul class="simple">
-<li>&#8220; <tt class="docutils literal"><span class="pre">pubpage</span></tt> &#8221;, &#8220; <tt class="docutils literal"><span class="pre">users</span></tt> &#8221;, &#8220; <tt class="docutils literal"><span class="pre">preferences</span></tt> &#8221;: static fixed
+<li>&#8220; <tt class="docutils literal">pubpage</tt> &#8221;, &#8220; <tt class="docutils literal">users</tt> &#8221;, &#8220; <tt class="docutils literal">preferences</tt> &#8221;: static fixed
 components</li>
-<li>&#8220; <tt class="docutils literal"><span class="pre">rachel</span></tt> &#8221;: a variable component, a username;</li>
+<li>&#8220; <tt class="docutils literal">rachel</tt> &#8221;: a variable component, a username;</li>
 </ul>
 </li>
 <li><p class="first"><strong>Rendering other URLs back to the user</strong>, in order to allow him to call back
@@ -264,7 +264,7 @@ aggregation of resources (the <a class="reference external" href="http://en.wiki
 <pre class="literal-block">
 http://mysite.com/accounts/get_balance?user=blais&amp;accno=643843
 </pre>
-<p>maps in a web application into a call to some function <tt class="docutils literal"><span class="pre">get_balance</span></tt> with two
+<p>maps in a web application into a call to some function <tt class="docutils literal">get_balance</tt> with two
 parameters, <em>user</em> and <em>accno</em>:</p>
 <pre class="literal-block">
 def get_balance( user, accno ):
@@ -298,7 +298,7 @@ request, we want to allow a way to hierarchically combine the behaviour of
 multiple resources.</p>
 <p>We first required that the application developer build a tree of resources, and
 provide this tree to our central mapper object.  When a request comes in, we
-initialize a context object that contains the path and a <tt class="docutils literal"><span class="pre">delegate()</span></tt> method
+initialize a context object that contains the path and a <tt class="docutils literal">delegate()</tt> method
 is called on the root resource.  The process of consuming components of the URL
 is then left to the resources themselves, with resources delegating behaviour to
 other resources.</p>
@@ -320,7 +320,7 @@ the program.</p>
 <p>In the implementation of your resources, if you require some custom behaviour
 that is not already provided by the basic Ranvier resources&#8212;this should occur
 rarely&#8212;you should make sure that when you delegate the handling to another
-resource you should always make sure to invoke the <tt class="docutils literal"><span class="pre">Resource.delegate()</span></tt>
+resource you should always make sure to invoke the <tt class="docutils literal">Resource.delegate()</tt>
 method.  For example:</p>
 <pre class="literal-block">
 class MyResource(Resource):
@@ -340,31 +340,31 @@ explicitly specify resource names for each of these.  Instead, we reuse the
 names of the classes of the leaf resources and transform them slightly to be
 placed in the URL map.</p>
 <p>By default, the transformation on the class name is simply to prepend the string
-&#8220; <tt class="docutils literal"><span class="pre">&#64;&#64;</span></tt> &#8221; in front of the resource-id, like this:</p>
+&#8220; <tt class="docutils literal">&#64;&#64;</tt> &#8221; in front of the resource-id, like this:</p>
 <pre class="literal-block">
 class UserPreferences(LeafResource):
     def handle( self, ctxt ):
         ...
 </pre>
-<p>will result in the <tt class="docutils literal"><span class="pre">&#64;&#64;UserPreferences</span></tt> resource-id.</p>
-<p>The reason we choose &#8220; <tt class="docutils literal"><span class="pre">&#64;&#64;</span></tt> &#8221; is because this pattern does not occur often in
+<p>will result in the <tt class="docutils literal">&#64;&#64;UserPreferences</tt> resource-id.</p>
+<p>The reason we choose &#8220; <tt class="docutils literal">&#64;&#64;</tt> &#8221; is because this pattern does not occur often in
 Python source code.  This allows us to easily grep for resource ids (see <a class="reference internal" href="#static-url-verification">Static
 URL Verification</a> section below).</p>
 <div class="section" id="custom-resource-ids">
 <h2><a class="toc-backref" href="#id11">4.1&nbsp;&nbsp;&nbsp;Custom Resource Ids</a></h2>
 <p>For those few cases where controllers are reused and instantiated in many
-places, we provide an optional <tt class="docutils literal"><span class="pre">resid</span></tt> keyword argument to let the user
+places, we provide an optional <tt class="docutils literal">resid</tt> keyword argument to let the user
 uniquely name the instances for later referral and rendering.</p>
 </div>
 <div class="section" id="customizing-the-naming-scheme">
 <h2><a class="toc-backref" href="#id12">4.2&nbsp;&nbsp;&nbsp;Customizing the Naming Scheme</a></h2>
-<p>If you do not like the &#8220; <tt class="docutils literal"><span class="pre">&#64;&#64;</span></tt> &#8221; scheme for whatever reason, you can globally
+<p>If you do not like the &#8220; <tt class="docutils literal">&#64;&#64;</tt> &#8221; scheme for whatever reason, you can globally
 customize the naming scheme via a global function of the Ranvier package.</p>
 </div>
 <div class="section" id="accessing-the-current-resource-id">
 <h2><a class="toc-backref" href="#id13">4.3&nbsp;&nbsp;&nbsp;Accessing the Current Resource Id</a></h2>
 <p>The delegation code automatically places the resource and resource id under the
-<tt class="docutils literal"><span class="pre">resource</span></tt> and <tt class="docutils literal"><span class="pre">resid</span></tt> attribute of the context object, so you can access it
+<tt class="docutils literal">resource</tt> and <tt class="docutils literal">resid</tt> attribute of the context object, so you can access it
 if needed.  I use this to render the filename and resource name in the title of
 my documents in test mode.  This makes it easy to find which source code
 corresponds to a particular page.</p>
@@ -423,7 +423,7 @@ mapurl('&#64;&#64;UserPreferences', 'rachel')
 <pre class="literal-block">
 /pubpages/users/rachel/preferences
 </pre>
-<p>To access the mapper object, we can make the <tt class="docutils literal"><span class="pre">mapurl()</span></tt> function available to
+<p>To access the mapper object, we can make the <tt class="docutils literal">mapurl()</tt> function available to
 all resource handlers in your preferred manner.</p>
 <p>This can be integrated in a templating system.  I like to use HTML node trees
 rather than templates, so I can use this directly in my source code, e.g.:</p>
@@ -435,8 +435,8 @@ document.append(
 <pre class="literal-block">
 Go to &lt;a href=&quot;&#64;&#64;Home&quot;&gt;home page&lt;/a&gt;.
 </pre>
-<p>where <tt class="docutils literal"><span class="pre">&#64;&#64;Home</span></tt> will automatically get replaced by something like
-<tt class="docutils literal"><span class="pre">/pubpages/welcome</span></tt>.  This could be extended to support variable parameters.
+<p>where <tt class="docutils literal">&#64;&#64;Home</tt> will automatically get replaced by something like
+<tt class="docutils literal">/pubpages/welcome</tt>.  This could be extended to support variable parameters.
 Note that Ranvier does not provide integration in existing template
 systems&#8212;there are simply too many and this integration should be easily to
 implement.</p>
@@ -530,7 +530,7 @@ mapper.</p>
 </li>
 </ol>
 <p>Note that we provide a standard resource to dump the contents of the mapper in
-<tt class="docutils literal"><span class="pre">text/plain</span></tt> format.  The URL mapper has a utility function to reload itself
+<tt class="docutils literal">text/plain</tt> format.  The URL mapper has a utility function to reload itself
 from this description.  You might be able to leverage this in some way I have
 not expected (see the <a class="reference internal" href="#writing-tests">Writing Tests</a> section).</p>
 <div class="section" id="static-url-verification">
@@ -627,7 +627,7 @@ then be converted into a graphviz dot file that gets converted into a PDF file.<
 <h1><a class="toc-backref" href="#id26">8&nbsp;&nbsp;&nbsp;Embedding Security in the Resource Tree</a></h1>
 <p>The URLs can be grouped hierarchically so that they share security access
 privileges.  A resource installed at the root can be used to check the required
-credentials.  For example, any URL beginning with <tt class="docutils literal"><span class="pre">/backstore</span></tt> could require
+credentials.  For example, any URL beginning with <tt class="docutils literal">/backstore</tt> could require
 administrative privileges, the resource setup code would look something like
 this:</p>
 <pre class="literal-block">
@@ -658,7 +658,7 @@ browser may not reflect accurately the actual page contents.  This can be an
 issue for pages that can be bookmarked.  Handlers that validate input parameters
 and that redirect to the original submit page (with marked errors) will show the
 handler's URL in the location bar.</p>
-<p>To use Ranvier's internal redirection, simply raise the <tt class="docutils literal"><span class="pre">InternalRedirect</span></tt>
+<p>To use Ranvier's internal redirection, simply raise the <tt class="docutils literal">InternalRedirect</tt>
 exception from your resource handler:</p>
 <pre class="literal-block">
 class MyHandler(Resource):
@@ -693,7 +693,7 @@ def setup_for_tests( module ):
     module.mapper = UrlMapper.urlload(module.mapper_url)
     module.mapurl = mapper.mapurl
 </pre>
-<p>(Each module is required to have a <tt class="docutils literal"><span class="pre">mapper_url</span></tt> global that describes where to
+<p>(Each module is required to have a <tt class="docutils literal">mapper_url</tt> global that describes where to
 fetch the resource list from.)</p>
 </div>
 <div class="section" id="integration-guide">
@@ -712,7 +712,7 @@ just import it like this:</p>
 from ranvier import *
 </pre>
 <p>Although Ranvier is a Python package, all the useful symbols are provided
-directly from the root of the package, e.g. <tt class="docutils literal"><span class="pre">ranvier.*</span></tt>.</p>
+directly from the root of the package, e.g. <tt class="docutils literal">ranvier.*</tt>.</p>
 </div>
 <div class="section" id="creating-the-mapper">
 <h2><a class="toc-backref" href="#id31">11.2&nbsp;&nbsp;&nbsp;Creating the Mapper</a></h2>
@@ -749,7 +749,7 @@ mapper.add_reporter(cov_reporter)
 mapper.remove_reporter(cov_reporter)
 </pre>
 <p>If you need to base your web application at a location not at the root of the
-domain, you can do so by specifying the optional <tt class="docutils literal"><span class="pre">rootloc</span></tt> argument to the
+domain, you can do so by specifying the optional <tt class="docutils literal">rootloc</tt> argument to the
 mapper when you create it, e.g.:</p>
 <pre class="literal-block">
 mapper = UrlMapper(rootloc='/ranvier/demo')
@@ -761,7 +761,7 @@ when you have a request.</p>
 <div class="section" id="handling-a-request">
 <h2><a class="toc-backref" href="#id32">11.3&nbsp;&nbsp;&nbsp;Handling a Request</a></h2>
 <p>Every time a request comes in, you will need to prepare the arguments to be
-processed by your resource handlers.  You need to create a Python <tt class="docutils literal"><span class="pre">dict</span></tt> that
+processed by your resource handlers.  You need to create a Python <tt class="docutils literal">dict</tt> that
 maps the argument names to their values, and extract the URL path from the
 request.  Then you call the mapper to do its job and your resource handlers will
 get called automatically, for example, within a CGI environment:</p>
@@ -784,7 +784,7 @@ provide it with a adapter object to provide the glue between them and the
 particular framework that you're using.  In Ranvier, we call this object a
 &#8220;resource proxy&#8221; and the default resources that we provide are written against
 its interface.  You can do this at application setup time and pass it on to the
-mapper's <tt class="docutils literal"><span class="pre">handler_request()</span></tt> method:</p>
+mapper's <tt class="docutils literal">handler_request()</tt> method:</p>
 <pre class="literal-block">
 # Create a proxy response object for the default resources provided with
 # Ranvier to use.
@@ -798,7 +798,7 @@ mapper.handle_request(path, args, response_proxy)
 <div class="section" id="creating-resources">
 <h2><a class="toc-backref" href="#id34">11.5&nbsp;&nbsp;&nbsp;Creating Resources</a></h2>
 <p>The resource handler implementation is very simple: derive a class from the
-<tt class="docutils literal"><span class="pre">Resource</span></tt> class and override the <tt class="docutils literal"><span class="pre">handle()</span></tt> method.  Make sure to provide
+<tt class="docutils literal">Resource</tt> class and override the <tt class="docutils literal">handle()</tt> method.  Make sure to provide
 an appropriate docstring if you intend to serve the pretty resource renderer:</p>
 <pre class="literal-block">
 class AnswerBabbler(Resource):
@@ -808,7 +808,7 @@ class AnswerBabbler(Resource):
     def handle( self, ctxt ):
         .... # print answer
 </pre>
-<p>The <tt class="docutils literal"><span class="pre">ctxt</span></tt> object is was we call &#8220;the context&#8221;.   It is an object which is
+<p>The <tt class="docutils literal">ctxt</tt> object is was we call &#8220;the context&#8221;.   It is an object which is
 passed around the resources in the chain of responsibility during handling.  You
 can freely put stuff in it, and the resources that extract components of the URL
 path as variables automatically store the contents of the components on it, so
@@ -828,27 +828,27 @@ while it is not too tricky, can be difficult to debug if implemented
 incorrectly.</p>
 <p>Here is a description of the most useful base resources provided with Ranvier.
 You should mostly just derive from these and only have to override the
-<tt class="docutils literal"><span class="pre">handle()</span></tt> method:</p>
+<tt class="docutils literal">handle()</tt> method:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">LeafResource</span></tt>: a resource that only serves contents directly (it does not
+<li><tt class="docutils literal">LeafResource</tt>: a resource that only serves contents directly (it does not
 delegate to other resources);</li>
-<li><tt class="docutils literal"><span class="pre">DelegaterResource</span></tt>: a resource that only delegates to another fixed
+<li><tt class="docutils literal">DelegaterResource</tt>: a resource that only delegates to another fixed
 resource;</li>
-<li><tt class="docutils literal"><span class="pre">VarResource</span></tt>: a resource that inconditionally consumes one component of the
+<li><tt class="docutils literal">VarResource</tt>: a resource that inconditionally consumes one component of the
 URL path and that serves contents directly.</li>
-<li><tt class="docutils literal"><span class="pre">VarDelegaterResource</span></tt>: a resource that inconditionally comsumes one
+<li><tt class="docutils literal">VarDelegaterResource</tt>: a resource that inconditionally comsumes one
 componet of the URL path adn that delegates to another resource.</li>
-<li><tt class="docutils literal"><span class="pre">RedirectResource</span></tt>: a resource that redirects to another fixed resource
+<li><tt class="docutils literal">RedirectResource</tt>: a resource that redirects to another fixed resource
 (identified by resource-id).  This is useful to support old URLs that have
 moved.</li>
-<li><tt class="docutils literal"><span class="pre">Folder</span></tt>: a resource that consumes one component of the URL path and that
+<li><tt class="docutils literal">Folder</tt>: a resource that consumes one component of the URL path and that
 serves fixed, different resources depending on the component.  This is used to
 implement directory trees.</li>
-<li><tt class="docutils literal"><span class="pre">FolderWithMenu</span></tt>: like <tt class="docutils literal"><span class="pre">Folder</span></tt>, but if served as a target, automatically
+<li><tt class="docutils literal">FolderWithMenu</tt>: like <tt class="docutils literal">Folder</tt>, but if served as a target, automatically
 render a basic list of the folder contents.</li>
-<li><tt class="docutils literal"><span class="pre">EnumResource</span></tt>: output the contents of the URL mapper in a textual, readable
+<li><tt class="docutils literal">EnumResource</tt>: output the contents of the URL mapper in a textual, readable
 way, but that can also be read by a URL mapper to reconstruct itself from it.</li>
-<li><tt class="docutils literal"><span class="pre">PrettyEnumResource</span></tt>: outputs a page that describes all the resources in the
+<li><tt class="docutils literal">PrettyEnumResource</tt>: outputs a page that describes all the resources in the
 URL mapper, along with descriptions and links to them.  You can specify
 parameters to this resource and it will use the parameters to fill in default
 values for those mappings that require components.</li>
@@ -857,7 +857,7 @@ values for those mappings that require components.</li>
 <div class="section" id="rendering-urls">
 <h2><a class="toc-backref" href="#id35">11.6&nbsp;&nbsp;&nbsp;Rendering URLs</a></h2>
 <p>If you want to render URLs within your HTML output code (what I usually call
-&#8220;rendering&#8221;), you can use the <tt class="docutils literal"><span class="pre">mapurl()</span></tt> function provided on the context
+&#8220;rendering&#8221;), you can use the <tt class="docutils literal">mapurl()</tt> function provided on the context
 object:</p>
 <pre class="literal-block">
 def handle( self, ctxt ):
@@ -873,7 +873,7 @@ print '&lt;a href=&quot;%s&quot;&gt;My Page&lt;/a&gt;' % user_url
 </pre>
 <p>Note that the rendering will blow up (i.e. raise an exception) if an incorrect
 number of parameters is provided.</p>
-<p>As a convenience, you can pass an object or dictionary to the <tt class="docutils literal"><span class="pre">mapurl()</span></tt>
+<p>As a convenience, you can pass an object or dictionary to the <tt class="docutils literal">mapurl()</tt>
 method and it will try to fetch the required parameters from it:</p>
 <pre class="literal-block">
 user_url = ctxt.mapurl('&#64;&#64;UserHome', ctxt)
@@ -886,7 +886,7 @@ context object.</p>
 as query parameters.  These are optional.</p>
 <div class="section" id="mapping-function-injection">
 <h3><a class="toc-backref" href="#id36">11.6.1&nbsp;&nbsp;&nbsp;Mapping Function Injection</a></h3>
-<p>Since we use this <tt class="docutils literal"><span class="pre">mapurl()</span></tt> method all over the place, we provide a kludge to
+<p>Since we use this <tt class="docutils literal">mapurl()</tt> method all over the place, we provide a kludge to
 &#8220;inject it&#8221; in the builtins functions dictionary, so that it is available
 everywhere all the time.  You can use this method on the mapper to do this once
 after the process/thread has been setup and the mapper initialized:</p>
@@ -923,7 +923,7 @@ root = Folder(
 </pre>
 <p>If you want to create multiple instances of the same resource class, you will
 need to provide distinct resource-ids for each, so that they can be linked to
-thereafter.  You do this with the optional <tt class="docutils literal"><span class="pre">resid</span></tt> parameter, which should be
+thereafter.  You do this with the optional <tt class="docutils literal">resid</tt> parameter, which should be
 supported by all of the resource classes, for example:</p>
 <pre class="literal-block">
 documents_folder = Folder(
