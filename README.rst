@@ -53,7 +53,7 @@ Download
 
 A Mercurial repository can be found at:
 
-  http://bitbucket.org/blais/ranvier
+  http://github.com/blais/ranvier
 
 
 Links

@@ -50,7 +50,7 @@ tests.
       author="Martin Blais",
       author_email="blais@furius.ca",
       url="http://furius.ca/ranvier",
-      download_url="http://bitbucket.org/blais/ranvier",
+      download_url="http://github.com/blais/ranvier",
       package_dir = {'': 'lib/python'},
       packages = ['ranvier', 'ranvier.reporters']
      )
